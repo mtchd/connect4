@@ -3,6 +3,7 @@ import scala.io.StdIn
 object Main {
   def main(args: Array[String]) {
 
+    // Most things are hardcoded at this stage of the project, to be cleaned up.
     println("Welcome.")
 
     // This should be made into a function the take arbitrary board size, eg (5x7)
@@ -10,9 +11,7 @@ object Main {
     val board = "012345" :: List.fill(7)("------")
     printBoard(board)
 
-    // This will be the start of the "game loop"
-    val new_board = playTurn(board)
-    playTurn(new_board)
+    gameLoop(board)
 
   }
 
@@ -28,7 +27,7 @@ object Main {
   }
 
   // Go to the lowest row, see if you can insert, if not, go to row above, repeat.
-  def updateBoard(board: List[String], move: Int): List[String] = {
+  def updateBoard(board: List[String], move: Int, player: Char): List[String] = {
 
     // Handle 2nd base case, when we reach top of column
     if (board.isEmpty) {
@@ -37,16 +36,37 @@ object Main {
     }
 
     // "If" statement seems readable to me, but what is the standard here? Should I just keep it consistent?
-    if (board.last(move) == 'X')
-      updateBoard(board.init, move) :+ board.last
-    else board.init :+ board.last.updated(move,'X')
+    if (board.last(move) != '-')
+      updateBoard(board.init, move, player) :+ board.last
+    else board.init :+ board.last.updated(move, player)
   }
 
-  def playTurn(board: List[String]): List[String] ={
+  def playTurn(board: List[String], player: Char): List[String] ={
     val move = StdIn.readLine("Enter column number:").toInt
-    val new_board = updateBoard(board, move)
+    val new_board = updateBoard(board, move, player)
     printBoard(new_board)
     // Don't have to write return according to IDE, but I feel it is cleaner. What is the standard here?
     new_board
+  }
+
+  def checkWin(board: List[String]): Boolean = {
+    true
+  }
+
+  def gameLoop(board: List[String]): Char= {
+
+    // Take in a command specifying if you want to quit, restart, play X, or play 0.
+    val new_board0 = playTurn(board, 'X')
+    val new_board1 = playTurn(new_board0, 'O')
+    gameLoop(new_board1)
+  }
+
+  /**
+    * Takes command line input and returns a code corresponding to the command.
+    * @param input Command entered by user.
+    * @return Code indicating what to execute.
+    */
+  def parseInput(input: String): Int = {
+    0
   }
 }
