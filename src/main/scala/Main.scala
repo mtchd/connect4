@@ -1,3 +1,4 @@
+import scala.annotation.switch
 import scala.io.StdIn
 
 object Main {
@@ -6,12 +7,7 @@ object Main {
     // Most things are hardcoded at this stage of the project, to be cleaned up.
     println("Welcome.")
 
-    // This should be made into a function the take arbitrary board size, eg (5x7)
-    // Starts at zero, of course.
-    val board = "012345" :: List.fill(7)("------")
-    printBoard(board)
-
-    gameLoop(board)
+    gameLoop(newBoard)
 
   }
 
@@ -41,32 +37,60 @@ object Main {
     else board.init :+ board.last.updated(move, player)
   }
 
-  def playTurn(board: List[String], player: Char): List[String] ={
-    val move = StdIn.readLine("Enter column number:").toInt
-    val new_board = updateBoard(board, move, player)
-    printBoard(new_board)
-    // Don't have to write return according to IDE, but I feel it is cleaner. What is the standard here?
-    new_board
+  def newBoard: List[String] = {
+    // TODO: This should be made into a function the take arbitrary board size, eg (5x7)
+    // Starts at zero, of course.
+    "012345" :: List.fill(7)("------")
   }
 
+  def playTurn(board: List[String], player: Char): List[String] ={
+    val move = StdIn.readLine("Enter column number:").toInt
+    // Don't have to write return according to IDE, but I feel it is cleaner. What is the standard here?
+    updateBoard(board, move, player)
+
+  }
+
+  // Search whole board for 4 Xs in a row or 4 Os in a row.
+  // Most efficient implementation: Search around latest token for match
+  // Other: Search only for Xs or Os at a time.
   def checkWin(board: List[String]): Boolean = {
     true
   }
 
-  def gameLoop(board: List[String]): Char= {
+  def gameLoop(board: List[String]): Char = {
 
-    // Take in a command specifying if you want to quit, restart, play X, or play 0.
-    val new_board0 = playTurn(board, 'X')
-    val new_board1 = playTurn(new_board0, 'O')
-    gameLoop(new_board1)
+    printBoard(board)
+
+    val player = parseInput("")
+    val command = parseInput(StdIn.readLine("Enter Command:"))
+
+    (command: @switch) match {
+      case 0 => userError("Invalid input.") ; gameLoop(board)
+      // Ideally, players are a proper object and not just a character, but that is to come.
+      case 1 => gameLoop(playTurn(board, 'X'))
+      case 2 => gameLoop(playTurn(board, 'O'))
+      case 3 => gameLoop(newBoard)
+      // Return '-' to signify draw.
+      case 4 => '-'
+    }
+
   }
 
   /**
     * Takes command line input and returns a code corresponding to the command.
+    * This uncouples command inputs, so it can be recomposed later for Slack.
     * @param input Command entered by user.
     * @return Code indicating what to execute.
     */
-  def parseInput(input: String): Int = {
-    0
+  def parseInput(input: String):  Int = {
+
+    (input: @switch) match {
+      case "X" => 1
+      case "O" => 2
+      case "reset" => 3
+      case "exit" => 4
+      case _ => 0
+    }
+
   }
 }
