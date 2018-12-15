@@ -2,18 +2,28 @@ import scala.annotation.switch
 import scala.io.StdIn
 
 object Main {
+
+  val boardCols = 6
+  val boardRows = 7
+
+  // TODO: Divide into separate classes, instead of this...
   def main(args: Array[String]) {
 
     // Most things are hardcoded at this stage of the project, to be cleaned up.
     println("Welcome.")
 
-    gameLoop(newBoard)
+    gameLoop(newBoard(boardRows, boardCols))
 
   }
 
   def printBoard(board : List[String]): Unit = {
+
     println("Game Board:")
-    for (line <- board) println(line)
+
+    // Add column numbers above columns
+    val annotatedBoard = "0123456789".take(boardCols) :: board
+
+    for (line <- annotatedBoard) println(line)
   }
 
   // Could use error codes instead of manually entering error.
@@ -37,31 +47,58 @@ object Main {
     else board.init :+ board.last.updated(move, player)
   }
 
-  def newBoard: List[String] = {
-    // TODO: This should be made into a function the take arbitrary board size, eg (5x7)
+  def newBoard(boardRows: Int, boardCols: Int): List[String] = {
+    // TODO: This should be made into a function to take arbitrary board size, eg (5x7)
     // Starts at zero, of course.
-    "012345" :: List.fill(7)("------")
+    List.fill(boardRows)("-"*boardCols)
   }
 
   def playTurn(board: List[String], player: Char): List[String] ={
     val move = StdIn.readLine("Enter column number:").toInt
     // Don't have to write return according to IDE, but I feel it is cleaner. What is the standard here?
     updateBoard(board, move, player)
-
   }
 
   // Search whole board for 4 Xs in a row or 4 Os in a row.
   // Most efficient implementation: Search around latest token for match
   // Other: Search only for Xs or Os at a time.
-  def checkWin(board: List[String]): Boolean = {
-    true
+  def checkWin(board: List[String], player: Char): Boolean = {
+    // Check horizontal
+    board.exists(x => recurseRow(x, player))
   }
+
+  // Return the cells for given col+row which need to be checked to verify if we
+  // can have 4 in a row horizontally.
+  def recurseRow(row: String, player: Char): Boolean = {
+
+    val firstFour = row.take(4)
+
+    if (firstFour.forall(x => x == player)) {
+      true
+    }
+    else if (row.length > 4) {
+      recurseRow(row.tail, player)
+    }
+    else {
+      false
+    }
+  }
+
 
   def gameLoop(board: List[String]): Char = {
 
     printBoard(board)
 
-    val player = parseInput("")
+    // Check if someone has won, if not, continue
+    if (checkWin(board, 'X')) {
+      println("Player X Wins")
+      return 'X'
+    }
+    else if (checkWin(board, 'O')) {
+      println("Player O Wins")
+      return 'O'
+    }
+
     val command = parseInput(StdIn.readLine("Enter Command:"))
 
     (command: @switch) match {
@@ -69,7 +106,7 @@ object Main {
       // Ideally, players are a proper object and not just a character, but that is to come.
       case 1 => gameLoop(playTurn(board, 'X'))
       case 2 => gameLoop(playTurn(board, 'O'))
-      case 3 => gameLoop(newBoard)
+      case 3 => gameLoop(newBoard(boardRows, boardCols))
       // Return '-' to signify draw.
       case 4 => '-'
     }
