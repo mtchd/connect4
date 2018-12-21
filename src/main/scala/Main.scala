@@ -16,16 +16,6 @@ object Main {
 
   }
 
-  def printBoard(board : List[String]): Unit = {
-
-    println("Game Board:")
-
-    // Add column numbers above columns
-    val annotatedBoard = "0123456789".take(boardCols) :: board
-
-    for (line <- annotatedBoard) println(line)
-  }
-
   // Could use error codes instead of manually entering error.
   def userError(message: String): Unit = {
     // Needs to tell user their input is an error, and return them to start of their turn.
@@ -51,6 +41,7 @@ object Main {
     // TODO: This should be made into a function to take arbitrary board size, eg (5x7)
     // Starts at zero, of course.
     List.fill(boardRows)("-"*boardCols)
+    new GameState(List.fill(boardRows)("-"*boardCols), None)
   }
 
   def playTurn(board: List[String], player: Char): List[String] ={
@@ -62,9 +53,9 @@ object Main {
   // Search whole board for 4 Xs in a row or 4 Os in a row.
   // Most efficient implementation: Search around latest token for match
   // Other: Search only for Xs or Os at a time.
-  def checkWin(board: List[String], player: Char): Boolean = {
+  def checkWin(gameState: GameState, player: Char): Boolean = {
     // Check horizontal
-    board.exists(x => recurseRow(x, player))
+    gameState.getBoard().exists(x => recurseRow(x, player))
   }
 
   // Return the cells for given col+row which need to be checked to verify if we
@@ -85,9 +76,9 @@ object Main {
   }
 
 
-  def gameLoop(board: List[String]): Char = {
+  def gameLoop(gameState: GameState): Char = {
 
-    printBoard(board)
+    gameState.printBoard()
 
     // Check if someone has won, if not, continue
     if (checkWin(board, 'X')) {
