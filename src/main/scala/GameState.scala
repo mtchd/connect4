@@ -76,7 +76,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
       new Move(player, row, col)
     }
     else {
-      findRow(column.tail, row-1, col, player)
+      findRow(column, row-1, col, player)
     }
 
   }
