@@ -6,6 +6,9 @@ object Main {
   val boardCols = 6
   val boardRows = 7
 
+  val playerX = new Player('X')
+  val playerO = new Player('O')
+
   // TODO: Divide into separate classes, instead of this...
   def main(args: Array[String]) {
 
@@ -27,13 +30,13 @@ object Main {
     new GameState(List.fill(boardRows)("-"*boardCols), None)
   }
 
-  def playTurn(gameState: GameState, player: Char): List[String] ={
-    val move = StdIn.readLine("Enter column number:").toInt
+  def playTurn(gameState: GameState, player: Player): GameState ={
+    val col = StdIn.readLine("Enter column number:").toInt
     // Don't have to write return according to IDE, but I feel it is cleaner. What is the standard here?
-    updateBoard(board, move, player)
+    gameState.playMove(col, player)
   }
 
-  def gameLoop(gameState: GameState): Player = {
+  def gameLoop(gameState: GameState): Option[Player] = {
 
     gameState.printBoard()
 
@@ -43,19 +46,19 @@ object Main {
       val winningPlayer = winner.get
       println(winningPlayer.token + " wins!")
       // Finish game
-      return winningPlayer
+      return Some(winningPlayer)
     }
 
     val command = parseInput(StdIn.readLine("Enter Command:"))
 
     (command: @switch) match {
-      case 0 => userError("Invalid input.") ; gameLoop(board)
+      case 0 => userError("Invalid input.") ; gameLoop(gameState)
       // Ideally, players are a proper object and not just a character, but that is to come.
-      case 1 => gameLoop(playTurn(board, 'X'))
-      case 2 => gameLoop(playTurn(board, 'O'))
+      case 1 => gameLoop(playTurn(gameState, playerX ))
+      case 2 => gameLoop(playTurn(gameState, playerO))
       case 3 => gameLoop(newBoard(boardRows, boardCols))
-      // Return '-' to signify draw.
-      case 4 => '-'
+      // Return none to signify draw.
+      case 4 => None
     }
 
   }

@@ -69,6 +69,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   }
 
   // TODO: Col and column are ambiguous, need better names.
+  // TODO: Needs to handle out of bounds col and full cols.
   def findRow(column: List[Char], row: Int, col: Int, player: Player): Move = {
 
     if (column(row) == '-') {
