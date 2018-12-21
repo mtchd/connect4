@@ -9,7 +9,8 @@ object Main {
   val playerX = new Player('X')
   val playerO = new Player('O')
 
-  // TODO: Divide into separate classes, instead of this...
+  // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell}
+  // TODO: Tests
   def main(args: Array[String]) {
 
     // Most things are hardcoded at this stage of the project, to be cleaned up.

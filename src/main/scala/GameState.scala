@@ -1,3 +1,5 @@
+import java.lang.IndexOutOfBoundsException
+
 import Main.{boardCols, boardRows}
 
 /**
@@ -26,7 +28,18 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     lastMove match {
       case Some(move) =>
 
-        if (board.exists(x => recurseRow(x, move.player.token))) {
+        val transposedBoard = board.transpose
+
+        println(getSEDiagonal(move.row, move.col, -3))
+
+        // TODO: Cleaner syntax by making into "or" statment.
+        if (fourInARow(board(move.row), move.player.token)) {
+          Some(move.player)
+        } else if (fourInARow(transposedBoard(move.col).mkString, move.player.token)) {
+          Some(move.player)
+        } else if (fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token)){
+          Some(move.player)
+        } else if (fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token)){
           Some(move.player)
         } else {
           None
@@ -39,7 +52,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
 
   // Return the cells for given col+row which need to be checked to verify if we
   // can have 4 in a row horizontally.
-  def recurseRow(row: String, player: Char): Boolean = {
+  def fourInARow(row: String, player: Char): Boolean = {
 
     val firstFour = row.take(4)
 
@@ -47,10 +60,44 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
       true
     }
     else if (row.length > 4) {
-      recurseRow(row.tail, player)
+      fourInARow(row.tail, player)
     }
     else {
       false
+    }
+  }
+
+  // TODO: Rediscover that algorithm for diagonals instead of this manual stuff
+  // Get southeast diagonal
+  def getSEDiagonal(row: Int, col: Int, offset: Int): String = {
+
+    if (offset == 3) {
+      safeGet(row + offset, col + offset)
+    }
+    else {
+     safeGet(row + offset, col + offset) + getSEDiagonal(row, col, offset + 1)
+    }
+  }
+
+  // Get southeast diagonal
+  def getNEDiagonal(row: Int, col: Int, offset: Int): String = {
+
+    if (offset == 3) {
+      safeGet(row - offset, col + offset)
+    }
+    else {
+      safeGet(row - offset, col + offset) + getSEDiagonal(row, col, offset + 1)
+    }
+  }
+
+
+  // This could be better by using option, as returning '-' means there is ambiguity between free spaces and out of
+  // bounds spaces
+  def safeGet(row: Int, col: Int): String = {
+    try {
+      board(row)(col).toString
+    } catch {
+      case e: IndexOutOfBoundsException => "-"
     }
   }
 
