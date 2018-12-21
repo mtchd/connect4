@@ -5,6 +5,6 @@
   * @param row Row the move ended up at.
   * @param col Column the player chose to drop their token into.
   */
-class Move(val player: Player, row: Int, col: Int) {
+class Move(val player: Player, val row: Int, val col: Int) {
 
 }
