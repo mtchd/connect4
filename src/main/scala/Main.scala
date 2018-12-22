@@ -32,9 +32,18 @@ object Main {
   }
 
   def playTurn(gameState: GameState, player: Player): GameState ={
+
     val col = StdIn.readLine("Enter column number:").toInt
-    // Don't have to write return according to IDE, but I feel it is cleaner. What is the standard here?
-    gameState.playMove(col, player)
+
+    // Check col within bounds (0 to number of columns take 1)
+    if (col >= 0 && col < boardCols) {
+      gameState.playMove(col, player)
+    }
+    else {
+      userError("Column out of bounds. Try again.")
+      playTurn(gameState, player)
+    }
+
   }
 
   def gameLoop(gameState: GameState): Option[Player] = {

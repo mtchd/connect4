@@ -1,6 +1,4 @@
-import java.lang.IndexOutOfBoundsException
-
-import Main.{boardCols, boardRows}
+import Main.{boardCols, boardRows, userError}
 
 /**
   * Represents a discrete state of the game.
@@ -29,8 +27,6 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
       case Some(move) =>
 
         val transposedBoard = board.transpose
-
-        println(getSEDiagonal(move.row, move.col, -3))
 
         // TODO: Cleaner syntax by making into "or" statment.
         if (fourInARow(board(move.row), move.player.token)) {
@@ -108,6 +104,12 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
 
     val move = findRow(transposedBoard(col), boardRows - 1, col, player)
 
+    // If column was full
+    if (move.row < 0) {
+      userError("Column is full.")
+      return this
+    }
+
     // TODO: This is messy and hard to read, please fix.
     // This is creating a new row with one character updated, then created a new board with one row updated.
     val newBoard = board.updated(move.row, board(move.row).updated(move.col, player.token))
@@ -118,6 +120,11 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   // TODO: Col and column are ambiguous, need better names.
   // TODO: Needs to handle out of bounds col and full cols.
   def findRow(column: List[Char], row: Int, col: Int, player: Player): Move = {
+
+    // Column is full if row < 0
+    if (row < 0) {
+      return new Move(player, row, col)
+    }
 
     if (column(row) == '-') {
       new Move(player, row, col)
