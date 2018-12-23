@@ -1,5 +1,10 @@
+import akka.actor.ActorSystem
+import slack.SlackUtil
+
 import scala.annotation.switch
 import scala.io.StdIn
+import slack.api.SlackApiClient
+import slack.rtm.SlackRtmClient // Async
 
 object Main {
 
@@ -15,6 +20,31 @@ object Main {
 
     // Most things are hardcoded at this stage of the project, to be cleaned up.
     println("Welcome.")
+
+    //...yep
+    val token = 
+
+    implicit val system = ActorSystem("slack")
+
+    implicit val ec = system.dispatcher
+
+    val client = SlackRtmClient(token)
+    val selfId = client.state.self.id
+
+    val Start = "(.*start)".r
+
+    client.onMessage { message =>
+      val mentionedIds = SlackUtil.extractMentionedIds(message.text)
+
+      if(mentionedIds.contains(selfId)) {
+
+        message.text match {
+          case Start(start) => client.sendMessage(message.channel, s"<@${message.user}>: Starting game...")
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
+        }
+
+      }
+    }
 
     gameLoop(newBoard(boardRows, boardCols))
 
