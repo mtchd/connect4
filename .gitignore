@@ -85,3 +85,6 @@ project/plugins/project/
 # ENSIME specific
 .ensime_cache/
 .ensime
+
+# Api key secrets
+*.txt

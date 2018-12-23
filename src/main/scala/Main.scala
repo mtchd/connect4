@@ -18,7 +18,7 @@ object Main {
 
   // Slack client stuff
   //...yep
-  val token = "xoxb-510194167889-510803498946-kJMCkuoerrzKvhX6b7b84yJr"
+  val token = ""
   implicit val system: ActorSystem = ActorSystem("slack")
   implicit val ec: ExecutionContextExecutor = system.dispatcher
   val client = SlackRtmClient(token)
@@ -72,6 +72,20 @@ object Main {
 
     // Print to confirm empty game with users
     client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
+
+    // Now it's time to wait for input
+    // Multiple "onMessage" things feels wrong...
+    client.onMessage{ newMessage =>
+      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
+
+      if(mentionedIds.contains(selfId) && newMessage.user == message.user) {
+
+        newMessage.text match {
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
+        }
+
+      }
+    }
   }
 
   // Could use error codes instead of manually entering error.
