@@ -1,10 +1,12 @@
 import akka.actor.ActorSystem
 import slack.SlackUtil
+import slack.models.Message
 
 import scala.annotation.switch
 import scala.io.StdIn
-import slack.api.SlackApiClient
-import slack.rtm.SlackRtmClient // Async
+import slack.rtm.SlackRtmClient
+
+import scala.concurrent.ExecutionContextExecutor // Async
 
 object Main {
 
@@ -14,24 +16,27 @@ object Main {
   val playerX = new Player('X')
   val playerO = new Player('O')
 
+  // Slack client stuff
+  //...yep
+  val token = "xoxb-510194167889-510803498946-kJMCkuoerrzKvhX6b7b84yJr"
+  implicit val system: ActorSystem = ActorSystem("slack")
+  implicit val ec: ExecutionContextExecutor = system.dispatcher
+  val client = SlackRtmClient(token)
+  val selfId: String = client.state.self.id
+
+
   // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell}
   // TODO: Tests
   def main(args: Array[String]) {
 
     // Most things are hardcoded at this stage of the project, to be cleaned up.
     println("Welcome.")
+    // TODO: Send a slack message to say I'm online?
 
-    //...yep
-    val token = 
-
-    implicit val system = ActorSystem("slack")
-
-    implicit val ec = system.dispatcher
-
-    val client = SlackRtmClient(token)
-    val selfId = client.state.self.id
-
+    // Currently just detects whatever is at the back of the message
     val Start = "(.*start)".r
+    val Stop = "(.*forfeit)".r
+    val Reset = "(.*reset)".r
 
     client.onMessage { message =>
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
@@ -39,26 +44,40 @@ object Main {
       if(mentionedIds.contains(selfId)) {
 
         message.text match {
-          case Start(start) => client.sendMessage(message.channel, s"<@${message.user}>: Starting game...")
+            // user will need to @ another user to specify who they are playing against?
+            // There will need to be support for multiple users playing each other simultaneously in future
+          case Start(_) => newGame(message)
+          case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
+          case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
         }
 
       }
     }
 
-    gameLoop(newBoard(boardRows, boardCols))
+    gameLoop(new GameState(boardRows, boardCols))
 
+  }
+
+  def newGame(message: Message): Unit = {
+
+    client.sendMessage(message.channel, s"<@${message.user}>: Starting game...")
+
+    // Now need to start listening to message pertinent to this game.
+    // Assume a user only has one game going in a channel at any one time.
+    // Now, whenever that user messages us, we assume they are talking about this game.
+
+    // Going imperative programming until I figure this out (nope not yet)
+    val gameState = new GameState(boardRows, boardCols)
+
+    // Print to confirm empty game with users
+    client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
   }
 
   // Could use error codes instead of manually entering error.
   def userError(message: String): Unit = {
     // Needs to tell user their input is an error, and return them to start of their turn.
     println(message)
-  }
-
-  def newBoard(boardRows: Int, boardCols: Int): GameState = {
-    // Starts at zero, of course.
-    new GameState(List.fill(boardRows)("-"*boardCols), None)
   }
 
   def playTurn(gameState: GameState, player: Player): GameState ={
@@ -96,7 +115,7 @@ object Main {
       // Ideally, players are a proper object and not just a character, but that is to come.
       case 1 => gameLoop(playTurn(gameState, playerX ))
       case 2 => gameLoop(playTurn(gameState, playerO))
-      case 3 => gameLoop(newBoard(boardRows, boardCols))
+      case 3 => gameLoop(new GameState(boardRows, boardCols))
       // Return none to signify draw.
       case 4 => None
     }

@@ -7,6 +7,9 @@ import Main.{boardCols, boardRows, userError}
   */
 class GameState(val board: List[String], lastMove: Option[Move]) {
 
+  // For constructing brand new board
+  def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)("-"*boardCols), None)
+
   def printBoard(): Unit = {
 
     println("Game Board:")
@@ -15,6 +18,10 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     val annotatedBoard = "0123456789".take(boardCols) :: board
 
     for (line <- annotatedBoard) println(line)
+  }
+
+  def boardAsString(): String = {
+    "\nGame Board:\n" + "0123456789".take(boardCols) + "\n" + board.mkString("\n")
   }
 
   // Search whole board for 4 Xs in a row or 4 Os in a row.
