@@ -28,7 +28,6 @@ object Main {
   val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
   val selfId: String = client.state.self.id
 
-
   // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell]
   // TODO: Tests
   def main(args: Array[String]) {
@@ -70,6 +69,11 @@ object Main {
 
   }
 
+  /**
+    * Starts new game and gets ready to recieve messages for it.
+    * @param message Challenging message that initiated game.
+    * @param opponent Slack id of opponent challenged.
+    */
   def newGame(message: Message, opponent: String): Unit = {
 
     // TODO: Give these messages buttons for users to press.
