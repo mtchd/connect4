@@ -1,4 +1,4 @@
-import Main.{boardCols, boardRows, userError}
+import Main.{boardCols, boardRows, userError, emptySpace, emptySpaceC}
 
 /**
   * Represents a discrete state of the game.
@@ -8,7 +8,7 @@ import Main.{boardCols, boardRows, userError}
 class GameState(val board: List[String], lastMove: Option[Move]) {
 
   // For constructing brand new board
-  def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)("-"*boardCols), None)
+  def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)(emptySpace*boardCols), None)
 
   def printBoard(): Unit = {
 
@@ -21,7 +21,8 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   }
 
   def boardAsString(): String = {
-    "\nGame Board:\n" + "0123456789".take(boardCols) + "\n" + board.mkString("\n")
+    // Need to multiply boardCols by 2 because the emojis are two characters each
+    "\nGame Board:\n" + "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣".take(boardCols*2) + "\n" + board.mkString("\n")
   }
 
   // Search whole board for 4 Xs in a row or 4 Os in a row.
@@ -100,7 +101,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     try {
       board(row)(col).toString
     } catch {
-      case e: IndexOutOfBoundsException => "-"
+      case e: IndexOutOfBoundsException => emptySpace
     }
   }
 
@@ -133,7 +134,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
       return new Move(player, row, col)
     }
 
-    if (column(row) == '-') {
+    if (column(row) == emptySpaceC) {
       new Move(player, row, col)
     }
     else {

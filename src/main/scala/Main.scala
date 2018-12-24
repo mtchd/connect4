@@ -13,8 +13,11 @@ object Main {
   val boardCols = 6
   val boardRows = 7
 
-  val playerX = new Player('X')
+  val playerX = new Player('❌')
   val playerO = new Player('O')
+
+  val emptySpace = "⚪"
+  val emptySpaceC = '⚪'
 
   // Slack client stuff
   //...yep
@@ -38,6 +41,9 @@ object Main {
     val Stop = "(.*forfeit)".r
     val Reset = "(.*reset)".r
 
+    // Maybe add a game to be attached to a challenging player?
+    // This concurrent stuff is hard.
+
     client.onMessage { message =>
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
@@ -46,7 +52,7 @@ object Main {
         message.text match {
             // user will need to @ another user to specify who they are playing against?
             // There will need to be support for multiple users playing each other simultaneously in future
-          case Start(_) => newGame(message)
+          case Start(_) => newGame(message) // Needs to start ignoring players invovled.
           case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
           case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
@@ -67,11 +73,13 @@ object Main {
     // Assume a user only has one game going in a channel at any one time.
     // Now, whenever that user messages us, we assume they are talking about this game.
 
-    // Going imperative programming until I figure this out (nope not yet)
-    val gameState = new GameState(boardRows, boardCols)
+    // Going imperative programming until I figure this out
+    var gameState = new GameState(boardRows, boardCols)
 
     // Print to confirm empty game with users
     client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
+
+    val Drop = "(.*drop )(\\d)".r
 
     // Now it's time to wait for input
     // Multiple "onMessage" things feels wrong...
@@ -81,6 +89,13 @@ object Main {
       if(mentionedIds.contains(selfId) && newMessage.user == message.user) {
 
         newMessage.text match {
+
+          case Drop(_, col) => client.sendMessage(message.channel, s"<@${message.user}>: Dropping into column $col")
+            gameState = gameState.playMove(col.toInt, playerX)
+            client.sendMessage(message.channel, gameState.boardAsString())
+            if (gameState.checkWin().isDefined)
+              client.sendMessage(message.channel, s"<@${message.user}>: You win!")
+
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
         }
 
