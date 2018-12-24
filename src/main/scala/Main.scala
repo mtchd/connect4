@@ -1,4 +1,4 @@
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorPath, ActorRef, ActorSystem}
 import slack.SlackUtil
 import slack.models.Message
 
@@ -6,14 +6,14 @@ import scala.annotation.switch
 import scala.io.StdIn
 import slack.rtm.SlackRtmClient
 
-import scala.concurrent.ExecutionContextExecutor // Async
-
+import scala.concurrent.ExecutionContextExecutor
 import com.typesafe.config.ConfigFactory
 
 object Main {
 
-  val boardCols = 6
-  val boardRows = 7
+  // Hardcoded crap
+  val nBoardCols = 6
+  val nBoardRows = 7
 
   val playerX = new Player('❌')
   val playerO = new Player('O')
@@ -24,7 +24,7 @@ object Main {
   // Slack client stuff
   implicit val system: ActorSystem = ActorSystem("slack")
   implicit val ec: ExecutionContextExecutor = system.dispatcher
-  val client = SlackRtmClient(ConfigFactory.load().getString("my.secret.value"))
+  val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
   val selfId: String = client.state.self.id
 
 
@@ -37,44 +37,57 @@ object Main {
     // TODO: Send a slack message to say I'm online?
 
     // Currently just detects whatever is at the back of the message
-    val Start = "(.*challenge )(@.*)".r
+    val Start = "(.*challenge )(<@.*>)".r
     val Stop = "(.*forfeit)".r
     val Reset = "(.*reset)".r
 
     // Maybe add a game to be attached to a challenging player?
     // This concurrent stuff is hard.
 
-    client.onMessage { message =>
+    // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
+    // inside the next handler function.
+    // TODO: Find a way of doing this that isn't so weird.
+    var handler = client.onMessage { message =>
+      // Do nothing?
+    }
+
+    handler = client.onMessage { message =>
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
       if(mentionedIds.contains(selfId)) {
+
+        println(message.text, selfId)
 
         message.text match {
             // user will need to @ another user to specify who they are playing against?
             // There will need to be support for multiple users playing each other simultaneously in future
           case Start(_, opponent) => newGame(message, opponent)
+            client.removeEventListener(handler)
           case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
           case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
         }
-
       }
+
     }
 
-    gameLoop(new GameState(boardRows, boardCols))
+    gameLoop(new GameState(nBoardRows, nBoardCols))
 
   }
 
   def newGame(message: Message, opponent: String): Unit = {
 
-    client.sendMessage(message.channel, s"<@${message.user}>: Starting game...")
+    // TODO: Give these messages buttons for users to press.
+    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $opponent...")
+
+    // Now I wish I could block and wait for opponent response...
 
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
     // Now, whenever that user messages us, we assume they are talking about this game.
 
     // Going imperative programming until I figure this out
-    var gameState = new GameState(boardRows, boardCols)
+    var gameState = new GameState(nBoardRows, nBoardCols)
 
     // Print to confirm empty game with users
     client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
@@ -119,7 +132,7 @@ object Main {
     val col = StdIn.readLine("Enter column number:").toInt
 
     // Check col within bounds (0 to number of columns take 1)
-    if (col >= 0 && col < boardCols) {
+    if (col >= 0 && col < nBoardCols) {
       gameState.playMove(col, player)
     }
     else {
@@ -149,7 +162,7 @@ object Main {
       // Ideally, players are a proper object and not just a character, but that is to come.
       case 1 => gameLoop(playTurn(gameState, playerX ))
       case 2 => gameLoop(playTurn(gameState, playerO))
-      case 3 => gameLoop(new GameState(boardRows, boardCols))
+      case 3 => gameLoop(new GameState(nBoardRows, nBoardCols))
       // Return none to signify draw.
       case 4 => None
     }

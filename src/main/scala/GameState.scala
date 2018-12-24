@@ -1,4 +1,4 @@
-import Main.{boardCols, boardRows, userError, emptySpace, emptySpaceC}
+import Main.{userError, emptySpace, emptySpaceC}
 
 /**
   * Represents a discrete state of the game.
@@ -6,6 +6,11 @@ import Main.{boardCols, boardRows, userError, emptySpace, emptySpaceC}
   * @param lastMove Last move played, important for checking if game is won.
   */
 class GameState(val board: List[String], lastMove: Option[Move]) {
+
+  // Extract number of columns and rows
+  // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
+  val nBoardCols: Int = board.head.length
+  val nBoardRows: Int = board.length
 
   // For constructing brand new board
   def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)(emptySpace*boardCols), None)
@@ -15,14 +20,14 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     println("Game Board:")
 
     // Add column numbers above columns
-    val annotatedBoard = "0123456789".take(boardCols) :: board
+    val annotatedBoard = "0123456789".take(nBoardCols) :: board
 
     for (line <- annotatedBoard) println(line)
   }
 
   def boardAsString(): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
-    "\nGame Board:\n" + "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣".take(boardCols*2) + "\n" + board.mkString("\n")
+    "\nGame Board:\n" + "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣".take(nBoardCols*2) + "\n" + board.mkString("\n")
   }
 
   // Search whole board for 4 Xs in a row or 4 Os in a row.
@@ -110,7 +115,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     // Get corresponding column
     val transposedBoard = board.transpose
 
-    val move = findRow(transposedBoard(col), boardRows - 1, col, player)
+    val move = findRow(transposedBoard(col), nBoardRows - 1, col, player)
 
     // If column was full
     if (move.row < 0) {
