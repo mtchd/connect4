@@ -1,12 +1,13 @@
-import akka.actor.{ActorPath, ActorRef, ActorSystem}
+import akka.actor.ActorSystem
+
 import slack.SlackUtil
 import slack.models.Message
+import slack.rtm.SlackRtmClient
 
 import scala.annotation.switch
 import scala.io.StdIn
-import slack.rtm.SlackRtmClient
-
 import scala.concurrent.ExecutionContextExecutor
+
 import com.typesafe.config.ConfigFactory
 
 object Main {
@@ -28,21 +29,14 @@ object Main {
   val selfId: String = client.state.self.id
 
 
-  // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell}
+  // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell]
   // TODO: Tests
   def main(args: Array[String]) {
 
-    // Most things are hardcoded at this stage of the project, to be cleaned up.
-    println("Welcome.")
-    // TODO: Send a slack message to say I'm online?
-
-    // Currently just detects whatever is at the back of the message
+    // Regex to detect challenging a player.
+    // In future, there will be a way of customising a player's token or the board size. This could be added here as a
+    // flag.
     val Start = "(.*challenge )(<@.*>)".r
-    val Stop = "(.*forfeit)".r
-    val Reset = "(.*reset)".r
-
-    // Maybe add a game to be attached to a challenging player?
-    // This concurrent stuff is hard.
 
     // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
     // inside the next handler function.
@@ -51,6 +45,10 @@ object Main {
       // Do nothing?
     }
 
+    // Currently, this starter stops listening after a single game is started. In future, it will continue listening
+    // but just block out the players playing.
+    // Perhaps a better implementation would be having one listener handle all possible interactions, redirecting
+    // to particular games and applying appropriate functions.
     handler = client.onMessage { message =>
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
@@ -59,18 +57,15 @@ object Main {
         println(message.text, selfId)
 
         message.text match {
-            // user will need to @ another user to specify who they are playing against?
-            // There will need to be support for multiple users playing each other simultaneously in future
           case Start(_, opponent) => newGame(message, opponent)
             client.removeEventListener(handler)
-          case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
-          case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
         }
       }
 
     }
 
+    // Starts terminal version of game
     gameLoop(new GameState(nBoardRows, nBoardCols))
 
   }
@@ -92,7 +87,10 @@ object Main {
     // Print to confirm empty game with users
     client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
 
+    // Available commands in this state, as regex
     val Drop = "(.*drop )(\\d)".r
+    val Stop = "(.*forfeit)".r
+    val Reset = "(.*reset)".r
 
     // Now it's time to wait for input
     // Multiple "onMessage" things feels wrong...
@@ -114,6 +112,8 @@ object Main {
             if (gameState.checkWin().isDefined)
               client.sendMessage(message.channel, s"<@${message.user}>: You win!")
 
+          case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
+          case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
         }
 
