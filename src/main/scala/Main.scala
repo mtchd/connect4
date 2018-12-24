@@ -1,4 +1,4 @@
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import slack.SlackUtil
 import slack.models.Message
 
@@ -7,6 +7,8 @@ import scala.io.StdIn
 import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor // Async
+
+import com.typesafe.config.ConfigFactory
 
 object Main {
 
@@ -20,11 +22,9 @@ object Main {
   val emptySpaceC = '⚪'
 
   // Slack client stuff
-  //...yep
-  val token = ""
   implicit val system: ActorSystem = ActorSystem("slack")
   implicit val ec: ExecutionContextExecutor = system.dispatcher
-  val client = SlackRtmClient(token)
+  val client = SlackRtmClient(ConfigFactory.load().getString("my.secret.value"))
   val selfId: String = client.state.self.id
 
 
@@ -37,7 +37,7 @@ object Main {
     // TODO: Send a slack message to say I'm online?
 
     // Currently just detects whatever is at the back of the message
-    val Start = "(.*start)".r
+    val Start = "(.*challenge )(@.*)".r
     val Stop = "(.*forfeit)".r
     val Reset = "(.*reset)".r
 
@@ -52,7 +52,7 @@ object Main {
         message.text match {
             // user will need to @ another user to specify who they are playing against?
             // There will need to be support for multiple users playing each other simultaneously in future
-          case Start(_) => newGame(message) // Needs to start ignoring players invovled.
+          case Start(_, opponent) => newGame(message, opponent)
           case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
           case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
@@ -65,7 +65,7 @@ object Main {
 
   }
 
-  def newGame(message: Message): Unit = {
+  def newGame(message: Message, opponent: String): Unit = {
 
     client.sendMessage(message.channel, s"<@${message.user}>: Starting game...")
 
@@ -86,12 +86,17 @@ object Main {
     client.onMessage{ newMessage =>
       val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
 
-      if(mentionedIds.contains(selfId) && newMessage.user == message.user) {
+      if(mentionedIds.contains(selfId) && (newMessage.user == message.user || newMessage.user == opponent)) {
 
         newMessage.text match {
 
           case Drop(_, col) => client.sendMessage(message.channel, s"<@${message.user}>: Dropping into column $col")
-            gameState = gameState.playMove(col.toInt, playerX)
+
+            var player = playerO
+            if (newMessage.user == message.user) {
+              player = playerX
+            }
+            gameState = gameState.playMove(col.toInt, player)
             client.sendMessage(message.channel, gameState.boardAsString())
             if (gameState.checkWin().isDefined)
               client.sendMessage(message.channel, s"<@${message.user}>: You win!")

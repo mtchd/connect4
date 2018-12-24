@@ -87,4 +87,4 @@ project/plugins/project/
 .ensime
 
 # Api key secrets
-*.txt
+application.conf
