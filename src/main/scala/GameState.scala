@@ -41,16 +41,15 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
 
         val transposedBoard = board.transpose
 
-        // TODO: Cleaner syntax by making into "or" statment.
-        if (fourInARow(board(move.row), move.player.token)) {
+        if (fourInARow(board(move.row), move.player.token) ||
+            fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
+            fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
+            fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
+        {
           Some(move.player)
-        } else if (fourInARow(transposedBoard(move.col).mkString, move.player.token)) {
-          Some(move.player)
-        } else if (fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token)){
-          Some(move.player)
-        } else if (fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token)){
-          Some(move.player)
-        } else {
+        }
+        else
+        {
           None
         }
 
