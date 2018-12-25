@@ -53,10 +53,8 @@ object Main {
 
       if(mentionedIds.contains(selfId)) {
 
-        println(message.text, selfId)
-
         message.text match {
-          case Start(_, opponent) => newGame(message, opponent)
+          case Start(_, opponent) => challenge(message, opponent)
             client.removeEventListener(handler)
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
         }
@@ -74,12 +72,44 @@ object Main {
     * @param message Challenging message that initiated game.
     * @param opponent Slack id of opponent challenged.
     */
-  def newGame(message: Message, opponent: String): Unit = {
+  def challenge(message: Message, opponent: String): Unit = {
 
     // TODO: Give these messages buttons for users to press.
-    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $opponent...")
+    val instructions = "\nThey must respond with 'accept' or 'reject.'"
+    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $opponent...$instructions")
 
     // Now I wish I could block and wait for opponent response...
+
+    // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
+    // inside the next handler function.
+    // TODO: Find a way of doing this that isn't so weird.
+    var handler = client.onMessage { message =>
+      // Do nothing?
+    }
+
+
+    // Need to specify the user you are accepting the challenge from. Or can make it so only one person can challenge at
+    // a time?
+    // Currently you can just specify anybody and it doesn't check it....
+    val Accept = "(.*accept )(<@.*>)".r
+    val Reject = "(.*reject )(<@.*>)".r
+
+    // Stops listening after player responds to challenge
+    handler = client.onMessage { newMessage =>
+
+      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
+
+      if(mentionedIds.contains(selfId) && newMessage.user == opponent) {
+
+        newMessage.text match {
+          case Accept(_, message.user) => newGame(newMessage, challenger)
+            client.removeEventListener(handler)
+          case Reject(_, message.user) => client.sendMessage(newMessage.channel, s"<@${message.user}> Rejected!")
+          case _ => client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: I don't understand...")
+        }
+      }
+
+    }
 
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.

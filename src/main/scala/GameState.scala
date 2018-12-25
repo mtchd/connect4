@@ -39,6 +39,8 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     lastMove match {
       case Some(move) =>
 
+        // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
+        // after transpose otherwise it thinks you're feeding it variables.
         val transposedBoard = board.transpose
 
         if (fourInARow(board(move.row), move.player.token) ||
