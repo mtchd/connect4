@@ -1,4 +1,4 @@
-import Main.{userError, emptySpace, emptySpaceC}
+import Main.userError
 
 /**
   * Represents a discrete state of the game.
@@ -11,6 +11,10 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
   val nBoardCols: Int = board.head.length
   val nBoardRows: Int = board.length
+
+  // Hardcoded for now
+  val emptySpace = "⚪"
+  val emptySpaceC = '⚪'
 
   // For constructing brand new board
   def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)(emptySpace*boardCols), None)
@@ -35,29 +39,24 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   // Other: Search only for Xs or Os at a time.
   def checkWin(): Option[Player] = {
 
-    // TODO: Cleaner way of checking if last move exists.
-    lastMove match {
-      case Some(move) =>
+    val move = lastMove.getOrElse( return None )
 
-        // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
-        // after transpose otherwise it thinks you're feeding it variables.
-        val transposedBoard = board.transpose
+    // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
+    // after transpose otherwise it thinks you're feeding it variables.
+    val transposedBoard = board.transpose
 
-        if (fourInARow(board(move.row), move.player.token) ||
-            fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
-            fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
-            fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
-        {
-          Some(move.player)
-        }
-        else
-        {
-          None
-        }
-
-      case None =>
-        None
+    if (fourInARow(board(move.row), move.player.token) ||
+        fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
+        fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
+        fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
+    {
+      Some(move.player)
     }
+    else
+    {
+      None
+    }
+
   }
 
   // Return the cells for given col+row which need to be checked to verify if we
