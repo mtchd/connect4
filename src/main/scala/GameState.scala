@@ -1,4 +1,4 @@
-import Main.userError
+import Main.{userError, emptySpace, emptySpaceC}
 
 /**
   * Represents a discrete state of the game.
@@ -11,10 +11,6 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
   val nBoardCols: Int = board.head.length
   val nBoardRows: Int = board.length
-
-  // Hardcoded for now
-  val emptySpace = "⚪"
-  val emptySpaceC = '⚪'
 
   // For constructing brand new board
   def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)(emptySpace*boardCols), None)

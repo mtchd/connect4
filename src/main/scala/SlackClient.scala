@@ -42,23 +42,27 @@ object SlackClient {
   }
 
   /**
-    * Starts new game and gets ready to recieve messages for it.
+    * Challenges a player to a match.
     * @param message Challenging message that initiated game.
-    * @param opponentId Slack id of opponent challenged.
+    * @param challengedId Slack id of opponent challenged.
     */
-  def challenge(message: Message, opponentId: String): Unit = {
+  def challenge(message: Message, challengedId: String): Unit = {
 
     // TODO: Give these messages buttons for users to press.
     val instructions = "\nThey must respond with 'accept' or 'reject.'"
-    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $opponentId...$instructions")
+    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $challengedId...$instructions")
 
     // Now we need to make that player have the "challenged" tag.
-    // First, we need to get the player attached to that ID
-    // We'll need to grab them if they already exist, or create a player object for them
-    // We can access a static playerbase I reckon.
+    // First, we need to get the players attached to that ID
+    val challenged = UserBase.getUser(challengedId)
+    val challenger = UserBase.getUser(message.user)
+
+    // So now the challenged user should have this guy as his challenger.
+    UserBase.updateUser(challenger.addChallenger(challenged))
+
   }
 
-  // Currently yuo reject yourself lol
+  // Currently you reject yourself lol
   def reject(message: Message): Unit = {
     client.sendMessage(message.channel, s"<@${message.user}> Rejected!")
   }
@@ -75,6 +79,7 @@ object SlackClient {
   def drop(message: Message, col: Int): Unit = {
 
     client.sendMessage(message.channel, s"<@${message.user}>: Dropping into column $col")
+    /*
     var player = playerO
     if (newMessage.user == message.user) {
       player = playerX
@@ -83,5 +88,6 @@ object SlackClient {
     client.sendMessage(message.channel, gameState.boardAsString())
     if (gameState.checkWin().isDefined)
       client.sendMessage(message.channel, s"<@${message.user}>: You win!")
+      */
   }
 }

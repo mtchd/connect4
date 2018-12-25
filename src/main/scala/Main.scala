@@ -16,6 +16,10 @@ object Main {
   val nBoardCols = 6
   val nBoardRows = 7
 
+  // Hardcoded for now
+  val emptySpace = "⚪"
+  val emptySpaceC = '⚪'
+
   val playerX = new Player('❌')
   val playerO = new Player('O')
 
