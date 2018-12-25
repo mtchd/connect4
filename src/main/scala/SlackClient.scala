@@ -17,6 +17,9 @@ object SlackClient {
   val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
   val selfId: String = client.state.self.id
 
+  /**
+    * All slack commands are parsed through this listener. This is kind of the 'main'.
+    */
   def startListening(): Unit = {
 
     client.onMessage { message =>
@@ -30,7 +33,7 @@ object SlackClient {
           // Hmm, we could try player.becomeChallenged and player.games and stuff like that
           case Challenge(_, opponentId) => challenge(message, opponentId)
           case Accept(_, message.user) => newGame(message)
-          case Reject(_, message.user) => reject(message)
+          case Reject(_, rejectedId) => reject(message, rejectedId)
           case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
           case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
           case Drop(_, col) => drop(message, col.toInt)
@@ -54,16 +57,29 @@ object SlackClient {
 
     // Now we need to make that player have the "challenged" tag.
     // First, we need to get the players attached to that ID
-    val challenged = UserBase.getUser(challengedId)
     val challenger = UserBase.getUser(message.user)
 
     // So now the challenged user should have this guy as his challenger.
-    UserBase.updateUser(challenger.addChallenger(challenged))
+    UserBase.updateUser(challenger.addChallenger(challengedId))
 
   }
 
-  // Currently you reject yourself lol
-  def reject(message: Message): Unit = {
+  /**
+    * Rejects an outstanding challenge request from specified user.
+    * @param message Message from challenged user. (Or mentally challenged, if they have not been challenged yet).
+    * @param rejectedId Id of user the message sender is rejecting.
+    */
+  def reject(message: Message, rejectedId: String): Unit = {
+
+    // First check that user challenged them in the first place.
+    // So get the user that was challenged
+    val challenged = UserBase.getUser(message.user)
+    // Now see if we have a match in their challenged list
+    if (challenged.challengers.contains(rejectedId)) {
+      // If its true we remove them from the list
+      UserBase.updateUser(challenged.removeChallenger(rejectedId))
+
+    }
     client.sendMessage(message.channel, s"<@${message.user}> Rejected!")
   }
 
