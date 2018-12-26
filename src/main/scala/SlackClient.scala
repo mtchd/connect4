@@ -25,7 +25,7 @@ object SlackClient {
 
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
-      // Checking that they have done @connect4 bot may not really be nessacary. They could just say the message...
+      // Checking that they have done @connect4 bot may not really be necessary. They could just say the message...
       if(mentionedIds.contains(selfId)) {
 
         message.text match {
@@ -66,6 +66,7 @@ object SlackClient {
           case Reject(_, challengeMessage.user, _) =>
             client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!")
             client.removeEventListener(handler)
+            startListening()
           // TODO: A more helpful error message would specify the possible commands you can make.
           case _ => client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}>: I don't understand...")
         }
@@ -75,6 +76,7 @@ object SlackClient {
 
 
   // TODO: Need to make sure stuff all happens in the one channel, otherwise it's chaos.
+  // TODO: Players need to take turns...
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.

@@ -26,6 +26,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     for (line <- annotatedBoard) println(line)
   }
 
+  // TODO: Put labels at bottom as well
   def boardAsString(): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
     "\nGame Board:\n" + "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣".take(nBoardCols*2) + "\n" + board.mkString("\n")
