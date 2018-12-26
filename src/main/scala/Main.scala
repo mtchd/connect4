@@ -5,9 +5,6 @@ object Main {
   val nBoardCols = 6
   val nBoardRows = 7
 
-  val playerX = new Player('❌')
-  val playerO = new Player('⭕')
-
   val emptySpace = "⚪"
   val emptySpaceC = '⚪'
 
@@ -17,9 +14,6 @@ object Main {
 
     // Starts slack version of game
     SlackClient.startListening()
-
-    // Starts terminal version of game
-    ConsoleClient.gameLoop(new GameState(nBoardRows, nBoardCols))
 
   }
 

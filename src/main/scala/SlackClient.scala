@@ -1,4 +1,4 @@
-import Main.{nBoardCols, nBoardRows, playerO, playerX}
+import Main.{nBoardCols, nBoardRows}
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import slack.SlackUtil
@@ -7,6 +7,7 @@ import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor
 
+// Gives us the regex for matching message text
 import CommandsRegex._
 
 object SlackClient {
@@ -16,6 +17,7 @@ object SlackClient {
   val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
   val selfId: String = client.state.self.id
 
+  // TODO: Create help message
   def startListening(): Unit = {
 
     // Currently, this starter stops listening after a single game is started. In future, it will continue listening
@@ -54,22 +56,19 @@ object SlackClient {
     var handler = handleForHandler()
     handler = client.onMessage { acceptMessage =>
 
-      val mentionedIds = SlackUtil.extractMentionedIds(acceptMessage.text)
+      acceptMessage.text match {
+        case Accept(_, challengeMessage.user, _) =>
+          newGame(acceptMessage, challengeMessage)
+          client.removeEventListener(handler)
+        case Accept(_, acceptMessage.user, _) =>
+          client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}: ${Strings.acceptSelf}")
+        case Reject(_, challengeMessage.user, _) =>
+          client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!")
+          client.removeEventListener(handler)
+          startListening()
+        // TODO: A more helpful error message would specify the possible commands you can make.
+        case _ => client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}>: I don't understand...")
 
-      if (mentionedIds.contains(selfId) && acceptMessage.user == opponent) {
-
-        acceptMessage.text match {
-          case Accept(_, challengeMessage.user, _) => newGame(acceptMessage, challengeMessage)
-            client.removeEventListener(handler)
-          case Accept(_, acceptMessage.user, _) =>
-            client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}: ${Strings.acceptSelf}")
-          case Reject(_, challengeMessage.user, _) =>
-            client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!")
-            client.removeEventListener(handler)
-            startListening()
-          // TODO: A more helpful error message would specify the possible commands you can make.
-          case _ => client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}>: I don't understand...")
-        }
       }
     }
   }
@@ -82,19 +81,38 @@ object SlackClient {
     // Assume a user only has one game going in a channel at any one time.
     // Now, whenever that user messages us, we assume they are talking about this game.
 
-    // Going imperative programming until I figure this out
-    var gameState = new GameState(nBoardRows, nBoardCols)
+    // Create players and feed them in
+    // Currently hardcoded tokens
+    val challenger = new Player(challengeMessage.user, '❌')
+    val defender = new Player(acceptMessage.user, '⭕')
+    val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender)
 
     // Print to confirm empty game with users
     client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}>:" + gameState.boardAsString())
 
+    playTurn(gameState, defendersTurn = true, acceptMessage.channel)
+
+  }
+
+  def playTurn(gameState: GameState, defendersTurn: Boolean, channel: String): Unit = {
+
+    // Print board at the start of a turn
+    client.sendMessage(channel, gameState.boardAsString())
+
+    // Check for a winner and announce if so
+    val winner = gameState.checkWin()
+    if (winner.isDefined) {
+      client.sendMessage(channel, s"<@${winner.get.slackId}>: You win!")
+      // End game and start listening for new one
+      startListening()
+      return
+    }
+
     // Now it's time to wait for input
     var handler = handleForHandler()
     handler = client.onMessage{ newMessage =>
-      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
 
-      if(mentionedIds.contains(selfId) &&
-        (newMessage.user == challengeMessage.user || newMessage.user == acceptMessage.user)) {
+      if(newMessage.user == gameState.challenger.slackId || newMessage.user == gameState.defender.slackId) {
 
         newMessage.text match {
 
@@ -102,25 +120,16 @@ object SlackClient {
           case Drop(_, col) =>
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
 
-            var player = playerO
-            if (newMessage.user == challengeMessage.user) {
-              player = playerX
+            // TODO: Some non-functional stuff here, needs to be changed.
+            var player = gameState.defender
+            if (newMessage.user == gameState.challenger.slackId) {
+              player = gameState.challenger
             }
 
-            // Play the move, updating the game state
-            // TODO: This can be made entirely functional by recursing here.
-            gameState = gameState.playMove(col.toInt, player)
-            // Sends board as message to channel
-            client.sendMessage(newMessage.channel, gameState.boardAsString())
+            client.removeEventListener(handler)
 
-            // Check for a winner and announce if so
-            val winner = gameState.checkWin()
-            if (winner.isDefined) {
-              client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: You win!")
-              // End game and start listening for new one
-              client.removeEventListener(handler)
-              startListening()
-            }
+            // Play the move, which gives an updated game state. Also switches whose turn it is.
+            playTurn(gameState.playMove(col.toInt, player), !defendersTurn, channel)
 
           case Stop(_) =>
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting game...")
@@ -129,8 +138,10 @@ object SlackClient {
           case Reset(_) =>
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting and resetting game...")
             client.removeEventListener(handler)
-            newGame(acceptMessage, challengeMessage)
-          case _ => client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: I don't understand...")
+            val newState = new GameState(nBoardRows, nBoardCols, gameState.challenger, gameState.defender)
+            playTurn(newState, defendersTurn = true, channel)
+          case _ =>
+          // Do nothing, as they could have sent any message, as we are no longer disambiguating via @connect4 bot
         }
 
       }
@@ -144,5 +155,10 @@ object SlackClient {
     client.onMessage { message =>
       // Do nothing?
     }
+  }
+
+  // TODO: Update to send messages to slack
+  def userError(message: String): Unit = {
+    println(message)
   }
 }

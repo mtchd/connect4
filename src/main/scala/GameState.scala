@@ -1,12 +1,12 @@
 import Main.{emptySpace, emptySpaceC}
-import ConsoleClient.userError
+import SlackClient.userError
 
 /**
   * Represents a discrete state of the game.
   * @param board Connect 4 board, represented as characters for each cell.
   * @param lastMove Last move played, important for checking if game is won.
   */
-class GameState(val board: List[String], lastMove: Option[Move]) {
+class GameState(val board: List[String], lastMove: Option[Move], val challenger: Player, val defender: Player) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -14,7 +14,8 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   val nBoardRows: Int = board.length
 
   // For constructing brand new board
-  def this(boardRows: Int, boardCols: Int) = this(List.fill(boardRows)(emptySpace*boardCols), None)
+  def this(boardRows: Int, boardCols: Int, challenger: Player, defender: Player) =
+    this(List.fill(boardRows)(emptySpace*boardCols), None, challenger, defender)
 
   def printBoard(): Unit = {
 
@@ -25,7 +26,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
 
     for (line <- annotatedBoard) println(line)
   }
-  
+
   def boardAsString(): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
     val markers = Strings.colMarkers.take(nBoardCols*2)
@@ -37,29 +38,24 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   // Other: Search only for Xs or Os at a time.
   def checkWin(): Option[Player] = {
 
-    // TODO: Cleaner way of checking if last move exists.
-    lastMove match {
-      case Some(move) =>
+    val move = lastMove.getOrElse{ return None }
 
-        // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
-        // after transpose otherwise it thinks you're feeding it variables.
-        val transposedBoard = board.transpose
+    // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
+    // after transpose otherwise it thinks you're feeding it variables.
+    val transposedBoard = board.transpose
 
-        if (fourInARow(board(move.row), move.player.token) ||
-            fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
-            fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
-            fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
-        {
-          Some(move.player)
-        }
-        else
-        {
-          None
-        }
-
-      case None =>
-        None
+    if (fourInARow(board(move.row), move.player.token) ||
+      fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
+      fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
+      fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
+    {
+      Some(move.player)
     }
+    else
+    {
+      None
+    }
+
   }
 
   // Return the cells for given col+row which need to be checked to verify if we
@@ -91,6 +87,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     }
   }
 
+  // TODO: Merge diagonals using -1/1 variable
   // Get southeast diagonal
   def getNEDiagonal(row: Int, col: Int, offset: Int): String = {
 
@@ -130,7 +127,7 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
     // This is creating a new row with one character updated, then created a new board with one row updated.
     val newBoard = board.updated(move.row, board(move.row).updated(move.col, player.token))
 
-    new GameState(newBoard, Some(move))
+    new GameState(newBoard, Some(move), challenger, defender)
   }
 
   // TODO: Col and column are ambiguous, need better names.
