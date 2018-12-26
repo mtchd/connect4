@@ -1,14 +1,3 @@
-import akka.actor.ActorSystem
-
-import slack.SlackUtil
-import slack.models.Message
-import slack.rtm.SlackRtmClient
-
-import scala.annotation.switch
-import scala.io.StdIn
-import scala.concurrent.ExecutionContextExecutor
-
-import com.typesafe.config.ConfigFactory
 
 object Main {
 
@@ -17,207 +6,21 @@ object Main {
   val nBoardRows = 7
 
   val playerX = new Player('❌')
-  val playerO = new Player('O')
+  val playerO = new Player('⭕')
 
   val emptySpace = "⚪"
   val emptySpaceC = '⚪'
-
-  // Slack client stuff
-  implicit val system: ActorSystem = ActorSystem("slack")
-  implicit val ec: ExecutionContextExecutor = system.dispatcher
-  val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
-  val selfId: String = client.state.self.id
 
   // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell]
   // TODO: Tests
   def main(args: Array[String]) {
 
-    // Regex to detect challenging a player.
-    // In future, there will be a way of customising a player's token or the board size. This could be added here as a
-    // flag.
-    val Start = "(.*challenge )(<@.*>)".r
-
-    // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
-    // inside the next handler function.
-    // TODO: Find a way of doing this that isn't so weird.
-    var handler = client.onMessage { message =>
-      // Do nothing?
-    }
-
-    // Currently, this starter stops listening after a single game is started. In future, it will continue listening
-    // but just block out the players playing.
-    // Perhaps a better implementation would be having one listener handle all possible interactions, redirecting
-    // to particular games and applying appropriate functions.
-    handler = client.onMessage { message =>
-      val mentionedIds = SlackUtil.extractMentionedIds(message.text)
-
-      if(mentionedIds.contains(selfId)) {
-
-        message.text match {
-          case Start(_, opponent) => challenge(message, opponent)
-            client.removeEventListener(handler)
-          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
-        }
-      }
-
-    }
+    // Starts slack version of game
+    SlackClient.startListening()
 
     // Starts terminal version of game
-    gameLoop(new GameState(nBoardRows, nBoardCols))
+    ConsoleClient.gameLoop(new GameState(nBoardRows, nBoardCols))
 
   }
 
-  /**
-    * Starts new game and gets ready to recieve messages for it.
-    * @param message Challenging message that initiated game.
-    * @param opponent Slack id of opponent challenged.
-    */
-  def challenge(message: Message, opponent: String): Unit = {
-
-    // TODO: Give these messages buttons for users to press.
-    val instructions = "\nThey must respond with 'accept' or 'reject.'"
-    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $opponent...$instructions")
-
-    // Now I wish I could block and wait for opponent response...
-
-    // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
-    // inside the next handler function.
-    // TODO: Find a way of doing this that isn't so weird.
-    var handler = client.onMessage { message =>
-      // Do nothing?
-    }
-
-
-    // Need to specify the user you are accepting the challenge from. Or can make it so only one person can challenge at
-    // a time?
-    // Currently you can just specify anybody and it doesn't check it....
-    val Accept = "(.*accept )(<@.*>)".r
-    val Reject = "(.*reject )(<@.*>)".r
-
-    // Stops listening after player responds to challenge
-    handler = client.onMessage { newMessage =>
-
-      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
-
-      if(mentionedIds.contains(selfId) && newMessage.user == opponent) {
-
-        newMessage.text match {
-          case Accept(_, message.user) => newGame(newMessage, challenger)
-            client.removeEventListener(handler)
-          case Reject(_, message.user) => client.sendMessage(newMessage.channel, s"<@${message.user}> Rejected!")
-          case _ => client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: I don't understand...")
-        }
-      }
-
-    }
-
-    // Now need to start listening to message pertinent to this game.
-    // Assume a user only has one game going in a channel at any one time.
-    // Now, whenever that user messages us, we assume they are talking about this game.
-
-    // Going imperative programming until I figure this out
-    var gameState = new GameState(nBoardRows, nBoardCols)
-
-    // Print to confirm empty game with users
-    client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
-
-    // Available commands in this state, as regex
-    val Drop = "(.*drop )(\\d)".r
-    val Stop = "(.*forfeit)".r
-    val Reset = "(.*reset)".r
-
-    // Now it's time to wait for input
-    // Multiple "onMessage" things feels wrong...
-    client.onMessage{ newMessage =>
-      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
-
-      if(mentionedIds.contains(selfId) && (newMessage.user == message.user || newMessage.user == opponent)) {
-
-        newMessage.text match {
-
-          case Drop(_, col) => client.sendMessage(message.channel, s"<@${message.user}>: Dropping into column $col")
-
-            var player = playerO
-            if (newMessage.user == message.user) {
-              player = playerX
-            }
-            gameState = gameState.playMove(col.toInt, player)
-            client.sendMessage(message.channel, gameState.boardAsString())
-            if (gameState.checkWin().isDefined)
-              client.sendMessage(message.channel, s"<@${message.user}>: You win!")
-
-          case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
-          case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
-          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
-        }
-
-      }
-    }
-  }
-
-  // Could use error codes instead of manually entering error.
-  def userError(message: String): Unit = {
-    // Needs to tell user their input is an error, and return them to start of their turn.
-    println(message)
-  }
-
-  def playTurn(gameState: GameState, player: Player): GameState ={
-
-    val col = StdIn.readLine("Enter column number:").toInt
-
-    // Check col within bounds (0 to number of columns take 1)
-    if (col >= 0 && col < nBoardCols) {
-      gameState.playMove(col, player)
-    }
-    else {
-      userError("Column out of bounds. Try again.")
-      playTurn(gameState, player)
-    }
-
-  }
-
-  def gameLoop(gameState: GameState): Option[Player] = {
-
-    gameState.printBoard()
-
-    // Check if someone has won, and finish game if so.
-    val winner = gameState.checkWin()
-    if (winner.isDefined) {
-      val winningPlayer = winner.get
-      println(winningPlayer.token + " wins!")
-      // Finish game
-      return Some(winningPlayer)
-    }
-
-    val command = parseInput(StdIn.readLine("Enter Command:"))
-
-    (command: @switch) match {
-      case 0 => userError("Invalid input.") ; gameLoop(gameState)
-      // Ideally, players are a proper object and not just a character, but that is to come.
-      case 1 => gameLoop(playTurn(gameState, playerX ))
-      case 2 => gameLoop(playTurn(gameState, playerO))
-      case 3 => gameLoop(new GameState(nBoardRows, nBoardCols))
-      // Return none to signify draw.
-      case 4 => None
-    }
-
-  }
-
-  /**
-    * Takes command line input and returns a code corresponding to the command.
-    * This uncouples command inputs, so it can be recomposed later for Slack.
-    * @param input Command entered by user.
-    * @return Code indicating what to execute.
-    */
-  def parseInput(input: String):  Int = {
-
-    (input: @switch) match {
-      case "X" => 1
-      case "O" => 2
-      case "reset" => 3
-      case "exit" => 4
-      case _ => 0
-    }
-
-  }
 }
