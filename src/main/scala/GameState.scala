@@ -1,4 +1,5 @@
-import Main.{userError, emptySpace, emptySpaceC}
+import Main.{emptySpace, emptySpaceC}
+import ConsoleClient.userError
 
 /**
   * Represents a discrete state of the game.
