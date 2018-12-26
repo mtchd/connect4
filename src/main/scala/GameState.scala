@@ -33,11 +33,10 @@ class GameState(val board: List[String], lastMove: Option[Move], val challenger:
     "\nGame Board:\n" + markers + "\n" + board.mkString("\n") + "\n" + markers
   }
 
-  // Search whole board for 4 Xs in a row or 4 Os in a row.
   // Most efficient implementation: Search around latest token for match
-  // Other: Search only for Xs or Os at a time.
   def checkWin(): Option[Player] = {
 
+    // TODO: Check if this returns none on checkWin or move
     val move = lastMove.getOrElse{ return None }
 
     // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets

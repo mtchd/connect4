@@ -76,18 +76,12 @@ object SlackClient {
 
   // TODO: Need to make sure stuff all happens in the one channel, otherwise it's chaos.
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
-    // Now need to start listening to message pertinent to this game.
-    // Assume a user only has one game going in a channel at any one time.
-    // Now, whenever that user messages us, we assume they are talking about this game.
 
     // Create players and feed them in
     // Currently hardcoded tokens
     val challenger = new Player(challengeMessage.user, '❌')
     val defender = new Player(acceptMessage.user, '⭕')
     val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender)
-
-    // Print to confirm empty game with users
-    client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}>:" + gameState.boardAsString())
 
     playTurn(gameState, defendersTurn = true, acceptMessage.channel)
 
@@ -107,7 +101,9 @@ object SlackClient {
       return
     }
 
-    // Now it's time to wait for input
+    // Now need to start listening to message pertinent to this game.
+    // Assume a user only has one game going in a channel at any one time.
+    // Now, whenever that user messages us, we assume they are talking about this game.
     var handler = handleForHandler()
     handler = client.onMessage{ newMessage =>
 
@@ -117,6 +113,7 @@ object SlackClient {
 
           // Drop a disc/token into a column
           case Drop(_, col) =>
+
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
 
             // TODO: Some non-functional stuff here, needs to be changed.

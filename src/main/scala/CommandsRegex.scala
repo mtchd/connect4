@@ -15,6 +15,8 @@ object CommandsRegex {
   val Reset: Regex = "(.*reset.*)".r
 
   def atUserRegex(command: String): Regex = {
+    // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,
+    // source: https://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html#special
     s"(?i)(.*$command.*<@)(.*)(>.*)".r
   }
 
