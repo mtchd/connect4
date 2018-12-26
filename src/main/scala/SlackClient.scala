@@ -75,7 +75,6 @@ object SlackClient {
 
 
   // TODO: Need to make sure stuff all happens in the one channel, otherwise it's chaos.
-  // TODO: Players need to take turns...
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
@@ -121,6 +120,7 @@ object SlackClient {
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
 
             // TODO: Some non-functional stuff here, needs to be changed.
+            // TODO: Check whose turn it is
             var player = gameState.defender
             if (newMessage.user == gameState.challenger.slackId) {
               player = gameState.challenger
@@ -151,9 +151,9 @@ object SlackClient {
   def handleForHandler(): ActorRef = {
     // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
     // inside the next handler function.
-    // TODO: Find a way of doing this that isn't so weird.
+    // TODO: Find a way of doing this that isn't so hacked.
     client.onMessage { message =>
-      // Do nothing?
+      // Do nothing
     }
   }
 
