@@ -35,24 +35,29 @@ class GameState(val board: List[String], lastMove: Option[Move]) {
   // Other: Search only for Xs or Os at a time.
   def checkWin(): Option[Player] = {
 
-    val move = lastMove.getOrElse( return None )
+    // TODO: Cleaner way of checking if last move exists.
+    lastMove match {
+      case Some(move) =>
 
-    // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
-    // after transpose otherwise it thinks you're feeding it variables.
-    val transposedBoard = board.transpose
+        // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
+        // after transpose otherwise it thinks you're feeding it variables.
+        val transposedBoard = board.transpose
 
-    if (fourInARow(board(move.row), move.player.token) ||
-        fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
-        fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
-        fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
-    {
-      Some(move.player)
+        if (fourInARow(board(move.row), move.player.token) ||
+            fourInARow(transposedBoard(move.col).mkString, move.player.token) ||
+            fourInARow(getSEDiagonal(move.row, move.col, -3), move.player.token) ||
+            fourInARow(getNEDiagonal(move.row, move.col, -3), move.player.token))
+        {
+          Some(move.player)
+        }
+        else
+        {
+          None
+        }
+
+      case None =>
+        None
     }
-    else
-    {
-      None
-    }
-
   }
 
   // Return the cells for given col+row which need to be checked to verify if we

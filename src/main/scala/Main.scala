@@ -16,22 +16,143 @@ object Main {
   val nBoardCols = 6
   val nBoardRows = 7
 
-  // Hardcoded for now
+  val playerX = new Player('❌')
+  val playerO = new Player('O')
+
   val emptySpace = "⚪"
   val emptySpaceC = '⚪'
 
-  val playerX = new Player('❌')
-  val playerO = new Player('O')
+  // Slack client stuff
+  implicit val system: ActorSystem = ActorSystem("slack")
+  implicit val ec: ExecutionContextExecutor = system.dispatcher
+  val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
+  val selfId: String = client.state.self.id
 
   // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell]
   // TODO: Tests
   def main(args: Array[String]) {
 
-    SlackClient.startListening()
+    // Regex to detect challenging a player.
+    // In future, there will be a way of customising a player's token or the board size. This could be added here as a
+    // flag.
+    val Start = "(.*challenge )(<@.*>)".r
+
+    // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
+    // inside the next handler function.
+    // TODO: Find a way of doing this that isn't so weird.
+    var handler = client.onMessage { message =>
+      // Do nothing?
+    }
+
+    // Currently, this starter stops listening after a single game is started. In future, it will continue listening
+    // but just block out the players playing.
+    // Perhaps a better implementation would be having one listener handle all possible interactions, redirecting
+    // to particular games and applying appropriate functions.
+    handler = client.onMessage { message =>
+      val mentionedIds = SlackUtil.extractMentionedIds(message.text)
+
+      if(mentionedIds.contains(selfId)) {
+
+        message.text match {
+          case Start(_, opponent) => challenge(message, opponent)
+            client.removeEventListener(handler)
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
+        }
+      }
+
+    }
 
     // Starts terminal version of game
     gameLoop(new GameState(nBoardRows, nBoardCols))
 
+  }
+
+  /**
+    * Starts new game and gets ready to recieve messages for it.
+    * @param message Challenging message that initiated game.
+    * @param opponent Slack id of opponent challenged.
+    */
+  def challenge(message: Message, opponent: String): Unit = {
+
+    // TODO: Give these messages buttons for users to press.
+    val instructions = "\nThey must respond with 'accept' or 'reject.'"
+    client.sendMessage(message.channel, s"<@${message.user}>: Challenging $opponent...$instructions")
+
+    // Now I wish I could block and wait for opponent response...
+
+    // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
+    // inside the next handler function.
+    // TODO: Find a way of doing this that isn't so weird.
+    var handler = client.onMessage { message =>
+      // Do nothing?
+    }
+
+
+    // Need to specify the user you are accepting the challenge from. Or can make it so only one person can challenge at
+    // a time?
+    // Currently you can just specify anybody and it doesn't check it....
+    val Accept = "(.*accept )(<@.*>)".r
+    val Reject = "(.*reject )(<@.*>)".r
+
+    // Stops listening after player responds to challenge
+    handler = client.onMessage { newMessage =>
+
+      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
+
+      if(mentionedIds.contains(selfId) && newMessage.user == opponent) {
+
+        newMessage.text match {
+          case Accept(_, message.user) => newGame(newMessage, challenger)
+            client.removeEventListener(handler)
+          case Reject(_, message.user) => client.sendMessage(newMessage.channel, s"<@${message.user}> Rejected!")
+          case _ => client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: I don't understand...")
+        }
+      }
+
+    }
+
+    // Now need to start listening to message pertinent to this game.
+    // Assume a user only has one game going in a channel at any one time.
+    // Now, whenever that user messages us, we assume they are talking about this game.
+
+    // Going imperative programming until I figure this out
+    var gameState = new GameState(nBoardRows, nBoardCols)
+
+    // Print to confirm empty game with users
+    client.sendMessage(message.channel, s"<@${message.user}>:" + gameState.boardAsString())
+
+    // Available commands in this state, as regex
+    val Drop = "(.*drop )(\\d)".r
+    val Stop = "(.*forfeit)".r
+    val Reset = "(.*reset)".r
+
+    // Now it's time to wait for input
+    // Multiple "onMessage" things feels wrong...
+    client.onMessage{ newMessage =>
+      val mentionedIds = SlackUtil.extractMentionedIds(newMessage.text)
+
+      if(mentionedIds.contains(selfId) && (newMessage.user == message.user || newMessage.user == opponent)) {
+
+        newMessage.text match {
+
+          case Drop(_, col) => client.sendMessage(message.channel, s"<@${message.user}>: Dropping into column $col")
+
+            var player = playerO
+            if (newMessage.user == message.user) {
+              player = playerX
+            }
+            gameState = gameState.playMove(col.toInt, player)
+            client.sendMessage(message.channel, gameState.boardAsString())
+            if (gameState.checkWin().isDefined)
+              client.sendMessage(message.channel, s"<@${message.user}>: You win!")
+
+          case Stop(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting game...")
+          case Reset(_) => client.sendMessage(message.channel, s"<@${message.user}>: Forfeiting and resetting game...")
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
+        }
+
+      }
+    }
   }
 
   // Could use error codes instead of manually entering error.
