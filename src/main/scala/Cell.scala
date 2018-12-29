@@ -5,4 +5,7 @@
   */
 class Cell(val contents: String) {
 
+  @Override
+  override def toString: String = contents
+
 }

@@ -31,7 +31,8 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
   def boardAsString(): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
     val markers = Strings.colMarkers.take(nBoardCols*2)
-    "\nGame Board:\n" + markers + "\n" + board.mkString("\n") + "\n" + markers
+    val stringBoard = board.map( x => x.mkString(""))
+    "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
   }
 
   // Most efficient implementation: Search around latest token for match
