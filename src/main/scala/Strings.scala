@@ -1,3 +1,5 @@
+import java.lang.reflect.Field
+
 object Strings {
 
   // There's obviously a better way of storing this but I'll figure it out later
@@ -8,6 +10,19 @@ object Strings {
   val challengerToken = ":red_circle:"
   val defenderToken = ":large_blue_circle:"
   val instructions = "\nThey must respond with 'accept' or 'reject.'"
-  val help = s"Available commands:\n ${CommandsRegex.getClass.getDeclaredFields.toString}"
+  val help = s"Available commands...in unreadable regex:\n ${listCommandsAsString()}"
+
+  def listCommandsAsString():String = {
+    val fields = CommandsRegex.getClass.getDeclaredFields
+
+    var list: List[AnyRef] = List()
+
+    fields.foreach { f =>
+      f.setAccessible(true)
+      list = list :+ f.get(CommandsRegex)
+    }
+
+    list.mkString("\n")
+  }
 
 }

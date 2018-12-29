@@ -79,7 +79,14 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
   }
 
   // TODO: Rediscover that algorithm for diagonals instead of this manual stuff
-  // Get southeast diagonal
+  /**
+    * Get cells along a diagonal. If it goes off the board, it treats them as empty cells.
+    * @param row Row number of centre cell
+    * @param col Column number of centre cell
+    * @param offset current offset from centre cell, along diagonal.
+    * @param NEorSE Northeast or Southeast. Refers to diagonal we are along, with north being up a column.
+    * @return List of cells that were along that diagonal, seven long.
+    */
   def getDiagonal(row: Int, col: Int, offset: Int, NEorSE: Int): List[Cell] = {
 
     if (offset == 3) {
@@ -90,9 +97,6 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     }
   }
 
-
-  // This could be better by using option, as returning '-' means there is ambiguity between free spaces and out of
-  // bounds spaces
   def safeGet(row: Int, col: Int): Cell = {
     try {
       board(row)(col)
