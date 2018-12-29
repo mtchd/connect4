@@ -31,7 +31,9 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
   def boardAsString(): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
     val markers = Strings.colMarkers.take(nBoardCols*2)
+    // Makes each row into string
     val stringBoard = board.map( x => x.mkString(""))
+    // Constructs whole board with markers as string
     "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
   }
 
@@ -109,9 +111,16 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
   def playMove(col: Int, player: Player): GameState = {
 
+    // Check col is valid
+    if (col < 0 || col > nBoardCols - 1) {
+      userError("Col is out of bounds.")
+      return this
+    }
+
     // Get corresponding column
     val transposedBoard = board.transpose
 
+    // nBoardRows - 1 is the bottom row of the board, and where we start checking for a valid cell in the column
     val move = findRow(transposedBoard(col), nBoardRows - 1, col, player)
 
     // If column was full

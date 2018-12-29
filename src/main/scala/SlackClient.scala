@@ -110,10 +110,12 @@ object SlackClient {
         newMessage.text match {
 
           // Drop a disc/token into a column
+          // TODO: Break this up a bit more, this function is huge
           case Drop(_, col) =>
 
             // TODO: Some non-functional stuff here, needs to be changed.
             var player: Option[Player] = None
+
             if (!defendersTurn && gameState.challenger.slackId == newMessage.user) {
               player = Some(gameState.challenger)
             }
@@ -122,7 +124,11 @@ object SlackClient {
             }
 
             if (player.isDefined) {
+              // Now we have to check it's a valid column
               client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
+              val newState = gameState.playMove(col.toInt, player.get)
+
+              if (newState)
               client.removeEventListener(handler)
               // Play the move, which gives an updated game state. Also switches whose turn it is.
               playTurn(gameState.playMove(col.toInt, player.get), !defendersTurn, channel)
@@ -158,6 +164,7 @@ object SlackClient {
   }
 
   // TODO: Update to send messages to slack
+  // TODO: If gameState has the channel, it can do that.
   def userError(message: String): Unit = {
     println(message)
   }
