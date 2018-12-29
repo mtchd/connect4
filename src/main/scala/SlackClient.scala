@@ -10,6 +10,9 @@ import scala.concurrent.ExecutionContextExecutor
 // Gives us the regex for matching message text
 import CommandsRegex._
 
+/**
+  * Bad boi that handles all interactions with slack.
+  */
 object SlackClient {
 
   implicit val system: ActorSystem = ActorSystem("slack")
@@ -50,7 +53,7 @@ object SlackClient {
     client.sendMessage(challengeMessage.channel,
       s"<@${challengeMessage.user}>: Challenging <@$opponent>...${Strings.instructions}")
 
-    // Stops listening after player responds to challenge
+    // Get reference so we can stop listening after player responds to challenge
     var handler = handleForHandler()
     handler = client.onMessage { acceptMessage =>
 
@@ -79,22 +82,23 @@ object SlackClient {
     // Currently hardcoded tokens
     val challenger = new Player(challengeMessage.user, Strings.challengerToken)
     val defender = new Player(acceptMessage.user, Strings.defenderToken)
-    val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender)
+    // Game is set in channel where the defender accepts it
+    val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender, acceptMessage.channel)
 
-    playTurn(gameState, defendersTurn = true, acceptMessage.channel)
+    playTurn(gameState, defendersTurn = true)
 
   }
 
   // TODO: Need to handle putting in a wrong column.
-  def playTurn(gameState: GameState, defendersTurn: Boolean, channel: String): Unit = {
+  def playTurn(gameState: GameState, defendersTurn: Boolean): Unit = {
 
     // Print board at the start of a turn
-    client.sendMessage(channel, gameState.boardAsString())
+    client.sendMessage(gameState.channel, gameState.boardAsString())
 
     // Check for a winner and announce if so
     val winner = gameState.checkWin()
     if (winner.isDefined) {
-      client.sendMessage(channel, s"<@${winner.get.slackId}>: You win!")
+      client.sendMessage(gameState.channel, s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15)
       // End Game
       return
     }
@@ -111,6 +115,7 @@ object SlackClient {
 
           // Drop a disc/token into a column
           // TODO: Break this up a bit more, this function is huge
+          // TODO: Turn checking could be put into the gameState, not here for better encapsulation
           case Drop(_, col) =>
 
             // TODO: Some non-functional stuff here, needs to be changed.
@@ -126,12 +131,15 @@ object SlackClient {
             if (player.isDefined) {
               // Now we have to check it's a valid column
               client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
+              // If new state isn't defined, it'll call userError and send a message to the user.
               val newState = gameState.playMove(col.toInt, player.get)
+              if (newState.isDefined) {
+                client.removeEventListener(handler)
+                // Play the move, which gives an updated game state. Also switches whose turn it is.
+                playTurn(newState.get, !defendersTurn)
+              }
+              // Else do nothing and keep listening, the move was invalid and it's still that players turn.
 
-              if (newState)
-              client.removeEventListener(handler)
-              // Play the move, which gives an updated game state. Also switches whose turn it is.
-              playTurn(gameState.playMove(col.toInt, player.get), !defendersTurn, channel)
             } else {
               client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Its not your turn.")
             }
@@ -143,8 +151,9 @@ object SlackClient {
           case Reset(_) =>
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting and resetting game...")
             client.removeEventListener(handler)
-            val newState = new GameState(nBoardRows, nBoardCols, gameState.challenger, gameState.defender)
-            playTurn(newState, defendersTurn = true, channel)
+            playTurn(
+              new GameState(nBoardRows, nBoardCols, gameState.challenger, gameState.defender, newMessage.channel),
+              defendersTurn = true)
           case _ =>
             // TODO: Help message for those that try to play but aren't part of the game.
             // Do nothing, as they could have sent any message, as we are no longer disambiguating via @connect4 bot
@@ -165,7 +174,7 @@ object SlackClient {
 
   // TODO: Update to send messages to slack
   // TODO: If gameState has the channel, it can do that.
-  def userError(message: String): Unit = {
-    println(message)
+  def userError(message: String, channel: String, player: Player): Unit = {
+    client.sendMessage(channel, s"<@${player.slackId}>: $message")
   }
 }

@@ -5,8 +5,6 @@ object Main {
   val nBoardCols = 6
   val nBoardRows = 7
 
-  val emptySpace = "⚪"
-
   // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell]
   // TODO: Tests
   def main(args: Array[String]) {

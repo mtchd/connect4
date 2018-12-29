@@ -1,13 +1,11 @@
-import Main.emptySpace
-import SlackClient.userError
-
 /**
   * Represents a discrete state of the game.
   * @param board Connect 4 board, represented as characters for each cell.
   * @param lastMove Last move played, important for checking if game is won.
   */
 // Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
-class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challenger: Player, val defender: Player) {
+class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challenger: Player, val defender: Player,
+                val channel: String) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -15,8 +13,13 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
   val nBoardRows: Int = board.length
 
   // For constructing brand new board
-  def this(boardRows: Int, boardCols: Int, challenger: Player, defender: Player) =
-    this(List.fill(boardRows)(List.fill(boardCols)( new Cell(emptySpace))), None, challenger, defender)
+  def this(boardRows: Int, boardCols: Int, challenger: Player, defender: Player, channel: String) =
+    this(
+      List.fill(boardRows)(List.fill(boardCols)(new Cell(Strings.emptySpace))),
+      None,
+      challenger,
+      defender,
+      channel)
 
   def printBoard(): Unit = {
 
@@ -37,7 +40,10 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
   }
 
-  // Most efficient implementation: Search around latest token for match
+  /**
+    * Checks if a player has won.
+    * @return Winning player, or None if there is no winner yet.
+    */
   def checkWin(): Option[Player] = {
 
     // TODO: Check if this returns none on checkWin or move
@@ -105,16 +111,16 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     } catch {
       // Empty cells can either be None or actual characters. I have chosen actual characters because it's easier to
       // print.
-      case e: IndexOutOfBoundsException => new Cell(emptySpace)
+      case e: IndexOutOfBoundsException => new Cell(Strings.emptySpace)
     }
   }
 
-  def playMove(col: Int, player: Player): GameState = {
+  def playMove(col: Int, player: Player): Option[GameState] = {
 
     // Check col is valid
     if (col < 0 || col > nBoardCols - 1) {
-      userError("Col is out of bounds.")
-      return this
+      SlackClient.userError("Col is out of bounds.", channel, player)
+      return None
     }
 
     // Get corresponding column
@@ -125,15 +131,15 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
     // If column was full
     if (move.row < 0) {
-      userError("Column is full.")
-      return this
+      SlackClient.userError("Column is full.", channel, player)
+      return None
     }
 
     // TODO: This is messy and hard to read, please fix.
     // This is creating a new row with one character updated, then created a new board with one row updated.
     val newBoard = board.updated(move.row, board(move.row).updated(move.col, new Cell(player.token)))
 
-    new GameState(newBoard, Some(move), challenger, defender)
+    Some(new GameState(newBoard, Some(move), challenger, defender, channel))
   }
 
   // TODO: Col and column are ambiguous, need better names.
@@ -145,7 +151,7 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       return new Move(player, row, col)
     }
 
-    if (column(row).contents == emptySpace) {
+    if (column(row).contents == Strings.emptySpace) {
       new Move(player, row, col)
     }
     else {
