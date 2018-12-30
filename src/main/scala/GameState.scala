@@ -5,7 +5,7 @@
   */
 // Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
 class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challenger: Player, val defender: Player,
-                val channel: String) {
+                val channel: String, defendersTurn: Boolean) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -13,14 +13,19 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
   val nBoardRows: Int = board.length
 
   // For constructing brand new board
-  def this(boardRows: Int, boardCols: Int, challenger: Player, defender: Player, channel: String) =
+  def this(boardRows: Int, boardCols: Int, challenger: Player, defender: Player, channel: String, defendersTurn: Boolean) =
     this(
       List.fill(boardRows)(List.fill(boardCols)(new Cell(Strings.emptySpace))),
       None,
       challenger,
       defender,
-      channel)
+      channel,
+      defendersTurn
+    )
 
+  /**
+    * Print board to console, for debugging.
+    */
   def printBoard(): Unit = {
 
     println("Game Board:")
@@ -60,6 +65,7 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       fourInARow(getDiagonal(move.row, move.col, -3, 1), move.player.token) ||
       fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token))
     {
+      // TODO: Turn winning 4 tokens into medals
       Some(move.player)
     }
     else
@@ -115,7 +121,23 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     }
   }
 
-  def playMove(col: Int, player: Player): Option[GameState] = {
+  def playMove(col: Int, playerId: String): Option[GameState] = {
+
+    // Check it's this players turn
+    // TODO: Some non-functional stuff here, needs to be changed.
+    var optionPlayer: Option[Player] = None
+
+    if (!defendersTurn && challenger.slackId == playerId) {
+      optionPlayer = Some(challenger)
+    }
+    else if (defendersTurn && defender.slackId == playerId) {
+      optionPlayer = Some(defender)
+    }
+
+    val player = optionPlayer.getOrElse {
+      // SlackClient.userError("It's not your turn.", channel, player)
+      return None
+    }
 
     // Check col is valid
     if (col < 0 || col > nBoardCols - 1) {
@@ -139,7 +161,7 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     // This is creating a new row with one character updated, then created a new board with one row updated.
     val newBoard = board.updated(move.row, board(move.row).updated(move.col, new Cell(player.token)))
 
-    Some(new GameState(newBoard, Some(move), challenger, defender, channel))
+    Some(new GameState(newBoard, Some(move), challenger, defender, channel, !defendersTurn))
   }
 
   // TODO: Col and column are ambiguous, need better names.

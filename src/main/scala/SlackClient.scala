@@ -20,7 +20,6 @@ object SlackClient {
   val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
   val selfId: String = client.state.self.id
 
-  // TODO: Create help message
   def startListening(): Unit = {
 
     // Currently, this starter stops listening after a single game is started. In future, it will continue listening
@@ -34,14 +33,16 @@ object SlackClient {
 
         message.text match {
           case Start(_, opponent, _) => challenge(message, opponent)
+          // TODO: Remove repeated code
           case Help(_) => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
-          case _ => client.sendMessage(message.channel, s"<@${message.user}>: I don't understand...")
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
         }
       }
     }
   }
 
 
+  // TODO: Need to make challenge stuff all happens in the one channel, otherwise it's chaos.
   /**
     * Starts new game and gets ready to recieve messages for it.
     * @param challengeMessage Challenging message that initiated game.
@@ -51,7 +52,7 @@ object SlackClient {
 
     // TODO: Give these messages buttons for users to press.
     client.sendMessage(challengeMessage.channel,
-      s"<@${challengeMessage.user}>: Challenging <@$opponent>...${Strings.instructions}")
+      s"<@${challengeMessage.user}>: Challenging <@$opponent>...${Strings.newChallengeHelp}")
 
     // Get reference so we can stop listening after player responds to challenge
     var handler = handleForHandler()
@@ -74,8 +75,7 @@ object SlackClient {
     }
   }
 
-
-  // TODO: Need to make sure stuff all happens in the one channel, otherwise it's chaos.
+  // TODO: Games can be played in their own thread for cleanlisness
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
 
     // Create players and feed them in
@@ -83,14 +83,15 @@ object SlackClient {
     val challenger = new Player(challengeMessage.user, Strings.challengerToken)
     val defender = new Player(acceptMessage.user, Strings.defenderToken)
     // Game is set in channel where the defender accepts it
-    val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender, acceptMessage.channel)
+    val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender, acceptMessage.channel, true)
 
-    playTurn(gameState, defendersTurn = true)
+    client.sendMessage(acceptMessage.channel, "Available commands:\n'Drop $columnNumber'\n'forfeit'\n'reset'")
+    playTurn(gameState)
 
   }
 
   // TODO: Need to handle putting in a wrong column.
-  def playTurn(gameState: GameState, defendersTurn: Boolean): Unit = {
+  def playTurn(gameState: GameState): Unit = {
 
     // Print board at the start of a turn
     client.sendMessage(gameState.channel, gameState.boardAsString())
@@ -118,32 +119,15 @@ object SlackClient {
           // TODO: Turn checking could be put into the gameState, not here for better encapsulation
           case Drop(_, col) =>
 
-            // TODO: Some non-functional stuff here, needs to be changed.
-            var player: Option[Player] = None
-
-            if (!defendersTurn && gameState.challenger.slackId == newMessage.user) {
-              player = Some(gameState.challenger)
-            }
-            else if (defendersTurn && gameState.defender.slackId == newMessage.user) {
-              player = Some(gameState.defender)
-            }
-
-            if (player.isDefined) {
-              // Now we have to check it's a valid column
+            // If new state isn't defined, it'll call userError and send a message to the user.
+            val newState = gameState.playMove(col.toInt, newMessage.user)
+            if (newState.isDefined) {
               client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
-              // If new state isn't defined, it'll call userError and send a message to the user.
-              val newState = gameState.playMove(col.toInt, player.get)
-              if (newState.isDefined) {
-                client.removeEventListener(handler)
-                // Play the move, which gives an updated game state. Also switches whose turn it is.
-                playTurn(newState.get, !defendersTurn)
-              }
-              // Else do nothing and keep listening, the move was invalid and it's still that players turn.
-
-            } else {
-              client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Its not your turn.")
+              client.removeEventListener(handler)
+              // Play the move, which gives an updated game state. Also switches whose turn it is.
+              playTurn(newState.get)
             }
-
+            // Else do nothing and keep listening, the move was invalid and it's still that players turn.
 
           case Stop(_) =>
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting game...")
@@ -152,8 +136,15 @@ object SlackClient {
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting and resetting game...")
             client.removeEventListener(handler)
             playTurn(
-              new GameState(nBoardRows, nBoardCols, gameState.challenger, gameState.defender, newMessage.channel),
-              defendersTurn = true)
+              new GameState(
+                nBoardRows,
+                nBoardCols,
+                gameState.challenger,
+                gameState.defender,
+                newMessage.channel,
+                defendersTurn = true
+              )
+            )
           case _ =>
             // TODO: Help message for those that try to play but aren't part of the game.
             // Do nothing, as they could have sent any message, as we are no longer disambiguating via @connect4 bot

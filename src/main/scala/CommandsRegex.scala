@@ -11,6 +11,7 @@ object CommandsRegex {
   val Accept: Regex = simpleRegex("accept")
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game
+  // TODO: just say 'd' instead
   val Drop: Regex = "(?i)(.*drop.*)(\\d)".r
   val Stop: Regex = simpleRegex("forfeit")
   val Reset: Regex = simpleRegex("reset")
