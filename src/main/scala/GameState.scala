@@ -51,12 +51,14 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     */
   def checkWin(): Option[Player] = {
 
-    // TODO: Check if this returns none on checkWin or move
     val move = lastMove.getOrElse{ return None }
 
     // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
+
+    // Return the row that is responsible for the win...we need to make a new board...
+    // So we gotta make a new row with the 4 offending characters updated...
 
     // There's got to be a nicer way of writing this.
     // TODO: Get rid of magic numbers or explain them
