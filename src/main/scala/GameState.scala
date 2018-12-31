@@ -59,6 +59,12 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
     // Return the row that is responsible for the win...we need to make a new board...
     // So we gotta make a new row with the 4 offending characters updated...
+    // That means if we have an index of the first of the 4 and the direction we should iterate along, we should be able
+    // to get it use updated on them.
+    // This is a little harder on the diagonal
+    // So use getDiagonal with some modified variables to get...
+    // Use new iterator like fourInARow that goes through, but replaces at index...
+    // Probably a better way but this'll do.
 
     // There's got to be a nicer way of writing this.
     // TODO: Get rid of magic numbers or explain them
@@ -77,17 +83,49 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
   }
 
-  // Return the cells for given col+row which need to be checked to verify if we
-  // can have 4 in a row horizontally.
-  def fourInARow(row: List[Cell], playerToken: String): Boolean = {
+  // Replacing the whole board with each update is painful, but seems to be necessary here.
+  // Offset starts at 3 and goes down for replacing the classic 4 cells
+  // TODO: Just have a simple enum to specify direction then give direction/zeroIfHorizontal values
+  /**
+    * Replaces multiple cells, along diagonal, vertical, or horizontal.
+    * @param startRow Row number of starting cell
+    * @param startCol Column number of starting cell
+    * @param direction -1 if southeast diagonal, 0 for vertical, 1 for northeast diagonal
+    * @param offset Offset from starting cell in positive direction
+    * @param zeroIfHorizontal Set this to zero if horizontal, or one if anything else.
+    * @return
+    */
+  def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfHorizontal: Int): List[List[Cell]] = {
 
-    val firstFour = row.take(4)
+    if (offset == 0) {
+      //Stop and return
+      replaceCell(board, startRow, startCol, Strings.winningToken)
+    }
+    // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens.
+    else {
+      replaceCell(
+        replaceCells(startRow, startCol, direction, offset - 1, zeroIfHorizontal),
+        startRow + (offset*direction),
+        startCol + (offset*zeroIfHorizontal),
+        Strings.winningToken)
+    }
+  }
+
+  /**
+    * Checks an abritary list of ordered cells if there is 4 in a row. O(n) complexity. (O(n*4) in exact terms)
+    * @param cells List of cells to check.
+    * @param playerToken Token of player we are checking has 4 in a row.
+    * @return True if there is at least 1 instance of 4 in a row.
+    */
+  def fourInARow(cells: List[Cell], playerToken: String): Boolean = {
+
+    val firstFour = cells.take(4)
 
     if (firstFour.forall(x => x.contents == playerToken)) {
       true
     }
-    else if (row.length > 4) {
-      fourInARow(row.tail, playerToken)
+    else if (cells.length > 4) {
+      fourInARow(cells.tail, playerToken)
     }
     else {
       false
@@ -159,9 +197,7 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       return None
     }
 
-    // TODO: This is messy and hard to read, please fix.
-    // This is creating a new row with one character updated, then created a new board with one row updated.
-    val newBoard = board.updated(move.row, board(move.row).updated(move.col, new Cell(player.token)))
+    val newBoard = replaceCell(board, move.row, move.col, player.token)
 
     Some(new GameState(newBoard, Some(move), challenger, defender, channel, !defendersTurn))
   }
@@ -182,6 +218,11 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       findRow(column, row-1, col, player)
     }
 
+  }
+
+  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, token: String): List[List[Cell]] = {
+    // This is creating a new row with one character updated, then created a new board with one row updated.
+    oldBoard.updated(row, board(row).updated(col, new Cell(token)))
   }
 
 }
