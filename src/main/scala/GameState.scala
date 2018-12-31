@@ -68,10 +68,10 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
     // There's got to be a nicer way of writing this.
     // TODO: Get rid of magic numbers or explain them
-    if (fourInARow(board(move.row), move.player.token) ||
-      fourInARow(transposedBoard(move.col), move.player.token) ||
-      fourInARow(getDiagonal(move.row, move.col, -3, 1), move.player.token) ||
-      fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token))
+    if (fourInARow(board(move.row), move.player.token, 0).isDefined ||
+      fourInARow(transposedBoard(move.col), move.player.token, 0).isDefined ||
+      fourInARow(getDiagonal(move.row, move.col, -3, 1), move.player.token, 0).isDefined ||
+      fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token, 0).isDefined)
     {
       // TODO: Turn winning 4 tokens into medals
       Some(move.player)
@@ -117,18 +117,18 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     * @param playerToken Token of player we are checking has 4 in a row.
     * @return True if there is at least 1 instance of 4 in a row.
     */
-  def fourInARow(cells: List[Cell], playerToken: String): Boolean = {
+  def fourInARow(cells: List[Cell], playerToken: String, index: Int): Option[Int] = {
 
     val firstFour = cells.take(4)
 
     if (firstFour.forall(x => x.contents == playerToken)) {
-      true
+      Some(index)
     }
     else if (cells.length > 4) {
-      fourInARow(cells.tail, playerToken)
+      fourInARow(cells.tail, playerToken, index + 1)
     }
     else {
-      false
+      None
     }
   }
 
@@ -175,13 +175,13 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     }
 
     val player = optionPlayer.getOrElse {
-      // SlackClient.userError("It's not your turn.", channel, player)
+      SlackClient.messageUser("It's not your turn.", channel, playerId)
       return None
     }
 
     // Check col is valid
     if (col < 0 || col > nBoardCols - 1) {
-      SlackClient.userError("Col is out of bounds.", channel, player)
+      SlackClient.messageUser("Col is out of bounds.", channel, playerId)
       return None
     }
 
@@ -193,7 +193,7 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
     // If column was full
     if (move.row < 0) {
-      SlackClient.userError("Column is full.", channel, player)
+      SlackClient.messageUser("Column is full.", channel, playerId)
       return None
     }
 

@@ -93,9 +93,6 @@ object SlackClient {
   // TODO: Need to handle putting in a wrong column.
   def playTurn(gameState: GameState): Unit = {
 
-    // Print board at the start of a turn
-    client.sendMessage(gameState.channel, gameState.boardAsString())
-
     // Check for a winner and announce if so
     val winner = gameState.checkWin()
     if (winner.isDefined) {
@@ -103,6 +100,9 @@ object SlackClient {
       // End Game
       return
     }
+
+    // Print board at the start of a turn
+    client.sendMessage(gameState.channel, gameState.boardAsString())
 
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
@@ -163,9 +163,7 @@ object SlackClient {
     }
   }
 
-  // TODO: Update to send messages to slack
-  // TODO: If gameState has the channel, it can do that.
-  def userError(message: String, channel: String, player: Player): Unit = {
-    client.sendMessage(channel, s"<@${player.slackId}>: $message")
+  def messageUser(message: String, channel: String, slackId: String): Unit = {
+    client.sendMessage(channel, s"<@$slackId>: $message")
   }
 }
