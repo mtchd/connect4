@@ -45,6 +45,21 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
   }
 
+  // TODO: Get rid of copied code
+  /**
+    * Overloaded board as string. Allows for putting a foreign board in. Maybe this would be better off if in Strings?
+    * @param board Foreign board, but with same number of columns and rows.
+    * @return Board represented as string (with emojis!)
+    */
+  def boardAsString(board: List[List[Cell]]): String = {
+    // Need to multiply boardCols by 2 because the emojis are two characters each
+    val markers = Strings.colMarkers.take(nBoardCols*2)
+    // Makes each row into string
+    val stringBoard = board.map( x => x.mkString(""))
+    // Constructs whole board with markers as string
+    "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
+  }
+
   /**
     * Checks if a player has won.
     * @return Winning player, or None if there is no winner yet.
@@ -66,6 +81,15 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     // Use new iterator like fourInARow that goes through, but replaces at index...
     // Probably a better way but this'll do.
 
+    val horizontal = fourInARow(board(move.row), move.player.token, 0)
+
+    if (horizontal.isDefined) {
+      // Holy moly magic numbers
+      val newBoard = replaceCells(move.row, horizontal.get, 0, 3, 1 )
+      SlackClient.messageUser(boardAsString(newBoard), channel, move.player.slackId)
+      return Some(move.player)
+    }
+
     // There's got to be a nicer way of writing this.
     // TODO: Get rid of magic numbers or explain them
     if (fourInARow(board(move.row), move.player.token, 0).isDefined ||
@@ -74,6 +98,12 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token, 0).isDefined)
     {
       // TODO: Turn winning 4 tokens into medals
+
+      // So we need the index first. Then, if it's horizontal, we take that row and replace four at the start index.
+
+      // This may not be the best place to do this, perhaps we should send back the gameState with the winning player
+      // attached instead of sending the winning player and printing here.
+      SlackClient.messageUser(boardAsString(), channel, move.player.slackId)
       Some(move.player)
     }
     else
@@ -90,12 +120,12 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     * Replaces multiple cells, along diagonal, vertical, or horizontal.
     * @param startRow Row number of starting cell
     * @param startCol Column number of starting cell
-    * @param direction -1 if southeast diagonal, 0 for vertical, 1 for northeast diagonal
+    * @param direction -1 if southeast diagonal, 1 for vertical, 1 for northeast diagonal, 0 for horizontal
     * @param offset Offset from starting cell in positive direction
-    * @param zeroIfHorizontal Set this to zero if horizontal, or one if anything else.
+    * @param zeroIfVertical Set this to zero if horizontal, or one if anything else.
     * @return
     */
-  def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfHorizontal: Int): List[List[Cell]] = {
+  def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfVertical: Int): List[List[Cell]] = {
 
     if (offset == 0) {
       //Stop and return
@@ -104,18 +134,24 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens.
     else {
       replaceCell(
-        replaceCells(startRow, startCol, direction, offset - 1, zeroIfHorizontal),
+        replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical),
         startRow + (offset*direction),
-        startCol + (offset*zeroIfHorizontal),
+        startCol + (offset*zeroIfVertical),
+        // Hardcoded replacement until otherwise needed
         Strings.winningToken)
     }
+  }
+
+  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, token: String): List[List[Cell]] = {
+    // This is creating a new row with one character updated, then created a new board with one row updated.
+    oldBoard.updated(row, board(row).updated(col, new Cell(token)))
   }
 
   /**
     * Checks an abritary list of ordered cells if there is 4 in a row. O(n) complexity. (O(n*4) in exact terms)
     * @param cells List of cells to check.
     * @param playerToken Token of player we are checking has 4 in a row.
-    * @return True if there is at least 1 instance of 4 in a row.
+    * @return Index of start cell of the 4 in a row, if there is 4 in a row. Otherwise none.
     */
   def fourInARow(cells: List[Cell], playerToken: String, index: Int): Option[Int] = {
 
@@ -218,11 +254,6 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       findRow(column, row-1, col, player)
     }
 
-  }
-
-  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, token: String): List[List[Cell]] = {
-    // This is creating a new row with one character updated, then created a new board with one row updated.
-    oldBoard.updated(row, board(row).updated(col, new Cell(token)))
   }
 
 }
