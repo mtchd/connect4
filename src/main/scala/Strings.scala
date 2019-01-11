@@ -1,4 +1,4 @@
-import java.lang.reflect.Field
+
 
 object Strings {
 
@@ -19,6 +19,8 @@ object Strings {
   val defenderToken = ":large_blue_circle:"
   // Turns winning 4 tokens into these
   val winningToken = ":medal:"
+  // Test challenger slack ID
+  val testChallengerId = "X"
   // General help, lists available commands
   val help = s"Available commands...in unreadable regex:\n ${listCommandsAsString()}"
 

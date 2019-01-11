@@ -31,8 +31,8 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       List.fill(testBoardRows)(List.fill(testBoardCols)(new Cell(Strings.emptySpace))),
       None,
       // Could be replaced with real stuff so tests come up
-      new Player("X", ":blue_circle:"),
-      new Player("O", ":red_circle:"),
+      new Player(Strings.testChallengerId, Strings.challengerToken),
+      new Player("O", Strings.defenderToken),
       " ",
       true
     )
@@ -82,49 +82,50 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
     val move = lastMove.getOrElse{ return None }
 
+    val newBoard = maybeWinningBoard(move, board)
+
+    if (newBoard.isDefined) {
+      SlackClient.messageUser(boardAsString(newBoard.get), channel, move.player.slackId)
+      Some(move.player)
+    }
+    else {
+      None
+    }
+
+  }
+
+  // This is really where the win check happens
+  def maybeWinningBoard(move: Move, board: List[List[Cell]]): Option[List[List[Cell]]] = {
+
     // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
 
-    // Return the row that is responsible for the win...we need to make a new board...
-    // So we gotta make a new row with the 4 offending characters updated...
-    // That means if we have an index of the first of the 4 and the direction we should iterate along, we should be able
-    // to get it use updated on them.
-    // This is a little harder on the diagonal
-    // So use getDiagonal with some modified variables to get...
-    // Use new iterator like fourInARow that goes through, but replaces at index...
-    // Probably a better way but this'll do.
-
+    // TODO: So many damn magic numbers
+    // Must be a better way
     val horizontal = fourInARow(board(move.row), move.player.token, 0)
+    val vertical = fourInARow(transposedBoard(move.col), move.player.token, 0)
+    val upperRightDiag = fourInARow(getDiagonal(move.row, move.col, -3, 1), move.player.token, 0)
+    val lowerRightDiag = fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token, 0)
 
+    // This should be a switch statement
     if (horizontal.isDefined) {
       // Holy moly magic numbers
-      val newBoard = replaceCells(move.row, horizontal.get, 0, 3, 1 )
-      SlackClient.messageUser(boardAsString(newBoard), channel, move.player.slackId)
-      return Some(move.player)
+      Some(replaceCells(move.row, horizontal.get, 0, 3, 1 ,Strings.winningToken))
+    }
+    else if (vertical.isDefined) {
+      Some(replaceCells(move.row, vertical.get, 1, 3, 0, Strings.winningToken ))
+    }
+    else if (upperRightDiag.isDefined) {
+      Some(replaceCells(move.row, upperRightDiag.get, 1, 3, 1, Strings.winningToken ))
+    }
+    else if (lowerRightDiag.isDefined) {
+      Some(replaceCells(move.row, lowerRightDiag.get, 1, 3, 1, Strings.winningToken ))
     }
 
-    // There's got to be a nicer way of writing this.
-    // TODO: Get rid of magic numbers or explain them
-    if (fourInARow(board(move.row), move.player.token, 0).isDefined ||
-      fourInARow(transposedBoard(move.col), move.player.token, 0).isDefined ||
-      fourInARow(getDiagonal(move.row, move.col, -3, 1), move.player.token, 0).isDefined ||
-      fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token, 0).isDefined)
-    {
-      // TODO: Turn winning 4 tokens into medals
-
-      // So we need the index first. Then, if it's horizontal, we take that row and replace four at the start index.
-
-      // This may not be the best place to do this, perhaps we should send back the gameState with the winning player
-      // attached instead of sending the winning player and printing here.
-      SlackClient.messageUser(boardAsString(), channel, move.player.slackId)
-      Some(move.player)
-    }
-    else
-    {
+    else {
       None
     }
-
   }
 
   // Replacing the whole board with each update is painful, but seems to be necessary here.
@@ -134,40 +135,36 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     * Replaces multiple cells, along diagonal, vertical, or horizontal.
     * @param startRow Row number of starting cell
     * @param startCol Column number of starting cell
-    * @param direction -1 if southeast diagonal, 1 for vertical, 1 for northeast diagonal, 0 for horizontal
+    * @param direction -1 if northeast diagonal, 1 for vertical, 1 for southeast diagonal, 0 for horizontal
     * @param offset Offset from starting cell in positive direction
     * @param zeroIfVertical Set this to zero if horizontal, or one if anything else.
-    * @return
+    * @param newToken New token to replace the current cells tokens with.
+    * @return Updated board
     */
-  def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfVertical: Int): List[List[Cell]] = {
+  // How do I format this the right way? Or use less parameters...
+  def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfVertical: Int, newToken: String
+                  ): List[List[Cell]] = {
 
     if (offset == 0) {
       //Stop and return
-      println("Replacing cell at origin.")
-      val newBoard = replaceCell(board, startRow, startCol, Strings.winningToken)
-      println(boardAsString(newBoard))
-      newBoard
+      replaceCell(board, startRow, startCol, newToken)
     }
     // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens.
     else {
-      println("Replacing cell elsewhere.")
-      val updatedboard = replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical)
-      println(boardAsString(updatedboard))
-      val newBoard = replaceCell(
-        updatedboard,
+      replaceCell(
+        replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical, newToken),
         startRow + (offset*direction),
         startCol + (offset*zeroIfVertical),
         // Hardcoded replacement until otherwise needed
-        Strings.winningToken)
-      println(boardAsString(newBoard))
-      newBoard
+        newToken)
     }
   }
 
-  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, token: String): List[List[Cell]] = {
+  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, newToken: String): List[List[Cell]] = {
     // This is creating a new row with one character updated, then created a new board with one row updated.
+    // Should be a cleaner way of doing this.
     oldBoard.updated(row,
-      oldBoard(row).updated(col, new Cell(token)))
+      oldBoard(row).updated(col, new Cell(newToken)))
   }
 
   /**
@@ -193,8 +190,8 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
   // TODO: Rediscover that algorithm for diagonals instead of this manual stuff
   /**
-    * Get cells along a diagonal. If it goes off the board, it treats them as empty cells.
-    * @param row Row number of centre cell
+    * Get cells along a diagonal, within the offset number. If it goes off the board, it treats them as empty cells.
+    * @param row Row number of centre cell (where last move was played)
     * @param col Column number of centre cell
     * @param offset current offset from centre cell, along diagonal.
     * @param NEorSE Northeast or Southeast. Refers to diagonal we are along, with north being up a column.

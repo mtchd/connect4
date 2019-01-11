@@ -1,10 +1,45 @@
 import org.scalatest.FunSuite
 
 class GameStateTests2 extends FunSuite {
-  test("GameState.replaceCells") {
 
+  // TODO: Make this into real test, which checks the boards are equal. But man that needs a monster string...?
+  test("GameState.replaceCells") {
+    newStateWithFourCells(Strings.winningToken)
+  }
+
+  def newStateWithFourCells(token: String): List[List[Cell]] = {
     val gameState = new GameState()
-    val newBoard = gameState.replaceCells(0,0,0,3,1)
+    val newBoard =
+      gameState.replaceCells(0,0,0,3,1, token)
     println(gameState.boardAsString(newBoard))
+    newBoard
+  }
+
+  test("GameState.maybeWinningBoard") {
+
+    // Horizontal
+    assert(maybeWinningBoardTest(0,0,0,1).isDefined)
+    // Vertical
+    assert(maybeWinningBoardTest(0,0,1,0).isDefined)
+    // Down and to right diagonal
+    assert(maybeWinningBoardTest(0,0,1,1).isDefined)
+    // Up and to right diagonal
+    assert(maybeWinningBoardTest(3,0,-1,1).isDefined)
+
+  }
+
+  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: Int, zeroIfVertical: Int
+                           ): Option[List[List[Cell]]] = {
+
+    val newBoard = newStateWithFourCells(Strings.challengerToken)
+    val lastMove = new Move(new Player(Strings.testChallengerId, Strings.challengerToken), startRow, startCol)
+    val maybeBoard = gameState.maybeWinningBoard(lastMove, newBoard)
+    // This line is confusing, should be better written
+    println(gameState.boardAsString(maybeBoard.getOrElse(return None)))
+    maybeBoard
+  }
+
+  test("GameState.getDiagonal") {
+
   }
 }

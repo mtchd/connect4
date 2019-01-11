@@ -90,7 +90,6 @@ object SlackClient {
 
   }
 
-  // TODO: Need to handle putting in a wrong column.
   def playTurn(gameState: GameState): Unit = {
 
     // Check for a winner and announce if so
