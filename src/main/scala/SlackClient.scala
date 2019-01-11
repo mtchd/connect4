@@ -1,4 +1,4 @@
-import Main.{nBoardCols, nBoardRows}
+import Main.{testBoardCols, testBoardRows}
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import slack.SlackUtil
@@ -83,7 +83,7 @@ object SlackClient {
     val challenger = new Player(challengeMessage.user, Strings.challengerToken)
     val defender = new Player(acceptMessage.user, Strings.defenderToken)
     // Game is set in channel where the defender accepts it
-    val gameState = new GameState(nBoardRows, nBoardCols, challenger, defender, acceptMessage.channel, true)
+    val gameState = new GameState(testBoardRows, testBoardCols, challenger, defender, acceptMessage.channel, true)
 
     client.sendMessage(acceptMessage.channel, "Available commands:\n'Drop $columnNumber'\n'forfeit'\n'reset'")
     playTurn(gameState)
@@ -137,8 +137,8 @@ object SlackClient {
             client.removeEventListener(handler)
             playTurn(
               new GameState(
-                nBoardRows,
-                nBoardCols,
+                testBoardRows,
+                testBoardCols,
                 gameState.challenger,
                 gameState.defender,
                 newMessage.channel,

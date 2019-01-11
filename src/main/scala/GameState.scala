@@ -1,3 +1,5 @@
+import Main.{testBoardCols, testBoardRows}
+
 /**
   * Represents a discrete state of the game.
   * @param board Connect 4 board, represented as characters for each cell.
@@ -21,6 +23,18 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
       defender,
       channel,
       defendersTurn
+    )
+
+  // Blank debugging game state
+  def this() =
+    this(
+      List.fill(testBoardRows)(List.fill(testBoardCols)(new Cell(Strings.emptySpace))),
+      None,
+      // Could be replaced with real stuff so tests come up
+      new Player("X", ":blue_circle:"),
+      new Player("O", ":red_circle:"),
+      " ",
+      true
     )
 
   /**
@@ -129,22 +143,31 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
 
     if (offset == 0) {
       //Stop and return
-      replaceCell(board, startRow, startCol, Strings.winningToken)
+      println("Replacing cell at origin.")
+      val newBoard = replaceCell(board, startRow, startCol, Strings.winningToken)
+      println(boardAsString(newBoard))
+      newBoard
     }
     // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens.
     else {
-      replaceCell(
-        replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical),
+      println("Replacing cell elsewhere.")
+      val updatedboard = replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical)
+      println(boardAsString(updatedboard))
+      val newBoard = replaceCell(
+        updatedboard,
         startRow + (offset*direction),
         startCol + (offset*zeroIfVertical),
         // Hardcoded replacement until otherwise needed
         Strings.winningToken)
+      println(boardAsString(newBoard))
+      newBoard
     }
   }
 
   def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, token: String): List[List[Cell]] = {
     // This is creating a new row with one character updated, then created a new board with one row updated.
-    oldBoard.updated(row, board(row).updated(col, new Cell(token)))
+    oldBoard.updated(row,
+      oldBoard(row).updated(col, new Cell(token)))
   }
 
   /**

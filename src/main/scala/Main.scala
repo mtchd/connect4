@@ -2,8 +2,8 @@
 object Main {
 
   // Hardcoded crap
-  val nBoardCols = 6
-  val nBoardRows = 7
+  val testBoardCols = 6
+  val testBoardRows = 7
 
   // TODO: Classes for more things, such as cells, then have rows/cols as List[Cell]
   // TODO: Tests
