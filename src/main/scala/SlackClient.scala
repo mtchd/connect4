@@ -19,12 +19,12 @@ object SlackClient {
   val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
   val selfId: String = client.state.self.id
 
+  /**
+    * Start point of the program, handles all incoming messages in channels the bot is present in.
+    */
   def startListening(): Unit = {
 
-    // Currently, this starter stops listening after a single game is started. In future, it will continue listening
-    // but just block out the players playing.
-    var handler = handleForHandler()
-    handler = client.onMessage { message =>
+    client.onMessage { message =>
 
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
@@ -32,8 +32,6 @@ object SlackClient {
 
         message.text match {
           case Start(_, opponent, _) => challenge(message, opponent)
-          // TODO: Remove repeated code
-          case Help(_) => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
         }
       }
