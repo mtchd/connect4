@@ -8,4 +8,7 @@ class Cell(val contents: String) {
   @Override
   override def toString: String = contents
 
+  @Override
+  override def equals(that: Any): Boolean = that.toString == contents
+
 }

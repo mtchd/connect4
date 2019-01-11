@@ -4,7 +4,7 @@
   * @param lastMove Last move played, important for checking if game is won.
   */
 // Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
-class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
+class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -19,7 +19,7 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
     )
 
   // Builds new board with default board rows and cols
-  def this() = this(Board.defaultBoardRows, Board.defaultBoardCols)
+  def this() = this(GameState.defaultBoardRows, GameState.defaultBoardCols)
 
   /**
     * Print board to console, for debugging.
@@ -34,6 +34,7 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
     for (line <- annotatedBoard) println(line)
   }
 
+  // TODO: Maybe this should override toString
   def boardAsString(): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
     val markers = Strings.colMarkers.take(nBoardCols*2)
@@ -44,7 +45,9 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
   }
 
   // This is really where the win check happens
-  def maybeWinningBoard(move: Move, board: List[List[Cell]]): Option[List[List[Cell]]] = {
+  def maybeWinningBoard(): Option[GameState] = {
+
+    val move = lastMove.getOrElse{ return None }
 
     // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
     // after transpose otherwise it thinks you're feeding it variables.
@@ -54,8 +57,8 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // Must be a better way
     val horizontal = fourInARow(board(move.row), move.player.token, 0)
     val vertical = fourInARow(transposedBoard(move.col), move.player.token, 0)
-    val upperRightDiag = fourInARow(getDiagonal(move.row, move.col, -3, 1), move.player.token, 0)
-    val lowerRightDiag = fourInARow(getDiagonal(move.row, move.col, -3, -1), move.player.token, 0)
+    val upperRightDiag = fourInARow(getDiagonal(move.row, move.col, 1), move.player.token, 0)
+    val lowerRightDiag = fourInARow(getDiagonal(move.row, move.col, -1), move.player.token, 0)
 
     // This should be a switch statement
     if (horizontal.isDefined) {
@@ -92,11 +95,11 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
     */
   // How do I format this the right way? Or use less parameters...
   def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfVertical: Int, newToken: String
-                  ): List[List[Cell]] = {
+                  ): GameState = {
 
     if (offset == 0) {
       //Stop and return
-      replaceCell(board, startRow, startCol, newToken)
+      replaceCell(this, startRow, startCol, newToken)
     }
     // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens.
     else {
@@ -108,14 +111,21 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
     }
   }
 
-  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, newToken: String): Board = {
+  def replaceCell(gameState: GameState, row: Int, col: Int, newToken: String): GameState = {
     // This is creating a new row with one character updated, then created a new board with one row updated.
     // Should be a cleaner way of doing this.
+    println(row, col)
+    val oldBoard = gameState.board
     updateBoardOnly(oldBoard.updated(row, oldBoard(row).updated(col, new Cell(newToken))))
   }
 
-  def updateBoardOnly(newBoard: List[List[Cell]]): Board = {
-    new Board(newBoard, lastMove)
+  // Keeping hold of this in case there are more variables in constructor added later, makes life easier
+  def updateBoardOnly(newBoard: List[List[Cell]]): GameState = {
+    new GameState(newBoard, lastMove)
+  }
+
+  def updateLastMoveOnly(move: Option[Move]): GameState = {
+    new GameState(board, move)
   }
 
   /**
@@ -139,13 +149,18 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
     }
   }
 
+  // Starts with -3 default offset
+  def getDiagonal(row: Int, col: Int, NEorSE: Int): List[Cell] = {
+    getDiagonal(row, col, -3, NEorSE)
+  }
+
   // TODO: Rediscover that algorithm for diagonals instead of this manual stuff
   /**
     * Get cells along a diagonal, within the offset number. If it goes off the board, it treats them as empty cells.
     * @param row Row number of centre cell (where last move was played)
     * @param col Column number of centre cell
-    * @param offset current offset from centre cell, along diagonal.
-    * @param NEorSE Northeast or Southeast. Refers to diagonal we are along, with north being up a column.
+    * @param offset current offset from centre cell, along diagonal. Usually starts at -3.
+    * @param NEorSE 1 is southeast (right and down / left and up ). -1 is opposite.
     * @return List of cells that were along that diagonal, seven long.
     */
   def getDiagonal(row: Int, col: Int, offset: Int, NEorSE: Int): List[Cell] = {
@@ -182,14 +197,14 @@ class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
       new Move(player, row, col)
     }
     else {
-      findRow(column, row-1, col, player)
+      findRow(column, row - 1, col, player)
     }
 
   }
 
 }
 
-object Board {
+object GameState {
 
   // Hardcoded crap
   val defaultBoardCols = 6

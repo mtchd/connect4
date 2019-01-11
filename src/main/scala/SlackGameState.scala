@@ -1,10 +1,10 @@
 // TODO: These methods have been lazily taken out of gamestate, by just using gamestate.doAThing, maybe fix that
 
-class SlackGameState(val gameState: Board, val channel: String, val challenger: Player, val defender: Player, defendersTurn: Boolean) {
+class SlackGameState(val gameState: GameState, val channel: String, val challenger: Player, val defender: Player, defendersTurn: Boolean) {
 
   // Completely new game
   def this(boardRows: Int, boardCols: Int, channel: String, challenger: Player, defender: Player, defendersTurn: Boolean) {
-    this(new Board(boardRows, boardCols), channel, challenger, defender, defendersTurn)
+    this(new GameState(boardRows, boardCols), channel, challenger, defender, defendersTurn)
   }
 
   def playMove(col: Int, playerId: String): Option[SlackGameState] = {
@@ -43,9 +43,9 @@ class SlackGameState(val gameState: Board, val channel: String, val challenger: 
       return None
     }
 
-    val newBoard = gameState.replaceCell(gameState.board, move.row, move.col, player.token)
+    val newState = gameState.replaceCell(gameState, move.row, move.col, player.token)
 
-    Some(new SlackGameState(new Board(newBoard, Some(move)), channel, challenger, defender, !defendersTurn))
+    Some(new SlackGameState(newState.updateLastMoveOnly(Some(move)), channel, challenger, defender, !defendersTurn))
   }
 
   /**
@@ -54,13 +54,11 @@ class SlackGameState(val gameState: Board, val channel: String, val challenger: 
     */
   def checkWin(): Option[Player] = {
 
-    val move = gameState.lastMove.getOrElse{ return None }
+    val newState = gameState.maybeWinningBoard()
 
-    val newBoard = gameState.maybeWinningBoard(move, gameState.board)
-
-    if (newBoard.isDefined) {
-      SlackClient.messageUser(gameState.boardAsString(newBoard.get), channel, move.player.slackId)
-      Some(move.player)
+    if (newState.isDefined) {
+      SlackClient.messageUser(newState.get.boardAsString(), channel, gameState.lastMove.get.player.slackId)
+      Some(gameState.lastMove.get.player)
     }
     else {
       None
