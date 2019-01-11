@@ -83,25 +83,25 @@ object SlackClient {
     val challenger = new Player(challengeMessage.user, Strings.challengerToken)
     val defender = new Player(acceptMessage.user, Strings.defenderToken)
     // Game is set in channel where the defender accepts it
-    val gameState = new GameState(testBoardRows, testBoardCols, challenger, defender, acceptMessage.channel, true)
+    val slackGameState = new SlackGameState(testBoardRows, testBoardCols, acceptMessage.channel, challenger, defender,true)
 
     client.sendMessage(acceptMessage.channel, "Available commands:\n'Drop $columnNumber'\n'forfeit'\n'reset'")
-    playTurn(gameState)
+    playTurn(slackGameState)
 
   }
 
-  def playTurn(gameState: GameState): Unit = {
+  def playTurn(slackGameState: SlackGameState): Unit = {
 
     // Check for a winner and announce if so
-    val winner = gameState.checkWin()
+    val winner = slackGameState.checkWin()
     if (winner.isDefined) {
-      client.sendMessage(gameState.channel, s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15)
+      client.sendMessage(slackGameState.channel, s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15)
       // End Game
       return
     }
 
     // Print board at the start of a turn
-    client.sendMessage(gameState.channel, gameState.boardAsString())
+    client.sendMessage(slackGameState.channel, slackGameState.gameState.boardAsString())
 
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
@@ -109,7 +109,7 @@ object SlackClient {
     var handler = handleForHandler()
     handler = client.onMessage{ newMessage =>
 
-      if(newMessage.user == gameState.challenger.slackId || newMessage.user == gameState.defender.slackId) {
+      if(newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId) {
 
         newMessage.text match {
 
@@ -119,7 +119,7 @@ object SlackClient {
           case Drop(_, col) =>
 
             // If new state isn't defined, it'll call userError and send a message to the user.
-            val newState = gameState.playMove(col.toInt, newMessage.user)
+            val newState = slackGameState.playMove(col.toInt, newMessage.user)
             if (newState.isDefined) {
               client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
               client.removeEventListener(handler)
@@ -135,18 +135,19 @@ object SlackClient {
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting and resetting game...")
             client.removeEventListener(handler)
             playTurn(
-              new GameState(
+              new SlackGameState(
                 testBoardRows,
                 testBoardCols,
-                gameState.challenger,
-                gameState.defender,
                 newMessage.channel,
+                slackGameState.challenger,
+                slackGameState.defender,
                 defendersTurn = true
               )
             )
           case _ =>
             // TODO: Help message for those that try to play but aren't part of the game.
             // Do nothing, as they could have sent any message, as we are no longer disambiguating via @connect4 bot
+            // We will disambiguate via threads, so will need to update
         }
 
       }
@@ -157,9 +158,7 @@ object SlackClient {
     // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
     // inside the next handler function.
     // TODO: Find a way of doing this that isn't so hacked.
-    client.onMessage { message =>
-      // Do nothing
-    }
+    client.onMessage { _ => /* Do nothing */ }
   }
 
   def messageUser(message: String, channel: String, slackId: String): Unit = {

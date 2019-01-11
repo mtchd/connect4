@@ -1,13 +1,10 @@
-import Main.{testBoardCols, testBoardRows}
-
 /**
   * Represents a discrete state of the game.
   * @param board Connect 4 board, represented as characters for each cell.
   * @param lastMove Last move played, important for checking if game is won.
   */
 // Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
-class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challenger: Player, val defender: Player,
-                val channel: String, defendersTurn: Boolean) {
+class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -15,26 +12,10 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
   val nBoardRows: Int = board.length
 
   // For constructing brand new board
-  def this(boardRows: Int, boardCols: Int, challenger: Player, defender: Player, channel: String, defendersTurn: Boolean) =
+  def this(boardRows: Int, boardCols: Int) =
     this(
       List.fill(boardRows)(List.fill(boardCols)(new Cell(Strings.emptySpace))),
-      None,
-      challenger,
-      defender,
-      channel,
-      defendersTurn
-    )
-
-  // Blank debugging game state
-  def this() =
-    this(
-      List.fill(testBoardRows)(List.fill(testBoardCols)(new Cell(Strings.emptySpace))),
-      None,
-      // Could be replaced with real stuff so tests come up
-      new Player(Strings.testChallengerId, Strings.challengerToken),
-      new Player("O", Strings.defenderToken),
-      " ",
-      true
+      None
     )
 
   /**
@@ -50,16 +31,11 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     for (line <- annotatedBoard) println(line)
   }
 
+  // Does to own board
   def boardAsString(): String = {
-    // Need to multiply boardCols by 2 because the emojis are two characters each
-    val markers = Strings.colMarkers.take(nBoardCols*2)
-    // Makes each row into string
-    val stringBoard = board.map( x => x.mkString(""))
-    // Constructs whole board with markers as string
-    "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
+    boardAsString(board)
   }
 
-  // TODO: Get rid of copied code
   /**
     * Overloaded board as string. Allows for putting a foreign board in. Maybe this would be better off if in Strings?
     * @param board Foreign board, but with same number of columns and rows.
@@ -72,26 +48,6 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     val stringBoard = board.map( x => x.mkString(""))
     // Constructs whole board with markers as string
     "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
-  }
-
-  /**
-    * Checks if a player has won.
-    * @return Winning player, or None if there is no winner yet.
-    */
-  def checkWin(): Option[Player] = {
-
-    val move = lastMove.getOrElse{ return None }
-
-    val newBoard = maybeWinningBoard(move, board)
-
-    if (newBoard.isDefined) {
-      SlackClient.messageUser(boardAsString(newBoard.get), channel, move.player.slackId)
-      Some(move.player)
-    }
-    else {
-      None
-    }
-
   }
 
   // This is really where the win check happens
@@ -217,48 +173,8 @@ class GameState(val board: List[List[Cell]], lastMove: Option[Move], val challen
     }
   }
 
-  def playMove(col: Int, playerId: String): Option[GameState] = {
-
-    // Check it's this players turn
-    // TODO: Some non-functional stuff here, needs to be changed.
-    var optionPlayer: Option[Player] = None
-
-    if (!defendersTurn && challenger.slackId == playerId) {
-      optionPlayer = Some(challenger)
-    }
-    else if (defendersTurn && defender.slackId == playerId) {
-      optionPlayer = Some(defender)
-    }
-
-    val player = optionPlayer.getOrElse {
-      SlackClient.messageUser("It's not your turn.", channel, playerId)
-      return None
-    }
-
-    // Check col is valid
-    if (col < 0 || col > nBoardCols - 1) {
-      SlackClient.messageUser("Col is out of bounds.", channel, playerId)
-      return None
-    }
-
-    // Get corresponding column
-    val transposedBoard = board.transpose
-
-    // nBoardRows - 1 is the bottom row of the board, and where we start checking for a valid cell in the column
-    val move = findRow(transposedBoard(col), nBoardRows - 1, col, player)
-
-    // If column was full
-    if (move.row < 0) {
-      SlackClient.messageUser("Column is full.", channel, playerId)
-      return None
-    }
-
-    val newBoard = replaceCell(board, move.row, move.col, player.token)
-
-    Some(new GameState(newBoard, Some(move), challenger, defender, channel, !defendersTurn))
-  }
-
   // TODO: Col and column are ambiguous, need better names.
+  // TODO: Static functions like this should be delcared static in some way...will look up how that works in scala later
   def findRow(column: List[Cell], row: Int, col: Int, player: Player): Move = {
 
     // Column is full if row < 0

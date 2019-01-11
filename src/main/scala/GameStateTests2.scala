@@ -2,6 +2,7 @@ import org.scalatest.FunSuite
 
 class GameStateTests2 extends FunSuite {
 
+  /*
   // TODO: Make this into real test, which checks the boards are equal. But man that needs a monster string...?
   test("GameState.replaceCells") {
     newStateWithFourCells(Strings.winningToken)
@@ -42,4 +43,5 @@ class GameStateTests2 extends FunSuite {
   test("GameState.getDiagonal") {
 
   }
+  */
 }
