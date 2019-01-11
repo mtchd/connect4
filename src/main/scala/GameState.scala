@@ -1,3 +1,17 @@
+object GameState {
+
+  // Hardcoded crap
+  val DefaultBoardCols = 6
+  val DefaultBoardRows = 7
+
+  // Constants for going directions in replaceCells. It works because math :)
+  val UpperRight: (Int, Int) = (-1, 1)
+  val LowerRight: (Int, Int) = (1, 1)
+  val Horizontal: (Int, Int) = (0, 1)
+  val Vertical: (Int, Int) = (1, 0)
+
+}
+
 /**
   * Represents a discrete state of the game.
   * @param board Connect 4 board, represented as characters for each cell.
@@ -53,7 +67,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
 
-    // TODO: So many damn magic numbers
+    // TODO: Still magic numbers left
     // Must be a better way
     val horizontal = fourInARow(board(move.row), move.player.token)
     val vertical = fourInARow(transposedBoard(move.col), move.player.token)
@@ -138,7 +152,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     new GameState(board, move)
   }
 
-  // Index always starts at zero
+  // Index starts at zero by default
   def fourInARow(cells: List[Cell], playerToken: String): Option[Int] = {
     fourInARow(cells, playerToken, 0)
   }
@@ -216,19 +230,5 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     }
 
   }
-
-}
-
-object GameState {
-
-  // Hardcoded crap
-  val DefaultBoardCols = 6
-  val DefaultBoardRows = 7
-
-  // Constants for going directions in replaceCells. It works because math :)
-  val UpperRight: (Int, Int) = (-1, 1)
-  val LowerRight: (Int, Int) = (1, 1)
-  val Horizontal: (Int, Int) = (0, 1)
-  val Vertical: (Int, Int) = (1, 0)
 
 }

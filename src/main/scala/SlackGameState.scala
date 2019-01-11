@@ -7,6 +7,11 @@ class SlackGameState(val gameState: GameState, val channel: String, val challeng
     this(new GameState(boardRows, boardCols), channel, challenger, defender, defendersTurn)
   }
 
+  // New game with default rows and cols
+  def this(channel: String, challenger: Player, defender: Player, defendersTurn: Boolean) {
+    this(new GameState(), channel, challenger, defender, defendersTurn)
+  }
+
   def playMove(col: Int, playerId: String): Option[SlackGameState] = {
 
     // Check it's this players turn
