@@ -11,45 +11,47 @@ class GameStateTests2 extends FunSuite {
   def newStateWithFourCells(token: String): GameState = {
     val gameState = new GameState()
     val newState =
-      gameState.replaceCells(0,0,0,3,1, token)
+      gameState.replaceCells(0,0,GameState.Horizontal)
     println(newState.boardAsString())
     newState
   }
 
   test("GameState.maybeWinningBoard") {
 
+    // TODO: Finish getting rid of these magic numbers
     // Horizontal
-    assert(maybeWinningBoardTest(0,0,0,1).isDefined)
+    assert(maybeWinningBoardTest(0,0,GameState.Horizontal).isDefined)
     // Vertical
-    assert(maybeWinningBoardTest(0,0,1,0).isDefined)
+    assert(maybeWinningBoardTest(0,0,GameState.Vertical).isDefined)
     // Down and to right diagonal, from top left corner
-    assert(maybeWinningBoardTest(0,0,1,1).isDefined)
+    assert(maybeWinningBoardTest(0,0,(1,1)).isDefined)
     // Down and to right diagonal, from middlish
-    assert(maybeWinningBoardTest(2,2,1,1).isDefined)
+    assert(maybeWinningBoardTest(2,2,(1,1)).isDefined)
     // Down adn to right diagonal, from middlish, different last move
-    assert(maybeWinningBoardTest(2,2,1,1, new Move(3, 3)).isDefined)
+    assert(maybeWinningBoardTest(2,2,(1,1), new Move(3, 3)).isDefined)
     // Up and to right diagonal
-    assert(maybeWinningBoardTest(3,0,-1,1).isDefined)
+    assert(maybeWinningBoardTest(3,0,(-1,1)).isDefined)
+    // Up and to right diagonal, last move is at top
+    assert(maybeWinningBoardTest(6,0,(-1,1), new Move(3, 3)).isDefined)
 
   }
 
-  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: Int, zeroIfVertical: Int
+  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int),
                            ): Option[GameState] = {
     maybeWinningBoardTest(
       startRow,
       startCol,
       direction,
-      zeroIfVertical,
       new Move(new Player(Strings.testChallengerId, Strings.challengerToken), startRow, startCol))
   }
 
-  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: Int, zeroIfVertical: Int, lastMove: Move
+  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
                            ): Option[GameState] = {
 
     val gameState = new GameState()
 
     val newState =
-      gameState.replaceCells(startRow, startCol, direction,3, zeroIfVertical, Strings.challengerToken)
+      gameState.replaceCells(startRow, startCol, direction, Strings.challengerToken)
 
     println(newState.boardAsString())
 
@@ -67,7 +69,7 @@ class GameStateTests2 extends FunSuite {
     val gameState = new GameState()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0,1,3,1, Strings.challengerToken)
+    val newState = gameState.replaceCells(0,0,GameState.LowerRight, Strings.challengerToken)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
@@ -79,11 +81,12 @@ class GameStateTests2 extends FunSuite {
     assert(diagonal == (firstHalf ::: secondHalf))
   }
 
+  // TODO: Finish this test
   test("GameState.fourInARow") {
     val gameState = new GameState()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0,1,3,1, Strings.challengerToken)
+    val newState = gameState.replaceCells(0,0, GameState.LowerRight, Strings.challengerToken)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)

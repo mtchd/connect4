@@ -19,7 +19,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     )
 
   // Builds new board with default board rows and cols
-  def this() = this(GameState.defaultBoardRows, GameState.defaultBoardCols)
+  def this() = this(GameState.DefaultBoardRows, GameState.DefaultBoardCols)
 
   /**
     * Print board to console, for debugging.
@@ -65,21 +65,30 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // This should be a switch statement
     if (horizontal.isDefined) {
       // Holy moly magic numbers
-      Some(replaceCells(move.row, horizontal.get, 0, 3, 1 ,Strings.winningToken))
+      Some(replaceCells(move.row, horizontal.get, GameState.Horizontal))
     }
     else if (vertical.isDefined) {
-      Some(replaceCells(move.row, vertical.get, 1, 3, 0, Strings.winningToken ))
+      Some(replaceCells(move.row, vertical.get, GameState.Vertical))
     }
     else if (upperRightDiag.isDefined) {
-      Some(replaceCells(move.row - upperRightDiag.get, move.col + upperRightDiag.get, 1, 3, 1, Strings.winningToken ))
+      println(move.row, move.col, upperRightDiag.get)
+      Some(replaceCells(move.row - upperRightDiag.get, move.col + upperRightDiag.get, GameState.UpperRight))
     }
     else if (lowerRightDiag.isDefined) {
-      Some(replaceCells(move.row + lowerRightDiag.get, move.col + lowerRightDiag.get, 1, 3, 1, Strings.winningToken ))
+      Some(replaceCells(move.row + lowerRightDiag.get, move.col + lowerRightDiag.get, GameState.LowerRight))
     }
 
     else {
       None
     }
+  }
+
+  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int)): GameState = {
+    replaceCells(startRow, startCol, direction, 3, Strings.winningToken)
+  }
+
+  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), token: String): GameState = {
+    replaceCells(startRow, startCol, direction, 3, token)
   }
 
   // Replacing the whole board with each update is painful, but seems to be necessary here.
@@ -89,26 +98,26 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     * Replaces multiple cells, along diagonal, vertical, or horizontal.
     * @param startRow Row number of starting cell
     * @param startCol Column number of starting cell
-    * @param direction -1 if northeast diagonal, 1 for vertical, 1 for southeast diagonal, 0 for horizontal
+    * @param direction -1 if northeast diagonal, 1 for vertical, 1 for southeast diagonal, 0 for horizontal.
+    *                  The 2nd number is 0 if vertical or 1 otherwise.
     * @param offset Offset from starting cell in positive direction. Starts at 3 and counts down usually.
-    * @param zeroIfVertical Set this to zero if horizontal, or one if anything else.
     * @param newToken New token to replace the current cells tokens with.
     * @return Updated board
     */
   // How do I format this the right way? Or use less parameters...
-  def replaceCells(startRow: Int, startCol: Int, direction: Int, offset: Int, zeroIfVertical: Int, newToken: String
+  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), offset: Int, newToken: String
                   ): GameState = {
 
     if (offset == 0) {
       //Stop and return
       replaceCell(this, startRow, startCol, newToken)
     }
-    // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens.
+    // Fails hard if goes out of bounds, but something has gone seriously wrong if that happens. (So we want it to.)
     else {
       replaceCell(
-        replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical, newToken),
-        startRow + (offset*direction),
-        startCol + (offset*zeroIfVertical),
+        replaceCells(startRow, startCol, direction, offset - 1, newToken),
+        startRow + (offset*direction._1),
+        startCol + (offset*direction._2),
         newToken)
     }
   }
@@ -213,7 +222,13 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
 object GameState {
 
   // Hardcoded crap
-  val defaultBoardCols = 6
-  val defaultBoardRows = 7
+  val DefaultBoardCols = 6
+  val DefaultBoardRows = 7
+
+  // Constants for going directions in replaceCells. It works because math :)
+  val UpperRight: (Int, Int) = (-1, 1)
+  val LowerRight: (Int, Int) = (1, 1)
+  val Horizontal: (Int, Int) = (0, 1)
+  val Vertical: (Int, Int) = (1, 0)
 
 }
