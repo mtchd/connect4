@@ -1,10 +1,10 @@
 // TODO: These methods have been lazily taken out of gamestate, by just using gamestate.doAThing, maybe fix that
 
-class SlackGameState(val gameState: GameState, val channel: String, val challenger: Player, val defender: Player, defendersTurn: Boolean) {
+class SlackGameState(val gameState: Board, val channel: String, val challenger: Player, val defender: Player, defendersTurn: Boolean) {
 
   // Completely new game
   def this(boardRows: Int, boardCols: Int, channel: String, challenger: Player, defender: Player, defendersTurn: Boolean) {
-    this(new GameState(boardRows, boardCols), channel, challenger, defender, defendersTurn)
+    this(new Board(boardRows, boardCols), channel, challenger, defender, defendersTurn)
   }
 
   def playMove(col: Int, playerId: String): Option[SlackGameState] = {
@@ -45,7 +45,7 @@ class SlackGameState(val gameState: GameState, val channel: String, val challeng
 
     val newBoard = gameState.replaceCell(gameState.board, move.row, move.col, player.token)
 
-    Some(new SlackGameState(new GameState(newBoard, Some(move)), channel, challenger, defender, !defendersTurn))
+    Some(new SlackGameState(new Board(newBoard, Some(move)), channel, challenger, defender, !defendersTurn))
   }
 
   /**

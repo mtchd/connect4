@@ -4,7 +4,7 @@
   * @param lastMove Last move played, important for checking if game is won.
   */
 // Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
-class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
+class Board(val board: List[List[Cell]], val lastMove: Option[Move]) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -17,6 +17,9 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
       List.fill(boardRows)(List.fill(boardCols)(new Cell(Strings.emptySpace))),
       None
     )
+
+  // Builds new board with default board rows and cols
+  def this() = this(Board.defaultBoardRows, Board.defaultBoardCols)
 
   /**
     * Print board to console, for debugging.
@@ -31,17 +34,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     for (line <- annotatedBoard) println(line)
   }
 
-  // Does to own board
   def boardAsString(): String = {
-    boardAsString(board)
-  }
-
-  /**
-    * Overloaded board as string. Allows for putting a foreign board in. Maybe this would be better off if in Strings?
-    * @param board Foreign board, but with same number of columns and rows.
-    * @return Board represented as string (with emojis!)
-    */
-  def boardAsString(board: List[List[Cell]]): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
     val markers = Strings.colMarkers.take(nBoardCols*2)
     // Makes each row into string
@@ -111,16 +104,18 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
         replaceCells(startRow, startCol, direction, offset - 1, zeroIfVertical, newToken),
         startRow + (offset*direction),
         startCol + (offset*zeroIfVertical),
-        // Hardcoded replacement until otherwise needed
         newToken)
     }
   }
 
-  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, newToken: String): List[List[Cell]] = {
+  def replaceCell(oldBoard: List[List[Cell]], row: Int, col: Int, newToken: String): Board = {
     // This is creating a new row with one character updated, then created a new board with one row updated.
     // Should be a cleaner way of doing this.
-    oldBoard.updated(row,
-      oldBoard(row).updated(col, new Cell(newToken)))
+    updateBoardOnly(oldBoard.updated(row, oldBoard(row).updated(col, new Cell(newToken))))
+  }
+
+  def updateBoardOnly(newBoard: List[List[Cell]]): Board = {
+    new Board(newBoard, lastMove)
   }
 
   /**
@@ -191,5 +186,13 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     }
 
   }
+
+}
+
+object Board {
+
+  // Hardcoded crap
+  val defaultBoardCols = 6
+  val defaultBoardRows = 7
 
 }
