@@ -55,10 +55,12 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
 
     // TODO: So many damn magic numbers
     // Must be a better way
-    val horizontal = fourInARow(board(move.row), move.player.token, 0)
-    val vertical = fourInARow(transposedBoard(move.col), move.player.token, 0)
-    val upperRightDiag = fourInARow(getDiagonal(move.row, move.col, 1), move.player.token, 0)
-    val lowerRightDiag = fourInARow(getDiagonal(move.row, move.col, -1), move.player.token, 0)
+    val horizontal = fourInARow(board(move.row), move.player.token)
+    val vertical = fourInARow(transposedBoard(move.col), move.player.token)
+    // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
+    // index, we know it's the start of our four in a row.
+    val upperRightDiag = fourInARow(getDiagonal(move.row, move.col, -1), move.player.token, -3)
+    val lowerRightDiag = fourInARow(getDiagonal(move.row, move.col, 1), move.player.token, -3)
 
     // This should be a switch statement
     if (horizontal.isDefined) {
@@ -69,10 +71,10 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
       Some(replaceCells(move.row, vertical.get, 1, 3, 0, Strings.winningToken ))
     }
     else if (upperRightDiag.isDefined) {
-      Some(replaceCells(move.row, upperRightDiag.get, 1, 3, 1, Strings.winningToken ))
+      Some(replaceCells(move.row - upperRightDiag.get, move.col + upperRightDiag.get, 1, 3, 1, Strings.winningToken ))
     }
     else if (lowerRightDiag.isDefined) {
-      Some(replaceCells(move.row, lowerRightDiag.get, 1, 3, 1, Strings.winningToken ))
+      Some(replaceCells(move.row + lowerRightDiag.get, move.col + lowerRightDiag.get, 1, 3, 1, Strings.winningToken ))
     }
 
     else {
@@ -88,7 +90,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     * @param startRow Row number of starting cell
     * @param startCol Column number of starting cell
     * @param direction -1 if northeast diagonal, 1 for vertical, 1 for southeast diagonal, 0 for horizontal
-    * @param offset Offset from starting cell in positive direction
+    * @param offset Offset from starting cell in positive direction. Starts at 3 and counts down usually.
     * @param zeroIfVertical Set this to zero if horizontal, or one if anything else.
     * @param newToken New token to replace the current cells tokens with.
     * @return Updated board
@@ -114,7 +116,6 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
   def replaceCell(gameState: GameState, row: Int, col: Int, newToken: String): GameState = {
     // This is creating a new row with one character updated, then created a new board with one row updated.
     // Should be a cleaner way of doing this.
-    println(row, col)
     val oldBoard = gameState.board
     updateBoardOnly(oldBoard.updated(row, oldBoard(row).updated(col, new Cell(newToken))))
   }
@@ -126,6 +127,11 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
 
   def updateLastMoveOnly(move: Option[Move]): GameState = {
     new GameState(board, move)
+  }
+
+  // Index always starts at zero
+  def fourInARow(cells: List[Cell], playerToken: String): Option[Int] = {
+    fourInARow(cells, playerToken, 0)
   }
 
   /**

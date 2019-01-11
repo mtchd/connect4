@@ -7,4 +7,7 @@
   */
 class Move(val player: Player, val row: Int, val col: Int) {
 
+  // Creates test move
+  def this(row: Int, col: Int) = this(new Player(Strings.testChallengerId, Strings.challengerToken), row, col)
+
 }
