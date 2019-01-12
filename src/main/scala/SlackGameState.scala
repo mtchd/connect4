@@ -4,8 +4,7 @@ class SlackGameState(val gameState: GameState,
                      val channel: String,
                      val thread_ts: Option[String],
                      val challenger: Player,
-                     val defender: Player
-                    ) {
+                     val defender: Player) {
 
   // Completely new game
   def this(boardRows: Int,
@@ -13,8 +12,7 @@ class SlackGameState(val gameState: GameState,
            channel: String,
            thread_ts: Option[String],
            challenger: Player,
-           defender: Player
-          ) {
+           defender: Player) {
     this(new GameState(boardRows, boardCols), channel, thread_ts, challenger, defender)
   }
 
@@ -23,29 +21,23 @@ class SlackGameState(val gameState: GameState,
     this(new GameState(), channel, thread_ts, challenger, defender)
   }
 
-  def playMove(col: Int, playerId: String): Option[SlackGameState] = {
+  def playMove(col: Int, player: Player): Option[SlackGameState] = {
 
     // Check it's this players turn
 
     // TODO: Use map here
     if (gameState.lastMove.isDefined) {
-      if (gameState.lastMove.get.player.slackId == playerId) {
+      if (gameState.lastMove.get.player.slackId == player.slackId) {
         //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
         // But I think it could be possible we could put a lot of this in SlackClient. Not a high priority tho.
-        SlackClient.messageUser("It's not your turn.", channel, thread_ts, playerId)
+        SlackClient.messageUser("It's not your turn.", player.slackId, this)
         return None
       }
     }
 
-    // Now we know it's their turn, we figure out which player it is...
-    val player = playerId match {
-      case challenger.slackId => challenger
-      case defender.slackId => defender
-    }
-
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      SlackClient.messageUser("Col is out of bounds.", channel, thread_ts, playerId)
+      SlackClient.messageUser("Col is out of bounds.", player.slackId, this)
       return None
     }
 
@@ -57,7 +49,7 @@ class SlackGameState(val gameState: GameState,
 
     // If column was full
     if (move.row < 0) {
-      SlackClient.messageUser("Column is full.", channel, thread_ts, playerId)
+      SlackClient.messageUser("Column is full.", player.slackId, this)
       return None
     }
 

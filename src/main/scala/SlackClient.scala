@@ -54,7 +54,7 @@ object SlackClient {
     )
 
     // Get reference so we can stop listening after player responds to challenge
-    var handler = handleForHandler()
+    var handler = getActorRef()
     handler = client.onMessage { acceptMessage =>
       challengeResponse(acceptMessage, challengeMessage, opponentId, handler)
     }
@@ -150,11 +150,19 @@ object SlackClient {
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
     // Now, whenever that user messages us, we assume they are talking about this game.
-    var handler = handleForHandler()
-    handler = client.onMessage{ newMessage =>
+    var messageListener = getActorRef()
+    messageListener = client.onMessage{ newMessage =>
 
       if (newMessage.thread_ts == slackGameState.thread_ts) {
-        if (newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId) {
+
+
+        val player: Option[Player] = newMessage.user match {
+          case slackGameState.challenger.slackId => Some(slackGameState.challenger)
+          case slackGameState.defender.slackId => Some(slackGameState.defender)
+          case _ => None
+        }
+
+        if (player.isDefined) {
 
           newMessage.text match {
 
@@ -163,10 +171,10 @@ object SlackClient {
             case CommandsRegex.Drop(_, col, _) =>
 
               // If new state isn't defined, it'll call userError and send a message to the user.
-              val newState = slackGameState.playMove(col.toInt, newMessage.user)
+              val newState = slackGameState.playMove(col.toInt, player.get)
               if (newState.isDefined) {
                 slackMessage(s"<@${newMessage.user}>: Dropping into column $col", slackGameState)
-                client.removeEventListener(handler)
+                client.removeEventListener(messageListener)
                 // Play the move, which gives an updated game state. Also switches whose turn it is.
                 playTurn(newState.get)
               }
@@ -174,10 +182,10 @@ object SlackClient {
 
             case CommandsRegex.Forfeit(_) =>
               slackMessage(s"<@${newMessage.user}>: Forfeiting game...", slackGameState)
-              client.removeEventListener(handler)
+              client.removeEventListener(messageListener)
             case CommandsRegex.Reset(_) =>
               slackMessage(s"<@${newMessage.user}>: Forfeiting and resetting game...", slackGameState)
-              client.removeEventListener(handler)
+              client.removeEventListener(messageListener)
               // TODO: Make this neater by creating reset game function in SlackGameState
               playTurn(
                 new SlackGameState(
@@ -200,13 +208,16 @@ object SlackClient {
     }
   }
 
-  def handleForHandler(): ActorRef = {
+  def getActorRef(): ActorRef = {
     // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
     // inside the next handler function.
     // TODO: Find a way of doing this that isn't so hacked.
+    // UPDATE: Just create new ActorRef...and sort out whatever variables that needs...
+    // UPDATE: Yep that's hard too.
     client.onMessage { _ => /* Do nothing */ }
   }
 
+  // TODO: Something has to be bad about this aggressive overloading
   def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
     client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
   }
@@ -215,8 +226,13 @@ object SlackClient {
     messageUser(message, slackGameState.channel, slackGameState.thread_ts, slackId)
   }
 
+  def messageUser(message: String, player: Player, slackGameState: SlackGameState): Unit = {
+    messageUser(message, slackGameState.channel, slackGameState.thread_ts, player.slackId)
+  }
+
   // Allows packaging of all info into gamestate, saves rewriting this sendMessage function as it's inputs change.
   def slackMessage(message: String, slackGameState: SlackGameState): Unit = {
     client.sendMessage(slackGameState.channel, s"$message", slackGameState.thread_ts)
   }
+
 }
