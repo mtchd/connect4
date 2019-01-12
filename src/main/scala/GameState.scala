@@ -54,17 +54,22 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
-    
-    // TODO: Still magic numbers left
-    // Must be a better way
-    // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
-    // index, we know it's the start of our four in a row.
 
     // It just works
-    fourInARow(board(move.row), move.player.token).map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
-      .orElse(fourInARow(transposedBoard(move.col), move.player.token).map(vertical => replaceCells(vertical, move.col, GameState.Vertical)))
-      .orElse(fourInARow(getDiagonal(move.row, move.col, -1), move.player.token, -3).map(upperRightDiag => replaceCells(move.row - upperRightDiag, move.col + upperRightDiag, GameState.UpperRight)))
-      .orElse(fourInARow(getDiagonal(move.row, move.col, 1), move.player.token, -3).map(lowerRightDiag => replaceCells(move.row + lowerRightDiag, move.col + lowerRightDiag, GameState.LowerRight)))
+    fourInARow(board(move.row), move.player.token)
+        .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
+
+      .orElse(fourInARow(transposedBoard(move.col), move.player.token)
+        .map(vertical => replaceCells(vertical, move.col, GameState.Vertical)))
+
+      // TODO: Still magic numbers left
+      // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
+      // index, we know it's the start of our four in a row.
+      .orElse(fourInARow(getDiagonal(move.row, move.col, -1), move.player.token, -3)
+        .map(upperRightDiag => replaceCells(move.row - upperRightDiag, move.col + upperRightDiag, GameState.UpperRight)))
+
+      .orElse(fourInARow(getDiagonal(move.row, move.col, 1), move.player.token, -3)
+        .map(lowerRightDiag => replaceCells(move.row + lowerRightDiag, move.col + lowerRightDiag, GameState.LowerRight)))
 
   }
 
