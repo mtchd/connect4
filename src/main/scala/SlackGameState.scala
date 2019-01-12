@@ -27,6 +27,11 @@ class SlackGameState(val gameState: GameState,
 
     // Check it's this players turn
     // TODO: Some non-functional stuff here, needs to be changed.
+
+    // The gamestate stores the player who did the last move. So we can check it's not that player.
+
+    // By this stage we already know it's a player playing the game, as we have checked earlier.
+
     var optionPlayer: Option[Player] = None
 
     if (!defendersTurn && challenger.slackId == playerId) {

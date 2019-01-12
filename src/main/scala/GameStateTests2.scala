@@ -19,10 +19,13 @@ class GameStateTests2 extends FunSuite {
   test("GameState.maybeWinningBoard") {
 
     // TODO: Finish getting rid of these magic numbers
+    // TODO: This only checks if it detects a win, not if it replaces the tokens with winning tokens properly.
     // Horizontal
     assert(maybeWinningBoardTest(0,0,GameState.Horizontal).isDefined)
     // Vertical
     assert(maybeWinningBoardTest(0,0,GameState.Vertical).isDefined)
+    // Vertical again, all on left side
+    assert(maybeWinningBoardTest(3,0, GameState.Vertical).isDefined)
     // Down and to right diagonal, from top left corner
     assert(maybeWinningBoardTest(0,0,(1,1)).isDefined)
     // Down and to right diagonal, from middlish

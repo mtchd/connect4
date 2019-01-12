@@ -7,6 +7,7 @@ import slack.rtm.SlackRtmClient
 import scala.concurrent.ExecutionContextExecutor
 
 // Gives us the regex for matching message text
+// TODO: This makes it unclear where that regex has come from, it's better to reference in the text as you go.
 import CommandsRegex._
 
 /**
@@ -89,6 +90,7 @@ object SlackClient {
       else {
         client.sendMessage(
           challengeMessage.channel,
+          // TODO: Magic string
           s"<@${acceptMessage.user}>: You have not been challenged, although you do seem mentally challenged.",
           Some(thread))
       }
@@ -120,14 +122,14 @@ object SlackClient {
     // Check for a winner and announce if so
     val winner = slackGameState.checkWin()
     if (winner.isDefined) {
-      // TODO: Create function to shorten this sendMessage business
-      client.sendMessage(slackGameState.channel, s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15, slackGameState.thread_ts)
+      // TODO: Magic String
+      slackMessage(s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15, slackGameState)
       // End Game
       return
     }
 
     // Print board at the start of a turn
-    client.sendMessage(slackGameState.channel, slackGameState.gameState.boardAsString())
+    slackMessage(slackGameState.gameState.boardAsString(), slackGameState)
 
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
@@ -141,13 +143,12 @@ object SlackClient {
 
           // Drop a disc/token into a column
           // TODO: Break this up a bit more, this function is huge
-          // TODO: Turn checking could be put into the gameState, not here for better encapsulation
           case Drop(_, col) =>
 
             // If new state isn't defined, it'll call userError and send a message to the user.
             val newState = slackGameState.playMove(col.toInt, newMessage.user)
             if (newState.isDefined) {
-              client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Dropping into column $col")
+              slackMessage(s"<@${newMessage.user}>: Dropping into column $col", slackGameState)
               client.removeEventListener(handler)
               // Play the move, which gives an updated game state. Also switches whose turn it is.
               playTurn(newState.get)
@@ -155,10 +156,10 @@ object SlackClient {
             // Else do nothing and keep listening, the move was invalid and it's still that players turn.
 
           case Stop(_) =>
-            client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting game...")
+            slackMessage(s"<@${newMessage.user}>: Forfeiting game...", slackGameState)
             client.removeEventListener(handler)
           case Reset(_) =>
-            client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting and resetting game...")
+            slackMessage(s"<@${newMessage.user}>: Forfeiting and resetting game...", slackGameState)
             client.removeEventListener(handler)
             // TODO: Make this neater by creating reset game function in SlackGameState
             playTurn(
@@ -191,5 +192,10 @@ object SlackClient {
 
   def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
     client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
+  }
+
+  // Allows packaging of all info into gamestate, saves rewriting this sendMessage function as it's inputs change.
+  def slackMessage(message: String, slackGameState: SlackGameState): Unit = {
+    client.sendMessage(slackGameState.channel, s"$message", slackGameState.thread_ts)
   }
 }
