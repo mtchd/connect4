@@ -157,9 +157,9 @@ object SlackClient {
     // Now, whenever that user messages us, we assume they are talking about this game.
     var handler = handleForHandler()
     handler = client.onMessage{ newMessage =>
-
-      // TODO: Needs to checks message is in game thread.
-      if(newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId) {
+      
+      if(newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId
+      && newMessage.thread_ts == slackGameState.thread_ts) {
 
         newMessage.text match {
 
