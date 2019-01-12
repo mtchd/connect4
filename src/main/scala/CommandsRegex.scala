@@ -5,16 +5,18 @@ object CommandsRegex {
   // Regex to detect challenging a player.
   // In future, there will be a way of customising a player's token or the board size. This could be added here as a
   // flag.
-  val Start: Regex = atUserRegex("challenge")
+  val Challenge: Regex = atUserRegex("challenge")
   // Need to specify the user you are accepting or rejecting the challenge from. Or do you? Could just be only one
   // challenge on each user per channel.
-  val Accept: Regex = simpleRegex("accept")
+  val Accept: Regex = "(?i)(.*accept)(.*)".r
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game
   val Drop: Regex = "(?i)(.*d.*)(\\d)".r
-  val Stop: Regex = simpleRegex("forfeit")
+  val Forfeit: Regex = simpleRegex("forfeit")
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
+  // Flags
+  val TokenFlag: Regex = "(?i)(.*-token.*=.*)(:.*:)(.*)".r
 
   def atUserRegex(command: String): Regex = {
     // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,
@@ -28,7 +30,7 @@ object CommandsRegex {
     s"(?i)(.*$command.*)".r
   }
 
-  def listCommandsAsString():String = {
+  def listCommandsAsString(): String = {
     val fields = CommandsRegex.getClass.getDeclaredFields
 
     var list: List[AnyRef] = List()

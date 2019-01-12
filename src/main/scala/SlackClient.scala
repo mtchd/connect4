@@ -32,7 +32,7 @@ object SlackClient {
       if(mentionedIds.contains(selfId)) {
 
         message.text match {
-          case Start(_, opponent, _) => challenge(message, opponent)
+          case Challenge(_, opponent, _) => challenge(message, opponent)
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
         }
       }
@@ -43,7 +43,7 @@ object SlackClient {
   //TODO: Need to make challenge stuff all happens in the one channel, otherwise it's chaos.
   // This can now only happen if there is another thread somewhere with the exact same time stamp.
   /**
-    * Starts new game and gets ready to recieve messages for it.
+    * Starts new game and gets ready to receive messages for it.
     * @param challengeMessage Challenging message that initiated game.
     * @param opponentId Slack id of opponent challenged.
     */
@@ -73,10 +73,10 @@ object SlackClient {
       if (acceptMessage.user == opponentId) {
 
         acceptMessage.text match {
-          case Accept(_) =>
+          case CommandsRegex.Accept(_, _) =>
             client.removeEventListener(handler)
             newGame(acceptMessage, challengeMessage)
-          case Reject(_) =>
+          case CommandsRegex.Reject(_) =>
             client.removeEventListener(handler)
             client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!", Some(thread))
           case _ =>
@@ -91,19 +91,40 @@ object SlackClient {
         client.sendMessage(
           challengeMessage.channel,
           // TODO: Magic string
-          s"<@${acceptMessage.user}>: You have not been challenged, although you do seem mentally challenged.",
+          s"<@${acceptMessage.user}>: You have not been challenged here, although you do seem mentally challenged.",
           Some(thread))
       }
     }
   }
 
-  // TODO: Games can be played in their own thread for cleanliness
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
+
+    // Here is where we should check the challengeMessage for flags
+    // Check for specifying their token
+    // TODO: Will need to upgraded if there are more flags. Parse flags into a list and map through ideally.
+
+    // TODO: God this is retarded
+    val challengerToken: String = challengeMessage.text match {
+      case CommandsRegex.Challenge(_, _, flag) =>
+        flag match {
+          case CommandsRegex.TokenFlag(_, token, _) => token
+          case _ => Strings.challengerToken
+        }
+    }
+
+    // TODO: You repeated the retarded code bro
+    val defenderToken: String = acceptMessage.text match {
+      case CommandsRegex.Accept(_, flag) =>
+        flag match {
+          case CommandsRegex.TokenFlag(_, token, _) => token
+          case _ => Strings.defenderToken
+        }
+    }
 
     // Create players and feed them in
     // Currently hardcoded tokens
-    val challenger = new Player(challengeMessage.user, Strings.challengerToken)
-    val defender = new Player(acceptMessage.user, Strings.defenderToken)
+    val challenger = new Player(challengeMessage.user, challengerToken)
+    val defender = new Player(acceptMessage.user, defenderToken)
     // Game is set in channel where the defender accepts it
     val slackGameState = new SlackGameState(acceptMessage.channel, acceptMessage.thread_ts, challenger, defender,true)
 
@@ -137,6 +158,7 @@ object SlackClient {
     var handler = handleForHandler()
     handler = client.onMessage{ newMessage =>
 
+      // TODO: Needs to checks message is in game thread.
       if(newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId) {
 
         newMessage.text match {
@@ -155,7 +177,7 @@ object SlackClient {
             }
             // Else do nothing and keep listening, the move was invalid and it's still that players turn.
 
-          case Stop(_) =>
+          case Forfeit(_) =>
             slackMessage(s"<@${newMessage.user}>: Forfeiting game...", slackGameState)
             client.removeEventListener(handler)
           case Reset(_) =>
