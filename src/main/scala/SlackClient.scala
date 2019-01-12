@@ -121,7 +121,7 @@ object SlackClient {
     val challenger = new Player(challengeMessage.user, challengerToken)
     val defender = new Player(acceptMessage.user, defenderToken)
     // Game is set in channel where the defender accepts it
-    val slackGameState = new SlackGameState(acceptMessage.channel, acceptMessage.thread_ts, challenger, defender,true)
+    val slackGameState = new SlackGameState(acceptMessage.channel, acceptMessage.thread_ts, challenger, defender)
 
     client.sendMessage(
       acceptMessage.channel,
@@ -187,7 +187,6 @@ object SlackClient {
                   slackGameState.thread_ts,
                   slackGameState.challenger,
                   slackGameState.defender,
-                  defendersTurn = true
                 )
               )
             case _ =>

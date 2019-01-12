@@ -1,4 +1,3 @@
-
 /**
   * Possible move within the Connect 4 game.
   * @param player Player who made the move.

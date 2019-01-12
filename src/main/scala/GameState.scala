@@ -35,18 +35,6 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
   // Builds new board with default board rows and cols
   def this() = this(GameState.DefaultBoardRows, GameState.DefaultBoardCols)
 
-  /**
-    * Print board to console, for debugging.
-    */
-  def printBoard(): Unit = {
-
-    println("Game Board:")
-
-    // Add column numbers above columns
-    val annotatedBoard = "0123456789".take(nBoardCols) :: board
-
-    for (line <- annotatedBoard) println(line)
-  }
 
   // TODO: Maybe this should override toString
   def boardAsString(): String = {

@@ -4,8 +4,8 @@ class SlackGameState(val gameState: GameState,
                      val channel: String,
                      val thread_ts: Option[String],
                      val challenger: Player,
-                     val defender: Player,
-                     defendersTurn: Boolean) {
+                     val defender: Player
+                    ) {
 
   // Completely new game
   def this(boardRows: Int,
@@ -13,37 +13,34 @@ class SlackGameState(val gameState: GameState,
            channel: String,
            thread_ts: Option[String],
            challenger: Player,
-           defender: Player,
-           defendersTurn: Boolean) {
-    this(new GameState(boardRows, boardCols), channel, thread_ts, challenger, defender, defendersTurn)
+           defender: Player
+          ) {
+    this(new GameState(boardRows, boardCols), channel, thread_ts, challenger, defender)
   }
 
   // New game with default rows and cols
-  def this(channel: String, thread_ts: Option[String], challenger: Player, defender: Player, defendersTurn: Boolean) {
-    this(new GameState(), channel, thread_ts, challenger, defender, defendersTurn)
+  def this(channel: String, thread_ts: Option[String], challenger: Player, defender: Player) {
+    this(new GameState(), channel, thread_ts, challenger, defender)
   }
 
   def playMove(col: Int, playerId: String): Option[SlackGameState] = {
 
     // Check it's this players turn
-    // TODO: Some non-functional stuff here, needs to be changed.
 
-    // The gamestate stores the player who did the last move. So we can check it's not that player.
-
-    // By this stage we already know it's a player playing the game, as we have checked earlier.
-
-    var optionPlayer: Option[Player] = None
-
-    if (!defendersTurn && challenger.slackId == playerId) {
-      optionPlayer = Some(challenger)
-    }
-    else if (defendersTurn && defender.slackId == playerId) {
-      optionPlayer = Some(defender)
+    // TODO: Use map here
+    if (gameState.lastMove.isDefined) {
+      if (gameState.lastMove.get.player.slackId == playerId) {
+        //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
+        // But I think it could be possible we could put a lot of this in SlackClient. Not a high priority tho.
+        SlackClient.messageUser("It's not your turn.", channel, thread_ts, playerId)
+        return None
+      }
     }
 
-    val player = optionPlayer.getOrElse {
-      SlackClient.messageUser("It's not your turn.", channel, thread_ts, playerId)
-      return None
+    // Now we know it's their turn, we figure out which player it is...
+    val player = playerId match {
+      case challenger.slackId => challenger
+      case defender.slackId => defender
     }
 
     // Check col is valid
@@ -64,6 +61,7 @@ class SlackGameState(val gameState: GameState,
       return None
     }
 
+    // TODO: Should be version of replaceCell which updates the last move as well.
     val newState = gameState.replaceCell(gameState, move.row, move.col, player.token)
 
     Some(new SlackGameState(
@@ -71,8 +69,8 @@ class SlackGameState(val gameState: GameState,
       channel,
       thread_ts,
       challenger,
-      defender,
-      !defendersTurn))
+      defender
+    ))
   }
 
   /**
