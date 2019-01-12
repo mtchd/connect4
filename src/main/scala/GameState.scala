@@ -212,7 +212,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
   }
 
   // TODO: Col and column are ambiguous, need better names.
-  // TODO: Static functions like this should be delcared static in some way...will look up how that works in scala later
+  // TODO: Could potentially put this in the companion object
   def findRow(column: List[Cell], row: Int, col: Int, player: Player): Move = {
 
     // Column is full if row < 0

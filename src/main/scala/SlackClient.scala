@@ -6,10 +6,6 @@ import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor
 
-// Gives us the regex for matching message text
-// TODO: This makes it unclear where that regex has come from, it's better to reference in the text as you go.
-import CommandsRegex._
-
 /**
   * Bad boi that handles all interactions with slack.
   */
@@ -32,7 +28,7 @@ object SlackClient {
       if(mentionedIds.contains(selfId)) {
 
         message.text match {
-          case Challenge(_, opponent, _) => challenge(message, opponent)
+          case CommandsRegex.Challenge(_, opponent, _) => challenge(message, opponent)
           case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
         }
       }
@@ -99,7 +95,6 @@ object SlackClient {
 
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
 
-    // Here is where we should check the challengeMessage for flags
     // Check for specifying their token
     // TODO: Will need to upgraded if there are more flags. Parse flags into a list and map through ideally.
 
@@ -130,7 +125,7 @@ object SlackClient {
 
     client.sendMessage(
       acceptMessage.channel,
-      "Available commands:\n'Drop $columnNumber'\n'forfeit'\n'reset'",
+      Strings.inGameCommands,
       acceptMessage.thread_ts
     )
 
@@ -157,50 +152,51 @@ object SlackClient {
     // Now, whenever that user messages us, we assume they are talking about this game.
     var handler = handleForHandler()
     handler = client.onMessage{ newMessage =>
-      
-      if(newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId
-      && newMessage.thread_ts == slackGameState.thread_ts) {
 
-        newMessage.text match {
+      if (newMessage.thread_ts == slackGameState.thread_ts) {
+        if (newMessage.user == slackGameState.challenger.slackId || newMessage.user == slackGameState.defender.slackId) {
 
-          // Drop a disc/token into a column
-          // TODO: Break this up a bit more, this function is huge
-          case Drop(_, col) =>
+          newMessage.text match {
 
-            // If new state isn't defined, it'll call userError and send a message to the user.
-            val newState = slackGameState.playMove(col.toInt, newMessage.user)
-            if (newState.isDefined) {
-              slackMessage(s"<@${newMessage.user}>: Dropping into column $col", slackGameState)
-              client.removeEventListener(handler)
-              // Play the move, which gives an updated game state. Also switches whose turn it is.
-              playTurn(newState.get)
-            }
+            // Drop a disc/token into a column
+            // TODO: Break this up a bit more, this function is huge
+            case CommandsRegex.Drop(_, col, _) =>
+
+              // If new state isn't defined, it'll call userError and send a message to the user.
+              val newState = slackGameState.playMove(col.toInt, newMessage.user)
+              if (newState.isDefined) {
+                slackMessage(s"<@${newMessage.user}>: Dropping into column $col", slackGameState)
+                client.removeEventListener(handler)
+                // Play the move, which gives an updated game state. Also switches whose turn it is.
+                playTurn(newState.get)
+              }
             // Else do nothing and keep listening, the move was invalid and it's still that players turn.
 
-          case Forfeit(_) =>
-            slackMessage(s"<@${newMessage.user}>: Forfeiting game...", slackGameState)
-            client.removeEventListener(handler)
-          case Reset(_) =>
-            slackMessage(s"<@${newMessage.user}>: Forfeiting and resetting game...", slackGameState)
-            client.removeEventListener(handler)
-            // TODO: Make this neater by creating reset game function in SlackGameState
-            playTurn(
-              new SlackGameState(
-                slackGameState.gameState.nBoardRows,
-                slackGameState.gameState.nBoardCols,
-                slackGameState.channel,
-                slackGameState.thread_ts,
-                slackGameState.challenger,
-                slackGameState.defender,
-                defendersTurn = true
+            case CommandsRegex.Forfeit(_) =>
+              slackMessage(s"<@${newMessage.user}>: Forfeiting game...", slackGameState)
+              client.removeEventListener(handler)
+            case CommandsRegex.Reset(_) =>
+              slackMessage(s"<@${newMessage.user}>: Forfeiting and resetting game...", slackGameState)
+              client.removeEventListener(handler)
+              // TODO: Make this neater by creating reset game function in SlackGameState
+              playTurn(
+                new SlackGameState(
+                  slackGameState.gameState.nBoardRows,
+                  slackGameState.gameState.nBoardCols,
+                  slackGameState.channel,
+                  slackGameState.thread_ts,
+                  slackGameState.challenger,
+                  slackGameState.defender,
+                  defendersTurn = true
+                )
               )
-            )
-          case _ =>
-            // TODO: Help message for those that try to play but aren't part of the game.
-            // Do nothing, as they could have sent any message, as we are no longer disambiguating via @connect4 bot
-            // We will disambiguate via threads, so will need to update
+            case _ =>
+              messageUser(s"I don't understand.\n${Strings.inGameCommands}", newMessage.user, slackGameState)
+          }
         }
-
+        else {
+          messageUser("You're not a part of this game.", newMessage.user, slackGameState)
+        }
       }
     }
   }
@@ -214,6 +210,10 @@ object SlackClient {
 
   def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
     client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
+  }
+
+  def messageUser(message:String, slackId: String, slackGameState: SlackGameState): Unit = {
+    messageUser(message, slackGameState.channel, slackGameState.thread_ts, slackId)
   }
 
   // Allows packaging of all info into gamestate, saves rewriting this sendMessage function as it's inputs change.
