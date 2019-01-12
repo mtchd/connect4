@@ -25,7 +25,7 @@ class SlackGameState(val gameState: GameState,
 
     // Check it's this players turn
 
-    // TODO: Use map here
+    // TODO: Use map here?
     if (gameState.lastMove.isDefined) {
       if (gameState.lastMove.get.player.slackId == player.slackId) {
         //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.

@@ -54,13 +54,13 @@ object SlackClient {
     )
 
     // Get reference so we can stop listening after player responds to challenge
-    var handler = getActorRef()
-    handler = client.onMessage { acceptMessage =>
-      challengeResponse(acceptMessage, challengeMessage, opponentId, handler)
+    var messageListener = getActorRef
+    messageListener = client.onMessage { acceptMessage =>
+      challengeResponse(acceptMessage, challengeMessage, opponentId, messageListener)
     }
   }
 
-  def challengeResponse(acceptMessage: Message, challengeMessage: Message, opponentId: String, handler: ActorRef
+  def challengeResponse(acceptMessage: Message, challengeMessage: Message, opponentId: String, messageListener: ActorRef
                        ): Unit = {
 
     val thread = acceptMessage.thread_ts.getOrElse{ return }
@@ -70,10 +70,10 @@ object SlackClient {
 
         acceptMessage.text match {
           case CommandsRegex.Accept(_, _) =>
-            client.removeEventListener(handler)
+            client.removeEventListener(messageListener)
             newGame(acceptMessage, challengeMessage)
           case CommandsRegex.Reject(_) =>
-            client.removeEventListener(handler)
+            client.removeEventListener(messageListener)
             client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!", Some(thread))
           case _ =>
             client.sendMessage(
@@ -150,7 +150,7 @@ object SlackClient {
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.
     // Now, whenever that user messages us, we assume they are talking about this game.
-    var messageListener = getActorRef()
+    var messageListener = getActorRef
     messageListener = client.onMessage{ newMessage =>
 
       if (newMessage.thread_ts == slackGameState.thread_ts) {
@@ -208,12 +208,13 @@ object SlackClient {
     }
   }
 
-  def getActorRef(): ActorRef = {
+  def getActorRef: ActorRef = {
     // This is weird as hell but it works at least. Creating this reference allows us to call removeEventListener
     // inside the next handler function.
     // TODO: Find a way of doing this that isn't so hacked.
     // UPDATE: Just create new ActorRef...and sort out whatever variables that needs...
     // UPDATE: Yep that's hard too.
+    // UPDATE: Go to the api source and find how new ActorRefs are made.
     client.onMessage { _ => /* Do nothing */ }
   }
 

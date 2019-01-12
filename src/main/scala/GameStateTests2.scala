@@ -5,13 +5,13 @@ class GameStateTests2 extends FunSuite {
 
   // TODO: Make this into real test, which checks the boards are equal. But man that needs a monster string...?
   test("GameState.replaceCells") {
-    newStateWithFourCells(Strings.winningToken)
+    newStateWithFourCells(":test:")
   }
 
   def newStateWithFourCells(token: String): GameState = {
     val gameState = new GameState()
     val newState =
-      gameState.replaceCells(0,0,GameState.Horizontal)
+      gameState.replaceCells(0,0, GameState.Horizontal, token)
     println(newState.boardAsString())
     newState
   }
@@ -21,9 +21,9 @@ class GameStateTests2 extends FunSuite {
     // TODO: Finish getting rid of these magic numbers
     // TODO: This only checks if it detects a win, not if it replaces the tokens with winning tokens properly.
     // Horizontal
-    assert(maybeWinningBoardTest(0,0,GameState.Horizontal).isDefined)
+    assert(maybeWinningBoardTest(0,0, GameState.Horizontal).isDefined)
     // Vertical
-    assert(maybeWinningBoardTest(0,0,GameState.Vertical).isDefined)
+    assert(maybeWinningBoardTest(0,0, GameState.Vertical).isDefined)
     // Vertical again, all on left side
     assert(maybeWinningBoardTest(3,0, GameState.Vertical).isDefined)
     // Down and to right diagonal, from top left corner
@@ -36,6 +36,8 @@ class GameStateTests2 extends FunSuite {
     assert(maybeWinningBoardTest(3,0,(-1,1)).isDefined)
     // Up and to right diagonal, last move is at top
     assert(maybeWinningBoardTest(6,0,(-1,1), new Move(3, 3)).isDefined)
+    // Should not be a winning game
+    assert(maybeWinningBoardTest(0,0, GameState.Horizontal, new Move(6,5)).isEmpty)
 
   }
 
