@@ -85,7 +85,6 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
       Some(replaceCells(move.row, vertical.get, GameState.Vertical))
     }
     else if (upperRightDiag.isDefined) {
-      println(move.row, move.col, upperRightDiag.get)
       Some(replaceCells(move.row - upperRightDiag.get, move.col + upperRightDiag.get, GameState.UpperRight))
     }
     else if (lowerRightDiag.isDefined) {

@@ -1,15 +1,26 @@
 // TODO: These methods have been lazily taken out of gamestate, by just using gamestate.doAThing, maybe fix that
 
-class SlackGameState(val gameState: GameState, val channel: String, val challenger: Player, val defender: Player, defendersTurn: Boolean) {
+class SlackGameState(val gameState: GameState,
+                     val channel: String,
+                     val thread_ts: Option[String],
+                     val challenger: Player,
+                     val defender: Player,
+                     defendersTurn: Boolean) {
 
   // Completely new game
-  def this(boardRows: Int, boardCols: Int, channel: String, challenger: Player, defender: Player, defendersTurn: Boolean) {
-    this(new GameState(boardRows, boardCols), channel, challenger, defender, defendersTurn)
+  def this(boardRows: Int,
+           boardCols: Int,
+           channel: String,
+           thread_ts: Option[String],
+           challenger: Player,
+           defender: Player,
+           defendersTurn: Boolean) {
+    this(new GameState(boardRows, boardCols), channel, thread_ts, challenger, defender, defendersTurn)
   }
 
   // New game with default rows and cols
-  def this(channel: String, challenger: Player, defender: Player, defendersTurn: Boolean) {
-    this(new GameState(), channel, challenger, defender, defendersTurn)
+  def this(channel: String, thread_ts: Option[String], challenger: Player, defender: Player, defendersTurn: Boolean) {
+    this(new GameState(), channel, thread_ts, challenger, defender, defendersTurn)
   }
 
   def playMove(col: Int, playerId: String): Option[SlackGameState] = {
@@ -26,13 +37,13 @@ class SlackGameState(val gameState: GameState, val channel: String, val challeng
     }
 
     val player = optionPlayer.getOrElse {
-      SlackClient.messageUser("It's not your turn.", channel, playerId)
+      SlackClient.messageUser("It's not your turn.", channel, thread_ts, playerId)
       return None
     }
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      SlackClient.messageUser("Col is out of bounds.", channel, playerId)
+      SlackClient.messageUser("Col is out of bounds.", channel, thread_ts, playerId)
       return None
     }
 
@@ -44,13 +55,19 @@ class SlackGameState(val gameState: GameState, val channel: String, val challeng
 
     // If column was full
     if (move.row < 0) {
-      SlackClient.messageUser("Column is full.", channel, playerId)
+      SlackClient.messageUser("Column is full.", channel, thread_ts, playerId)
       return None
     }
 
     val newState = gameState.replaceCell(gameState, move.row, move.col, player.token)
 
-    Some(new SlackGameState(newState.updateLastMoveOnly(Some(move)), channel, challenger, defender, !defendersTurn))
+    Some(new SlackGameState(
+      newState.updateLastMoveOnly(Some(move)),
+      channel,
+      thread_ts,
+      challenger,
+      defender,
+      !defendersTurn))
   }
 
   /**
@@ -62,7 +79,7 @@ class SlackGameState(val gameState: GameState, val channel: String, val challeng
     val newState = gameState.maybeWinningBoard()
 
     if (newState.isDefined) {
-      SlackClient.messageUser(newState.get.boardAsString(), channel, gameState.lastMove.get.player.slackId)
+      SlackClient.messageUser(newState.get.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
       Some(gameState.lastMove.get.player)
     }
     else {

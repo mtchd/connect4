@@ -39,40 +39,63 @@ object SlackClient {
   }
 
 
-  // TODO: Need to make challenge stuff all happens in the one channel, otherwise it's chaos.
+  //TODO: Need to make challenge stuff all happens in the one channel, otherwise it's chaos.
+  // This can now only happen if there is another thread somewhere with the exact same time stamp.
   /**
     * Starts new game and gets ready to recieve messages for it.
     * @param challengeMessage Challenging message that initiated game.
-    * @param opponent Slack id of opponent challenged.
+    * @param opponentId Slack id of opponent challenged.
     */
-  def challenge(challengeMessage: Message, opponent: String): Unit = {
+  def challenge(challengeMessage: Message, opponentId: String): Unit = {
 
-    // TODO: Give these messages buttons for users to press.
-    client.sendMessage(challengeMessage.channel,
-      s"<@${challengeMessage.user}>: Challenging <@$opponent>...${Strings.newChallengeHelp}")
+    //TODO: Give these messages buttons for users to press.
+    // Looks like you can do it through Dialog.scala under slack-scala-client/src/main/scala/slack/models/
+    client.sendMessage(
+      challengeMessage.channel,
+      s"<@${challengeMessage.user}>: Challenging <@$opponentId>...${Strings.newChallengeHelp}",
+      Some(challengeMessage.ts)
+    )
 
     // Get reference so we can stop listening after player responds to challenge
     var handler = handleForHandler()
     handler = client.onMessage { acceptMessage =>
+      challengeResponse(acceptMessage, challengeMessage, opponentId, handler)
+    }
+  }
 
-      if (acceptMessage.user == opponent) {
+  def challengeResponse(acceptMessage: Message, challengeMessage: Message, opponentId: String, handler: ActorRef
+                       ): Unit = {
+
+    val thread = acceptMessage.thread_ts.getOrElse{ return }
+
+    if (thread == challengeMessage.ts) {
+      if (acceptMessage.user == opponentId) {
 
         acceptMessage.text match {
           case Accept(_) =>
+            client.removeEventListener(handler)
             newGame(acceptMessage, challengeMessage)
-            client.removeEventListener(handler)
           case Reject(_) =>
-            client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!")
             client.removeEventListener(handler)
+            client.sendMessage(challengeMessage.channel, s"<@${challengeMessage.user}> Rejected!", Some(thread))
           case _ =>
-            client.sendMessage(acceptMessage.channel, s"<@${acceptMessage.user}>: ${Strings.challengeHelp}")
+            client.sendMessage(
+              acceptMessage.channel,
+              s"<@${acceptMessage.user}>: ${Strings.challengeHelp}",
+              Some(thread))
         }
+      }
 
+      else {
+        client.sendMessage(
+          challengeMessage.channel,
+          s"<@${acceptMessage.user}>: You have not been challenged, although you do seem mentally challenged.",
+          Some(thread))
       }
     }
   }
 
-  // TODO: Games can be played in their own thread for cleanlisness
+  // TODO: Games can be played in their own thread for cleanliness
   def newGame(acceptMessage: Message, challengeMessage: Message): Unit = {
 
     // Create players and feed them in
@@ -80,9 +103,14 @@ object SlackClient {
     val challenger = new Player(challengeMessage.user, Strings.challengerToken)
     val defender = new Player(acceptMessage.user, Strings.defenderToken)
     // Game is set in channel where the defender accepts it
-    val slackGameState = new SlackGameState(acceptMessage.channel, challenger, defender,true)
+    val slackGameState = new SlackGameState(acceptMessage.channel, acceptMessage.thread_ts, challenger, defender,true)
 
-    client.sendMessage(acceptMessage.channel, "Available commands:\n'Drop $columnNumber'\n'forfeit'\n'reset'")
+    client.sendMessage(
+      acceptMessage.channel,
+      "Available commands:\n'Drop $columnNumber'\n'forfeit'\n'reset'",
+      acceptMessage.thread_ts
+    )
+
     playTurn(slackGameState)
 
   }
@@ -92,7 +120,8 @@ object SlackClient {
     // Check for a winner and announce if so
     val winner = slackGameState.checkWin()
     if (winner.isDefined) {
-      client.sendMessage(slackGameState.channel, s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15)
+      // TODO: Create function to shorten this sendMessage business
+      client.sendMessage(slackGameState.channel, s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15, slackGameState.thread_ts)
       // End Game
       return
     }
@@ -131,9 +160,13 @@ object SlackClient {
           case Reset(_) =>
             client.sendMessage(newMessage.channel, s"<@${newMessage.user}>: Forfeiting and resetting game...")
             client.removeEventListener(handler)
+            // TODO: Make this neater by creating reset game function in SlackGameState
             playTurn(
               new SlackGameState(
-                newMessage.channel,
+                slackGameState.gameState.nBoardRows,
+                slackGameState.gameState.nBoardCols,
+                slackGameState.channel,
+                slackGameState.thread_ts,
                 slackGameState.challenger,
                 slackGameState.defender,
                 defendersTurn = true
@@ -156,7 +189,7 @@ object SlackClient {
     client.onMessage { _ => /* Do nothing */ }
   }
 
-  def messageUser(message: String, channel: String, slackId: String): Unit = {
-    client.sendMessage(channel, s"<@$slackId>: $message")
+  def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
+    client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
   }
 }
