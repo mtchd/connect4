@@ -22,6 +22,7 @@ object Strings {
   // Test challenger slack ID
   val testChallengerId = "X"
   // General help, lists available commands
+  // TODO: Make this just challenge and flags
   val help = s"Available commands...in unreadable regex:\n ${CommandsRegex.listCommandsAsString()}"
   // Help during game
   val inGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'\n'reset'"
