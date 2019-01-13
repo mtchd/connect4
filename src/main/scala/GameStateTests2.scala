@@ -36,7 +36,7 @@ class GameStateTests2 extends FunSuite {
     assert(maybeWinningBoardTest(3,0,(-1,1)).isDefined)
     // Up and to right diagonal, last move is at top
     assert(maybeWinningBoardTest(6,0,(-1,1), new Move(3, 3)).isDefined)
-    // Should not be a winning game
+    // Should not be a winning game (Because the move is placed wrong, although there is actually 4 in a row)
     assert(maybeWinningBoardTest(0,0, GameState.Horizontal, new Move(6,5)).isEmpty)
 
   }
@@ -96,7 +96,7 @@ class GameStateTests2 extends FunSuite {
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
 
-    newState.fourInARow(diagonal, Strings.challengerToken, 0)
+    newState.fourInARow(diagonal, Strings.challengerToken)
   }
 
 }

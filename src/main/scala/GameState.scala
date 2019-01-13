@@ -55,21 +55,23 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
 
-    // It just works
     fourInARow(board(move.row), move.player.token)
-        .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
-
-      .orElse(fourInARow(transposedBoard(move.col), move.player.token)
-        .map(vertical => replaceCells(vertical, move.col, GameState.Vertical)))
-
+      .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
+      .orElse(
+        fourInARow(transposedBoard(move.col), move.player.token)
+          .map(vertical => replaceCells(vertical, move.col, GameState.Vertical))
+      )
       // TODO: Still magic numbers left
       // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
       // index, we know it's the start of our four in a row.
-      .orElse(fourInARow(getDiagonal(move.row, move.col, -1), move.player.token, -3)
-        .map(upperRightDiag => replaceCells(move.row - upperRightDiag, move.col + upperRightDiag, GameState.UpperRight)))
-
-      .orElse(fourInARow(getDiagonal(move.row, move.col, 1), move.player.token, -3)
-        .map(lowerRightDiag => replaceCells(move.row + lowerRightDiag, move.col + lowerRightDiag, GameState.LowerRight)))
+      .orElse(
+        fourInARow(getDiagonal(move.row, move.col, -1), move.player.token)
+          .map(upperRightDiag => replaceCells(move.row - (upperRightDiag - 3), move.col + (upperRightDiag - 3), GameState.UpperRight))
+      )
+      .orElse(
+        fourInARow(getDiagonal(move.row, move.col, 1), move.player.token)
+          .map(lowerRightDiag => replaceCells(move.row + lowerRightDiag - 3, move.col + lowerRightDiag - 3, GameState.LowerRight))
+      )
 
   }
 
@@ -128,26 +130,18 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     new GameState(board, move)
   }
 
-  // Index starts at zero by default
-  def fourInARow(cells: List[Cell], playerToken: String): Option[Int] = {
-    fourInARow(cells, playerToken, 0)
-  }
-
   /**
-    * Checks an abritary list of ordered cells if there is 4 in a row. O(n) complexity. (O(n*4) in exact terms)
+    * Checks a list of game board cells for 4 of the players token in a row.
     * @param cells List of cells to check.
     * @param playerToken Token of player we are checking has 4 in a row.
     * @return Index of start cell of the 4 in a row, if there is 4 in a row. Otherwise none.
     */
-  def fourInARow(cells: List[Cell], playerToken: String, index: Int): Option[Int] = {
+  def fourInARow(cells: List[Cell], playerToken: String): Option[Int] = {
 
-    val firstFour = cells.take(4)
+    val index = cells.indexOfSlice(List.fill(4)(new Cell(playerToken)))
 
-    if (firstFour.forall(x => x.contents == playerToken)) {
+    if ( index >= 0 ) {
       Some(index)
-    }
-    else if (cells.length > 4) {
-      fourInARow(cells.tail, playerToken, index + 1)
     }
     else {
       None
