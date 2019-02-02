@@ -57,6 +57,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
 
     fourInARow(board(move.row), move.player.token)
       .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
+
       .orElse(
         fourInARow(transposedBoard(move.col), move.player.token)
           .map(vertical => replaceCells(vertical, move.col, GameState.Vertical))
