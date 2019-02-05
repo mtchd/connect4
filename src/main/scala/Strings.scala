@@ -24,6 +24,7 @@ object Strings {
   // General help, lists available commands
   // TODO: Make this just challenge and flags
   val help = s"Available commands...in unreadable regex:\n ${CommandsRegex.listCommandsAsString()}"
+  val help2 = "Available commands:\n@connect4 challenge @username -flags\n"
   // Help during game
   val inGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'\n'reset'"
 
