@@ -29,7 +29,7 @@ object SlackClient {
 
         message.text match {
           case CommandsRegex.Challenge(_, opponent, _) => challenge(message, opponent)
-          case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help2}")
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
         }
       }
     }

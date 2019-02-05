@@ -30,6 +30,7 @@ object CommandsRegex {
     s"(?i)(.*$command.*)".r
   }
 
+  // Lists commands as string. Currently unused but available for use if needed.
   def listCommandsAsString(): String = {
     val fields = CommandsRegex.getClass.getDeclaredFields
 
