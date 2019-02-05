@@ -8,7 +8,7 @@ object Strings {
   // Markers for board columns
   val colMarkers = "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣"
   // Help text sent with a challenge
-  val newChallengeHelp = "\nThey must respond with 'accept' or 'reject.'"
+  val newChallengeHelp = "\nThey must respond with 'accept [-flags] (optional)' or 'reject.'"
   // Help text when failing to respond to a challenge
   val challengeHelp = "You will need to answer the challenge with 'accept' or 'reject"
   // Token for empty space on the board.
