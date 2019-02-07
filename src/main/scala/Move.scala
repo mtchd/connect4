@@ -4,9 +4,10 @@
   * @param row Row the move ended up at.
   * @param col Column the player chose to drop their token into.
   */
-class Move(val player: Player, val row: Int, val col: Int) {
+case class Move(player: Player, row: Int, col: Int) {
 
   // Creates test move
-  def this(row: Int, col: Int) = this(new Player(Strings.testChallengerId, Strings.challengerToken), row, col)
+  // TODO: Isolate this test definition
+  def this(row: Int, col: Int) = this(Player(Strings.testChallengerId, Strings.challengerToken), row, col)
 
 }

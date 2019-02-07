@@ -47,7 +47,7 @@ class GameStateTests2 extends FunSuite {
       startRow,
       startCol,
       direction,
-      new Move(new Player(Strings.testChallengerId, Strings.challengerToken), startRow, startCol))
+      Move(Player(Strings.testChallengerId, Strings.challengerToken), startRow, startCol))
   }
 
   def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
@@ -80,8 +80,8 @@ class GameStateTests2 extends FunSuite {
     val diagonal = newState.getDiagonal(0,0,1)
 
     // What to expect
-    val firstHalf = List.fill(3)(new Cell(Strings.emptySpace))
-    val secondHalf = List.fill(4)(new Cell(Strings.challengerToken))
+    val firstHalf = List.fill(3)(Cell(Strings.emptySpace))
+    val secondHalf = List.fill(4)(Cell(Strings.challengerToken))
 
     assert(diagonal == (firstHalf ::: secondHalf))
   }

@@ -18,7 +18,7 @@ object GameState {
   * @param lastMove Last move played, important for checking if game is won.
   */
 // Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
-class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
+case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -28,7 +28,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
   // For constructing brand new board
   def this(boardRows: Int, boardCols: Int) =
     this(
-      List.fill(boardRows)(List.fill(boardCols)(new Cell(Strings.emptySpace))),
+      List.fill(boardRows)(List.fill(boardCols)(Cell(Strings.emptySpace))),
       None
     )
 
@@ -119,7 +119,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // This is creating a new row with one character updated, then created a new board with one row updated.
     // Should be a cleaner way of doing this.
     val oldBoard = gameState.board
-    updateBoardOnly(oldBoard.updated(row, oldBoard(row).updated(col, new Cell(newToken))))
+    updateBoardOnly(oldBoard.updated(row, oldBoard(row).updated(col, Cell(newToken))))
   }
 
   // Keeping hold of this in case there are more variables in constructor added later, makes life easier
@@ -139,7 +139,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     */
   def fourInARow(cells: List[Cell], playerToken: String): Option[Int] = {
 
-    val index = cells.indexOfSlice(List.fill(4)(new Cell(playerToken)))
+    val index = cells.indexOfSlice(List.fill(4)(Cell(playerToken)))
 
     if ( index >= 0 ) {
       Some(index)
@@ -179,7 +179,7 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     } catch {
       // Empty cells can either be None or actual characters. I have chosen actual characters because it's easier to
       // print.
-      case e: IndexOutOfBoundsException => new Cell(Strings.emptySpace)
+      case e: IndexOutOfBoundsException => Cell(Strings.emptySpace)
     }
   }
 
@@ -190,11 +190,11 @@ class GameState(val board: List[List[Cell]], val lastMove: Option[Move]) {
     // Column is full if row < 0
     // Return the <0 row to signify it's full
     if (row < 0) {
-      return new Move(player, row, col)
+      return Move(player, row, col)
     }
 
     if (column(row).contents == Strings.emptySpace) {
-      new Move(player, row, col)
+      Move(player, row, col)
     }
     else {
       findRow(column, row - 1, col, player)

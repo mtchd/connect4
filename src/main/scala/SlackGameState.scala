@@ -1,10 +1,10 @@
 // TODO: These methods have been lazily taken out of gamestate, by just using gamestate.doAThing, maybe fix that
 
-class SlackGameState(val gameState: GameState,
-                     val channel: String,
-                     val thread_ts: Option[String],
-                     val challenger: Player,
-                     val defender: Player) {
+case class SlackGameState(gameState: GameState,
+                          channel: String,
+                          thread_ts: Option[String],
+                          challenger: Player,
+                          defender: Player) {
 
   // Completely new game
   def this(boardRows: Int,
