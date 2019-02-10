@@ -29,15 +29,15 @@ case class SlackGameState(gameState: GameState,
     if (gameState.lastMove.isDefined) {
       if (gameState.lastMove.get.player.slackId == player.slackId) {
         //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
-        //But I think it could be possible we could put a lot of this in SlackClient. Not a high priority tho.
-        SlackClient.messageUser("It's not your turn.", player.slackId, this)
+        //But I think it could be possible we could put a lot of this in CommandHandler. Not a high priority tho.
+        CommandHandler.messageUser("It's not your turn.", player.slackId, this)
         return None
       }
     }
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      SlackClient.messageUser("Col is out of bounds.", player.slackId, this)
+      CommandHandler.messageUser("Col is out of bounds.", player.slackId, this)
       return None
     }
 
@@ -49,7 +49,7 @@ case class SlackGameState(gameState: GameState,
 
     // If column was full
     if (move.row < 0) {
-      SlackClient.messageUser("Column is full.", player.slackId, this)
+      CommandHandler.messageUser("Column is full.", player.slackId, this)
       return None
     }
 
@@ -74,7 +74,7 @@ case class SlackGameState(gameState: GameState,
     val newState = gameState.maybeWinningBoard()
 
     if (newState.isDefined) {
-      SlackClient.messageUser(newState.get.boardAsString(defender, challenger), channel, thread_ts, gameState.lastMove.get.player.slackId)
+      CommandHandler.messageUser(newState.get.boardAsString(defender, challenger), channel, thread_ts, gameState.lastMove.get.player.slackId)
       Some(gameState.lastMove.get.player)
     }
     else {

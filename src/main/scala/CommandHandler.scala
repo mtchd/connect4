@@ -6,7 +6,7 @@ import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor
 
-object SlackClient {
+object CommandHandler {
 
   implicit val system: ActorSystem = ActorSystem("slack")
   implicit val ec: ExecutionContextExecutor = system.dispatcher
@@ -16,6 +16,7 @@ object SlackClient {
   /**
     * Start point of the program, handles all incoming messages in channels the bot is present in.
     */
+  // TODO: Divide the command parsing and the side effects up
   def startListening(): Unit = {
 
     client.onMessage { message =>
@@ -32,9 +33,6 @@ object SlackClient {
     }
   }
 
-
-  //TODO: Need to make challenge stuff all happens in the one channel, otherwise it's chaos.
-  // This can now only happen if there is another thread somewhere with the exact same time stamp.
   /**
     * Starts new game and gets ready to receive messages for it.
     * @param challengeMessage Challenging message that initiated game.
@@ -178,7 +176,7 @@ object SlackClient {
             // Else do nothing and keep listening, the move was invalid and it's still that players turn.
 
             case CommandsRegex.Forfeit(_) =>
-              slackMessage(s"<@${newMessage.user}>: Forfeiting game...", slackGameState)
+              slackMessage(s"<@${newMessage.user}>: Game forfeited.", slackGameState)
               client.removeEventListener(messageListener)
             case CommandsRegex.Reset(_) =>
               slackMessage(s"<@${newMessage.user}>: Forfeiting and resetting game...", slackGameState)

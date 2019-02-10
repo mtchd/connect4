@@ -22,6 +22,7 @@ object CommandsRegex {
 
   // This is a bit loose, they just have to mention the word anywhere in what they are saying and it will accept.
   // However given the tendency of users to capitalise (esp. on phone) and add accidental spaces, this seems best.
+  // Especially given the command will always be in a thread for the game
   def simpleRegex(command: String): Regex = {
     s"(?i)(.*$command.*)".r
   }
