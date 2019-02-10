@@ -29,7 +29,7 @@ case class SlackGameState(gameState: GameState,
     if (gameState.lastMove.isDefined) {
       if (gameState.lastMove.get.player.slackId == player.slackId) {
         //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
-        // But I think it could be possible we could put a lot of this in SlackClient. Not a high priority tho.
+        //But I think it could be possible we could put a lot of this in SlackClient. Not a high priority tho.
         SlackClient.messageUser("It's not your turn.", player.slackId, this)
         return None
       }
@@ -54,9 +54,9 @@ case class SlackGameState(gameState: GameState,
     }
 
     // TODO: Should be version of replaceCell which updates the last move as well.
-    val newState = gameState.replaceCell(gameState, move.row, move.col, player.token)
+    val newState = gameState.replaceCell(gameState, move.row, move.col, player.role)
 
-    Some(new SlackGameState(
+    Some(SlackGameState(
       newState.updateLastMoveOnly(Some(move)),
       channel,
       thread_ts,
@@ -74,7 +74,7 @@ case class SlackGameState(gameState: GameState,
     val newState = gameState.maybeWinningBoard()
 
     if (newState.isDefined) {
-      SlackClient.messageUser(newState.get.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
+      SlackClient.messageUser(newState.get.boardAsString(defender, challenger), channel, thread_ts, gameState.lastMove.get.player.slackId)
       Some(gameState.lastMove.get.player)
     }
     else {

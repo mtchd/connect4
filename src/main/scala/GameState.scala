@@ -28,22 +28,35 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   // For constructing brand new board
   def this(boardRows: Int, boardCols: Int) =
     this(
-      List.fill(boardRows)(List.fill(boardCols)(Cell(Strings.emptySpace))),
+      List.fill(boardRows)(List.fill(boardCols)(Cell(Empty))),
       None
     )
 
   // Builds new board with default board rows and cols
   def this() = this(GameState.DefaultBoardRows, GameState.DefaultBoardCols)
 
+  def boardAsString(defender: Player, challenger: Player): String = {
+    // Need to multiply boardCols by 2 because the emojis are two characters each
+    val markers = Strings.ColMarkers.take(nBoardCols*2)
+    // Makes each row into string
+    val stringBoard = board.map{ row =>
+      row.map { cell =>
+        cell.contents match {
+          case Challenger => challenger.token
+          case Defender => defender.token
+          case Winner => Strings.WinningToken
+          case _ => Strings.EmptySpace
+        }
+      // Rows become strings, not lists
+      }.mkString("")
+    }
+    // Constructs whole board with markers on top and bottom
+    "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
+  }
 
   // TODO: Maybe this should override toString
   def boardAsString(): String = {
-    // Need to multiply boardCols by 2 because the emojis are two characters each
-    val markers = Strings.colMarkers.take(nBoardCols*2)
-    // Makes each row into string
-    val stringBoard = board.map( x => x.mkString(""))
-    // Constructs whole board with markers as string
-    "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
+    boardAsString(Player("-1", Strings.DefenderToken, Defender), Player("-1", Strings.ChallengerToken, Challenger))
   }
 
   // This is really where the win check happens
@@ -55,32 +68,34 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
 
-    fourInARow(board(move.row), move.player.token)
+    // This is pretty complex. Essentially, we check each of the 4 directions (e.g. Up/down or diagonal up right/down
+    // left) for a "connect 4" and then replace those cells with medals if true, returning that winning board.
+    fourInARow(board(move.row), move.player.role)
       .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
 
       .orElse(
-        fourInARow(transposedBoard(move.col), move.player.token)
+        fourInARow(transposedBoard(move.col), move.player.role)
           .map(vertical => replaceCells(vertical, move.col, GameState.Vertical))
       )
       // TODO: Still magic numbers left
       // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
       // index, we know it's the start of our four in a row.
       .orElse(
-        fourInARow(getDiagonal(move.row, move.col, -1), move.player.token)
+        fourInARow(getDiagonal(move.row, move.col, -1), move.player.role)
           .map(upperRightDiag => replaceCells(move.row - (upperRightDiag - 3), move.col + (upperRightDiag - 3), GameState.UpperRight))
       )
       .orElse(
-        fourInARow(getDiagonal(move.row, move.col, 1), move.player.token)
+        fourInARow(getDiagonal(move.row, move.col, 1), move.player.role)
           .map(lowerRightDiag => replaceCells(move.row + lowerRightDiag - 3, move.col + lowerRightDiag - 3, GameState.LowerRight))
       )
 
   }
 
   def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int)): GameState = {
-    replaceCells(startRow, startCol, direction, 3, Strings.winningToken)
+    replaceCells(startRow, startCol, direction, 3, Winner)
   }
 
-  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), token: String): GameState = {
+  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), token: CellContents): GameState = {
     replaceCells(startRow, startCol, direction, 3, token)
   }
 
@@ -98,7 +113,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     * @return Updated board
     */
   // How do I format this the right way? Or use less parameters...
-  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), offset: Int, newToken: String
+  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), offset: Int, newToken: CellContents
                   ): GameState = {
 
     if (offset == 0) {
@@ -115,7 +130,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     }
   }
 
-  def replaceCell(gameState: GameState, row: Int, col: Int, newToken: String): GameState = {
+  def replaceCell(gameState: GameState, row: Int, col: Int, newToken: CellContents): GameState = {
     // This is creating a new row with one character updated, then created a new board with one row updated.
     // Should be a cleaner way of doing this.
     val oldBoard = gameState.board
@@ -137,7 +152,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     * @param playerToken Token of player we are checking has 4 in a row.
     * @return Index of start cell of the 4 in a row, if there is 4 in a row. Otherwise none.
     */
-  def fourInARow(cells: List[Cell], playerToken: String): Option[Int] = {
+  def fourInARow(cells: List[Cell], playerToken: CellContents): Option[Int] = {
 
     val index = cells.indexOfSlice(List.fill(4)(Cell(playerToken)))
 
@@ -179,7 +194,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     } catch {
       // Empty cells can either be None or actual characters. I have chosen actual characters because it's easier to
       // print.
-      case e: IndexOutOfBoundsException => Cell(Strings.emptySpace)
+      case e: IndexOutOfBoundsException => Cell(Empty)
     }
   }
 
@@ -193,7 +208,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
       return Move(player, row, col)
     }
 
-    if (column(row).contents == Strings.emptySpace) {
+    if (column(row).contents == Empty) {
       Move(player, row, col)
     }
     else {

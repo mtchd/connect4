@@ -6,9 +6,6 @@ import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor
 
-/**
-  * Bad boi that handles all interactions with slack.
-  */
 object SlackClient {
 
   implicit val system: ActorSystem = ActorSystem("slack")
@@ -98,28 +95,28 @@ object SlackClient {
     // Check for specifying their token
     // TODO: Will need to upgraded if there are more flags. Parse flags into a list and map through ideally.
 
-    // TODO: God this is retarded
+    // TODO: Find a more terse way of saying this
     val challengerToken: String = challengeMessage.text match {
       case CommandsRegex.Challenge(_, _, flag) =>
         flag match {
           case CommandsRegex.TokenFlag(_, token, _) => token
-          case _ => Strings.challengerToken
+          case _ => Strings.ChallengerToken
         }
     }
 
-    // TODO: You repeated the retarded code bro
+    // TODO: Put code into a function of some sort so we don't repeat it
     val defenderToken: String = acceptMessage.text match {
       case CommandsRegex.Accept(_, flag) =>
         flag match {
           case CommandsRegex.TokenFlag(_, token, _) => token
-          case _ => Strings.defenderToken
+          case _ => Strings.DefenderToken
         }
     }
 
     // Create players and feed them in
     // Currently hardcoded tokens
-    val challenger = new Player(challengeMessage.user, challengerToken)
-    val defender = new Player(acceptMessage.user, defenderToken)
+    val challenger = Player(challengeMessage.user, challengerToken, Challenger)
+    val defender = Player(acceptMessage.user, defenderToken, Defender)
     // Game is set in channel where the defender accepts it
     val slackGameState = new SlackGameState(acceptMessage.channel, acceptMessage.thread_ts, challenger, defender)
 
@@ -145,7 +142,7 @@ object SlackClient {
     }
 
     // Print board at the start of a turn
-    slackMessage(slackGameState.gameState.boardAsString(), slackGameState)
+    slackMessage(slackGameState.gameState.boardAsString(slackGameState.defender, slackGameState.challenger), slackGameState)
 
     // Now need to start listening to message pertinent to this game.
     // Assume a user only has one game going in a channel at any one time.

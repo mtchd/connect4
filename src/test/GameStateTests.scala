@@ -5,7 +5,7 @@ class GameStateTests extends FunSuite {
 
   // TODO: Make this into real test, which checks the boards are equal. But man that needs a monster string...?
   test("GameState.replaceCells") {
-    newStateWithFourCells(Strings.winningToken)
+    newStateWithFourCells(Strings.WinningToken)
   }
 
   def newStateWithFourCells(token: String): GameState = {
@@ -42,7 +42,7 @@ class GameStateTests extends FunSuite {
       startRow,
       startCol,
       direction,
-      new Move(new Player(Strings.testChallengerId, Strings.challengerToken), startRow, startCol))
+      new Move(new Player(Strings.testChallengerId, Strings.ChallengerToken), startRow, startCol))
   }
 
   def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
@@ -51,7 +51,7 @@ class GameStateTests extends FunSuite {
     val gameState = new GameState()
 
     val newState =
-      gameState.replaceCells(startRow, startCol, direction, Strings.challengerToken)
+      gameState.replaceCells(startRow, startCol, direction, Strings.ChallengerToken)
 
     println(newState.boardAsString())
 
@@ -69,14 +69,14 @@ class GameStateTests extends FunSuite {
     val gameState = new GameState()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0,GameState.LowerRight, Strings.challengerToken)
+    val newState = gameState.replaceCells(0,0,GameState.LowerRight, Strings.ChallengerToken)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
 
     // What to expect
-    val firstHalf = List.fill(3)(new Cell(Strings.emptySpace))
-    val secondHalf = List.fill(4)(new Cell(Strings.challengerToken))
+    val firstHalf = List.fill(3)(new Cell(Strings.EmptySpace))
+    val secondHalf = List.fill(4)(new Cell(Strings.ChallengerToken))
 
     assert(diagonal == (firstHalf ::: secondHalf))
   }
@@ -86,12 +86,12 @@ class GameStateTests extends FunSuite {
     val gameState = new GameState()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0, GameState.LowerRight, Strings.challengerToken)
+    val newState = gameState.replaceCells(0,0, GameState.LowerRight, Strings.ChallengerToken)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
 
-    newState.fourInARow(diagonal, Strings.challengerToken, 0)
+    newState.fourInARow(diagonal, Strings.ChallengerToken, 0)
   }
 
 }

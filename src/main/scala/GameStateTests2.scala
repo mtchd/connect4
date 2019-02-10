@@ -2,13 +2,12 @@ import org.scalatest.FunSuite
 
 class GameStateTests2 extends FunSuite {
 
-
   // TODO: Make this into real test, which checks the boards are equal. But man that needs a monster string...?
   test("GameState.replaceCells") {
-    newStateWithFourCells(":test:")
+    newStateWithFourCells(Challenger)
   }
 
-  def newStateWithFourCells(token: String): GameState = {
+  def newStateWithFourCells(token: CellContents): GameState = {
     val gameState = new GameState()
     val newState =
       gameState.replaceCells(0,0, GameState.Horizontal, token)
@@ -47,7 +46,7 @@ class GameStateTests2 extends FunSuite {
       startRow,
       startCol,
       direction,
-      Move(Player(Strings.testChallengerId, Strings.challengerToken), startRow, startCol))
+      Move(Player(Strings.testChallengerId, Strings.ChallengerToken, Challenger), startRow, startCol))
   }
 
   def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
@@ -56,9 +55,9 @@ class GameStateTests2 extends FunSuite {
     val gameState = new GameState()
 
     val newState =
-      gameState.replaceCells(startRow, startCol, direction, Strings.challengerToken)
+      gameState.replaceCells(startRow, startCol, direction, Challenger)
 
-    println(newState.boardAsString())
+    // println(newState.boardAsString())
 
     val newerState = newState.updateLastMoveOnly(Some(lastMove))
 
@@ -74,14 +73,14 @@ class GameStateTests2 extends FunSuite {
     val gameState = new GameState()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0,GameState.LowerRight, Strings.challengerToken)
+    val newState = gameState.replaceCells(0,0,GameState.LowerRight, Challenger)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
 
     // What to expect
-    val firstHalf = List.fill(3)(Cell(Strings.emptySpace))
-    val secondHalf = List.fill(4)(Cell(Strings.challengerToken))
+    val firstHalf = List.fill(3)(Cell(Empty))
+    val secondHalf = List.fill(4)(Cell(Challenger))
 
     assert(diagonal == (firstHalf ::: secondHalf))
   }
@@ -91,12 +90,12 @@ class GameStateTests2 extends FunSuite {
     val gameState = new GameState()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0, GameState.LowerRight, Strings.challengerToken)
+    val newState = gameState.replaceCells(0,0, GameState.LowerRight, Challenger)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
 
-    newState.fourInARow(diagonal, Strings.challengerToken)
+    newState.fourInARow(diagonal, Challenger)
   }
 
 }
