@@ -56,7 +56,7 @@ case class SlackGameState(gameState: GameState,
     // TODO: Should be version of replaceCell which updates the last move as well.
     val newState = gameState.replaceCell(gameState, move.row, move.col, player.token)
 
-    Some(new SlackGameState(
+    Some(SlackGameState(
       newState.updateLastMoveOnly(Some(move)),
       channel,
       thread_ts,
@@ -71,14 +71,12 @@ case class SlackGameState(gameState: GameState,
     */
   def checkWin(): Option[Player] = {
 
-    val newState = gameState.maybeWinningBoard()
-
-    if (newState.isDefined) {
-      SlackClient.messageUser(newState.get.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
-      Some(gameState.lastMove.get.player)
-    }
-    else {
-      None
+    // Done on advice from the fp guild talk on Wed 13th
+    gameState.maybeWinningBoard() match {
+      case Some(newState) =>
+        SlackClient.messageUser(newState.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
+        Some(gameState.lastMove.get.player)
+      case _ => None
     }
 
   }
