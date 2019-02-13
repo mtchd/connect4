@@ -1,13 +1,9 @@
 import scala.util.matching.Regex
 
-//TODO: There's got to be a better way to store this.
+//TODO: Look into Parser Combinators
 object CommandsRegex {
-  // Regex to detect challenging a player.
-  // In future, there will be a way of customising a player's token or the board size. This could be added here as a
-  // flag.
+  // Regex for challenging and accepting/rejecting a game
   val Challenge: Regex = atUserRegex("challenge")
-  // Need to specify the user you are accepting or rejecting the challenge from. Or do you? Could just be only one
-  // challenge on each user per channel.
   val Accept: Regex = "(?i)(.*accept)(.*)".r
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game
@@ -26,6 +22,7 @@ object CommandsRegex {
 
   // This is a bit loose, they just have to mention the word anywhere in what they are saying and it will accept.
   // However given the tendency of users to capitalise (esp. on phone) and add accidental spaces, this seems best.
+  // Especially given the command will always be in a thread for the game
   def simpleRegex(command: String): Regex = {
     s"(?i)(.*$command.*)".r
   }

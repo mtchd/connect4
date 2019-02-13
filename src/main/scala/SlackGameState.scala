@@ -29,15 +29,15 @@ case class SlackGameState(gameState: GameState,
     if (gameState.lastMove.isDefined) {
       if (gameState.lastMove.get.player.slackId == player.slackId) {
         //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
-        // But I think it could be possible we could put a lot of this in SlackClient. Not a high priority tho.
-        SlackClient.messageUser("It's not your turn.", player.slackId, this)
+        //But I think it could be possible we could put a lot of this in CommandHandler. Not a high priority tho.
+        CommandHandler.messageUser("It's not your turn.", player.slackId, this)
         return None
       }
     }
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      SlackClient.messageUser("Col is out of bounds.", player.slackId, this)
+      CommandHandler.messageUser("Col is out of bounds.", player.slackId, this)
       return None
     }
 
@@ -49,12 +49,12 @@ case class SlackGameState(gameState: GameState,
 
     // If column was full
     if (move.row < 0) {
-      SlackClient.messageUser("Column is full.", player.slackId, this)
+      CommandHandler.messageUser("Column is full.", player.slackId, this)
       return None
     }
 
     // TODO: Should be version of replaceCell which updates the last move as well.
-    val newState = gameState.replaceCell(gameState, move.row, move.col, player.token)
+    val newState = gameState.replaceCell(gameState, move.row, move.col, player.role)
 
     Some(SlackGameState(
       newState.updateLastMoveOnly(Some(move)),
@@ -74,7 +74,7 @@ case class SlackGameState(gameState: GameState,
     // Done on advice from the fp guild talk on Wed 13th
     gameState.maybeWinningBoard() match {
       case Some(newState) =>
-        SlackClient.messageUser(newState.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
+        CommandHandler.messageUser(newState.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
         Some(gameState.lastMove.get.player)
       case _ => None
     }
