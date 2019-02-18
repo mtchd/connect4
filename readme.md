@@ -4,7 +4,7 @@ I'm learning Scala by creating a connect 4 game.
 
 Game runs in slack, with plans for discord as well.
 
-Uses the slack scala client here handle interactions with slack - https://github.com/slack-scala-client/slack-scala-client
+Uses the slack scala client here to handle interactions with slack - https://github.com/slack-scala-client/slack-scala-client
 
 ## Manual Tests
 
