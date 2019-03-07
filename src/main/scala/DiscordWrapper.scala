@@ -15,7 +15,7 @@ object DiscordWrapper {
   private val settings = ClientSettings(token, commandSettings = CommandSettings(prefixes = Set(GeneralCommands), needsMention = true))
   import settings.executionContext
 
-  def start(): Unit = {
+  def startListening(): Unit = {
 
     val clientSettings = ClientSettings(token)
 
@@ -34,10 +34,17 @@ object DiscordWrapper {
 
             for {
               user <- liftOptionT(UserId(message.authorId).resolve)
+              // TODO: Fix if statement hack
               _ <- if (user.bot.getOrElse(false)) {
                 client.sourceRequesterRunner.unit
               } else {
-              run (CreateMessage.mkContent (message.channelId, "hello"))
+
+                parseMessageIntoCommand(message.content) match {
+                  case Some(Command(Challenge)) => run (CreateMessage.mkContent (message.channelId, "hello"))
+                  case None => run (replyMessage(message, Strings.help))
+                  case _ => run (CreateMessage.mkContent (message.channelId, "Something has gone seriously wrong"))
+                }
+
               }
             } yield ()
 
@@ -47,6 +54,18 @@ object DiscordWrapper {
 
       client.login()
     }
+  }
+
+  def parseMessageIntoCommand(message: String): Option[Command] = {
+    message match {
+      case CommandsRegex.Challenge(_, opponent, _) => Some(Command(Challenge))
+      case _ => None
+    }
+  }
+
+  //TODO: Why does request need this _?
+  def replyMessage(message: Message, reply: String): Request[_, NotUsed] = {
+    CreateMessage.mkContent(message.channelId, reply)
   }
 
 }

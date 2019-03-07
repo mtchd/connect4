@@ -7,9 +7,9 @@ object Main {
   def main(args: Array[String]) {
 
     // Starts slack version of game
-    // CommandHandler.startListening()
+    // SlackWrapper.startListening()
 
-    DiscordWrapper.start
+    DiscordWrapper.startListening
 
   }
 
