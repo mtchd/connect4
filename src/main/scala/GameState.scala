@@ -68,6 +68,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
 
+    // TODO: Make this less arcane
     // This is pretty complex. Essentially, we check each of the 4 directions (e.g. Up/down or diagonal up right/down
     // left) for a "connect 4" and then replace those cells with medals if true, returning that winning board.
     fourInARow(board(move.row), move.player.role)

@@ -11,3 +11,5 @@ libraryDependencies += "com.github.slack-scala-client" %% "slack-scala-client" %
 // For testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
+resolvers += Resolver.JCenterRepository
+
