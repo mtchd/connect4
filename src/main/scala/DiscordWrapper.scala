@@ -76,7 +76,6 @@ object DiscordWrapper {
                     gameInstances = newGameInstances
 
                     run (replyMessage(message, reply))
-                    client.sourceRequesterRunner.unit
 
                   case _ =>
                     run (replyMessage(message, Strings.Help))

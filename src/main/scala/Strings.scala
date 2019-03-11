@@ -28,5 +28,11 @@ object Strings {
   val FailedAcceptOrReject = "You have not been challenged here, although you do seem mentally challenged."
   // When a play enters a drop command but isn't in a game
   val FailedDrop = "You are not in a game."
+  // When a player enters a drop command but it's not their turn
+  val WrongTurn = "It's not your turn."
+  // When player tries to drop in column out of bounds
+  val OutOfBounds = "Column is out of bounds."
+  // Column is full
+  val ColFull = "Column is full."
 
 }

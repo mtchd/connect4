@@ -10,9 +10,7 @@ object CommandHandler {
     // This could be done in one line, but I've spaced it out here for better readability
 
     val pair = PlayerPair.newPairFromIds(challengerId, defenderId)
-
     val newChallengePairs = challengePairs :+ pair
-
     val reply = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
     (newChallengePairs, reply)
@@ -27,7 +25,7 @@ object CommandHandler {
     var foundOne = false
     var newGameInstances = gameInstances
     var newChallengePairs = challengePairs
-    var gameStatePrintout =
+    var gameStatePrintout = "Failed to render game."
 
     // Check the player is part of a pair
     // TODO: Abstract this to function which returns foundOne, newGameInstances and newChallengePairs?
@@ -39,11 +37,12 @@ object CommandHandler {
         newGameInstances = newGameInstances :+ gameInstance
         newChallengePairs = challengePairs.filterNot( cPair => pair == cPair)
         foundOne = true
+        gameStatePrintout = gameState.boardAsString(pair.defender, pair.challenger)
       }
     )
 
     if (foundOne) {
-      (newGameInstances, newChallengePairs, Strings.InGameCommands + "\n" + )
+      (newGameInstances, newChallengePairs, Strings.InGameCommands + "\n" + gameStatePrintout )
     } else {
       // If not, tell player they stupid
       (gameInstances, challengePairs, Strings.FailedAcceptOrReject)
@@ -59,62 +58,61 @@ object CommandHandler {
     // TODO: Should only change one game instance...but has the potential to do many.
     val newGameInstances = gameInstances.map{ gameInstance =>
       val (newGameInstance, sReply) = playIf(col, gameInstance, playerId)
+      // TODO: This reply is canoodled
+      println("Mapping game instances...")
       reply = sReply
       newGameInstance
     }
 
+    println("Reply:" + reply)
     (newGameInstances, reply)
   }
 
+  // TODO: Better name for function
+  // Plays a turn if the play meets all the rules
+  // TODO: Could bring out the gameInstance part and have only gameState in here
   def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
 
     val optionRole = gameInstance.has(playerId)
-    val role = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
+    val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
 
     val gameState = gameInstance.gameState
 
-    // Check it's this players turn
+    println("In playIf")
 
-    // TODO: Use map here?
-    if (gameState.lastMove.isDefined) {
-      if (gameState.lastMove.get.player.id == player.id) {
-        //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
-        //But I think it could be possible we could put a lot of this in SlackWrapper. Not a high priority tho.
-        SlackWrapper.messageUser("It's not your turn.", player.id, this)
-        return None
+    // Check it's this players turn
+    // TODO: I highly doubt this works due to the return in the map
+    gameState.lastMove.map{ lastMove =>
+      if (lastMove.playerRole == playerRole) {
+        return (gameInstance, Strings.WrongTurn)
+      } else {
+        lastMove
       }
     }
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      SlackWrapper.messageUser("Col is out of bounds.", player.id, this)
-      return None
+      return (gameInstance, Strings.OutOfBounds)
     }
 
     // Get corresponding column
     val transposedBoard = gameState.board.transpose
 
     // nBoardRows - 1 is the bottom row of the board, and where we start checking for a valid cell in the column
-    val move = gameState.findRow(transposedBoard(col), gameState.nBoardRows - 1, col, player)
+    val move = gameState.findRow(transposedBoard(col), gameState.nBoardRows - 1, col, playerRole)
 
     // If column was full
     if (move.row < 0) {
-      SlackWrapper.messageUser("Column is full.", player.id, this)
-      return None
+      return (gameInstance, Strings.ColFull)
     }
 
     // TODO: Should be version of replaceCell which updates the last move as well.
-    // TODO: MEGA DANGEROUS, JUST MOCKED CHALLENGER HERE WHILE WORKING ON THINGS
-    val newState = gameState.replaceCell(gameState, move.row, move.col, Challenger)
+    val newState = gameState.replaceCell(gameState, move.row, move.col, playerRole).updateLastMoveOnly(Some(move))
 
-    Some(SlackGameState(
-      newState.updateLastMoveOnly(Some(move)),
-      channel,
-      thread_ts,
-      challenger,
-      defender
-    ))
+    val newInstance = GameInstance(newState, gameInstance.playerPair)
+
+    // TODO: This could be less verbose
+    (newInstance, newState.boardAsString(gameInstance.playerPair.defender, gameInstance.playerPair.challenger))
+
   }
-
-
 }

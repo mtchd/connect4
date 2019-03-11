@@ -202,7 +202,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
 
   // TODO: Col and column are ambiguous, need better names.
   // TODO: Could potentially put this in the companion object
-  def findRow(column: List[Cell], row: Int, col: Int, player: Player): Move = {
+  def findRow(column: List[Cell], row: Int, col: Int, player: CellContents): Move = {
 
     // Column is full if row < 0
     // Return the <0 row to signify it's full

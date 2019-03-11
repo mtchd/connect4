@@ -1,6 +1,7 @@
 case class GameInstance(gameState: GameState, playerPair: PlayerPair) {
 
   // Returns role of player, if they are in our pair
+  // TODO: Better name
   def has(playerId: String): Option[CellContents] = {
 
     playerId match {
