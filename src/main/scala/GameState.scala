@@ -60,10 +60,9 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   // This is really where the win check happens
   def maybeWinningBoard(): Option[GameState] = {
 
-    // TODO: SUPER DANGEROUS
-    val playerRole = Challenger
-
     val move = lastMove.getOrElse{ return None }
+
+    val playerRole = move.playerRole
 
     // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
     // after transpose otherwise it thinks you're feeding it variables.

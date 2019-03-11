@@ -39,4 +39,6 @@ object Strings {
 
   val FailedForfeit = "You're not in a game, don't go giving up already!"
 
+  val Reject = "Rejected!"
+
 }

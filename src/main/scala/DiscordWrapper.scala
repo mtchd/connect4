@@ -85,6 +85,14 @@ object DiscordWrapper {
 
                     run (replyMessage(message, reply))
 
+                  case CommandsRegex.Reject(_) =>
+
+                    val (newChallengePairs, reply) = CommandHandler.reject(challengePairs, message.authorId.toString)
+
+                    challengePairs = newChallengePairs
+
+                    run (replyMessage(message, reply))
+
                   case _ =>
                     run (replyMessage(message, Strings.Help))
                 }

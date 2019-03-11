@@ -68,6 +68,7 @@ object CommandHandler {
     (newGameInstances, reply)
   }
 
+  // TODO: Logic could be nicer
   def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
     val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.has(playerId).isDefined)
@@ -78,6 +79,17 @@ object CommandHandler {
       (newGameInstances, Strings.Forfeit)
     }
 
+  }
+
+  // TODO: This is very similar to forfeit, perhaps they can be merged somehow
+  def reject(challengePairs: List[PlayerPair], playerId: String): (List[PlayerPair], String) = {
+    val newChallengerPairs = challengePairs.filterNot(pair => pair.defender.id == playerId)
+
+    if (newChallengerPairs.length == challengePairs.length) {
+      (challengePairs, Strings.FailedAcceptOrReject)
+    } else {
+      (newChallengerPairs, Strings.Reject)
+    }
   }
 
   // TODO: Better name for function
