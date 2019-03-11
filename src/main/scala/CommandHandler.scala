@@ -23,30 +23,35 @@ object CommandHandler {
   }
 
   // TODO: Best way to format this?
-  def accept(gameInstances: GameInstance, challengePairs: List[PlayerPair], accepterId: String):
+  def accept(gameInstances: List[GameInstance], challengePairs: List[PlayerPair], accepterId: String):
   (List[GameInstance], List[PlayerPair], String) = {
 
     // TODO: Fix this, we shouldn't need this var to do this logic
     var foundOne = false
+    var newGameInstances = gameInstances
+    var newChallengePairs = challengePairs
 
     // Check the player is part of a pair
+    // TODO: Abstract this to function which returns foundOne, newGameInstances and newChallengePairs?
     challengePairs.foreach( pair =>
       // If true, delete pair and make game
       if (pair.defender.id == accepterId) {
 
         val gameState = GameState.newDefaultBoard()
         val gameInstance = GameInstance(gameState, pair)
-        val newGameInstances = gameInstances :+ gameInstance
+        newGameInstances = newGameInstances :+ gameInstance
+        newChallengePairs = challengePairs.filterNot( cPair => pair == cPair)
         foundOne = true
       }
     )
 
-    if (!foundOne) {
-    // If not, tell player they stupid
+    if (foundOne) {
+      (newGameInstances, newChallengePairs, Strings.inGameCommands)
+    } else {
+      // If not, tell player they stupid
+      (gameInstances, challengePairs, Strings.FailedAcceptOrReject)
     }
 
-
-    (List.empty, List.empty, "")
   }
 
   def drop: Unit = {

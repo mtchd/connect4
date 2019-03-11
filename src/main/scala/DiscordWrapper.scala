@@ -17,8 +17,7 @@ object DiscordWrapper {
 
   def startListening(): Unit = {
 
-    // Make a case class instead of using a tuple
-    // Maybe make a case class with two players and a gameState
+    //TODO: Investigate using a ListBuffer instead of a list, seeing as we are going mutable.
     var gameInstances: List[GameInstance] = List.empty
     var challengePairs: List[PlayerPair] = List.empty
 
@@ -62,7 +61,7 @@ object DiscordWrapper {
                     // Passing side effects to command handler?
                     // Could make a ID type known as DiscordId that handles this, makes it less side effecty
                     val (newGameInstances, newChallengePairs, reply) =
-                      CommandHandler.accept(challengePairs, message.authorId.toString)
+                      CommandHandler.accept(gameInstances, challengePairs, message.authorId.toString)
 
                     gameInstances = newGameInstances
                     challengePairs = newChallengePairs

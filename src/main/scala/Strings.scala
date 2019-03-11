@@ -24,5 +24,7 @@ object Strings {
   val help = "Available commands:\n@connect4 challenge @username -flags\n"
   // Help during game
   val inGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'\n'reset'"
+  // When accepting or rejecting when not challenged by anyone
+  val FailedAcceptOrReject = "You have not been challenged here, although you do seem mentally challenged."
 
 }

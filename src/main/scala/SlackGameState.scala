@@ -13,12 +13,12 @@ case class SlackGameState(gameState: GameState,
            thread_ts: Option[String],
            challenger: Player,
            defender: Player) {
-    this(new GameState(boardRows, boardCols), channel, thread_ts, challenger, defender)
+    this(GameState.newCustomBoard(boardRows, boardCols), channel, thread_ts, challenger, defender)
   }
 
   // New game with default rows and cols
   def this(channel: String, thread_ts: Option[String], challenger: Player, defender: Player) {
-    this(new GameState(), channel, thread_ts, challenger, defender)
+    this(GameState.newDefaultBoard(), channel, thread_ts, challenger, defender)
   }
 
   def playMove(col: Int, player: Player): Option[SlackGameState] = {
