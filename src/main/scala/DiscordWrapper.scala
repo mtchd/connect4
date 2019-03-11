@@ -61,7 +61,8 @@ object DiscordWrapper {
 
                     // Passing side effects to command handler?
                     // Could make a ID type known as DiscordId that handles this, makes it less side effecty
-                    val (newGameInstances, newChallengePairs, reply) = CommandHandler.accept(challengePairs, message.authorId.toString)
+                    val (newGameInstances, newChallengePairs, reply) =
+                      CommandHandler.accept(challengePairs, message.authorId.toString)
 
                     gameInstances = newGameInstances
                     challengePairs = newChallengePairs
@@ -70,11 +71,12 @@ object DiscordWrapper {
 
                   case CommandsRegex.Drop(_, col, _) =>
 
-                    val (newGameInstances, reply) = CommandHandler.drop(col, gameInstances, message.authorId.toString)
-
-                    gameInstances = newGameInstances
-
-                    run (replyMessage(message, reply))
+//                    val (newGameInstances, reply) = CommandHandler.drop(col, gameInstances, message.authorId.toString)
+//
+//                    gameInstances = newGameInstances
+//
+//                    run (replyMessage(message, reply))
+                    client.sourceRequesterRunner.unit
 
                   case _ =>
                     run (replyMessage(message, Strings.help))

@@ -4,11 +4,19 @@ object GameState {
   val DefaultBoardCols = 6
   val DefaultBoardRows = 7
 
-  // Constants for going directions in replaceCells. It works because math :)
+  // Constants for going directions in replaceCells.
   val UpperRight: (Int, Int) = (-1, 1)
   val LowerRight: (Int, Int) = (1, 1)
   val Horizontal: (Int, Int) = (0, 1)
   val Vertical: (Int, Int) = (1, 0)
+
+  def newDefaultBoard(): GameState = {
+    newCustomBoard(GameState.DefaultBoardRows, GameState.DefaultBoardCols)
+  }
+
+  def newCustomBoard(boardRows: Int, boardCols: Int): GameState = {
+    GameState(List.fill(boardRows)(List.fill(boardCols)(Cell(Empty))), None)
+  }
 
 }
 
@@ -24,16 +32,6 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
   val nBoardCols: Int = board.head.length
   val nBoardRows: Int = board.length
-
-  // For constructing brand new board
-  def this(boardRows: Int, boardCols: Int) =
-    this(
-      List.fill(boardRows)(List.fill(boardCols)(Cell(Empty))),
-      None
-    )
-
-  // Builds new board with default board rows and cols
-  def this() = this(GameState.DefaultBoardRows, GameState.DefaultBoardCols)
 
   def boardAsString(defender: Player, challenger: Player): String = {
     // Need to multiply boardCols by 2 because the emojis are two characters each
@@ -56,11 +54,14 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
 
   // TODO: Maybe this should override toString
   def boardAsString(): String = {
-    boardAsString(Player("-1", Strings.DefenderToken, Defender), Player("-1", Strings.ChallengerToken, Challenger))
+    boardAsString(Player("-1", Strings.DefenderToken), Player("-1", Strings.ChallengerToken))
   }
 
   // This is really where the win check happens
   def maybeWinningBoard(): Option[GameState] = {
+
+    // TODO: SUPER DANGEROUS
+    val playerRole = Challenger
 
     val move = lastMove.getOrElse{ return None }
 
@@ -71,22 +72,22 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     // TODO: Make this less arcane
     // This is pretty complex. Essentially, we check each of the 4 directions (e.g. Up/down or diagonal up right/down
     // left) for a "connect 4" and then replace those cells with medals if true, returning that winning board.
-    fourInARow(board(move.row), move.player.role)
+    fourInARow(board(move.row), playerRole)
       .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
 
       .orElse(
-        fourInARow(transposedBoard(move.col), move.player.role)
+        fourInARow(transposedBoard(move.col), playerRole)
           .map(vertical => replaceCells(vertical, move.col, GameState.Vertical))
       )
       // TODO: Still magic numbers left
       // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
       // index, we know it's the start of our four in a row.
       .orElse(
-        fourInARow(getDiagonal(move.row, move.col, -1), move.player.role)
+        fourInARow(getDiagonal(move.row, move.col, -1), playerRole)
           .map(upperRightDiag => replaceCells(move.row - (upperRightDiag - 3), move.col + (upperRightDiag - 3), GameState.UpperRight))
       )
       .orElse(
-        fourInARow(getDiagonal(move.row, move.col, 1), move.player.role)
+        fourInARow(getDiagonal(move.row, move.col, 1), playerRole)
           .map(lowerRightDiag => replaceCells(move.row + lowerRightDiag - 3, move.col + lowerRightDiag - 3, GameState.LowerRight))
       )
 

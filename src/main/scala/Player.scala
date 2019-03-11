@@ -3,17 +3,20 @@
   * @param token Character used to represent players token/disc in the board.
   */
 // TODO: Rmove slack id from player
-case class Player(id: String, token: String, role: CellContents) {
+case class Player(id: String, token: String) {
 
 }
 
 object Player {
 
-  def defaultTokenPlayer(id: String, role: CellContents): Unit = {
+  // TODO Using CellContents for this isn't super great, because it's a wider scope than what we should be accepting.
+  def newDefaultPlayer(id: String, role: CellContents): Player = {
 
     if (role == Defender) {
       Player(id, Strings.DefenderToken)
+    } else {
+      Player(id, Strings.ChallengerToken )
     }
-    Player(id, Strings. )
+
   }
 }

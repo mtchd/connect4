@@ -8,6 +8,6 @@ case class Move(player: Player, row: Int, col: Int) {
 
   // Creates test move
   // TODO: Isolate this test definition
-  def this(row: Int, col: Int) = this(Player(Strings.testChallengerId, Strings.ChallengerToken, Challenger), row, col)
+  def this(row: Int, col: Int) = this(Player(Strings.testChallengerId, Strings.ChallengerToken), row, col)
 
 }

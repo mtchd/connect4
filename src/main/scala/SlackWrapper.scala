@@ -114,8 +114,8 @@ object SlackWrapper {
 
     // Create players and feed them in
     // Currently hardcoded tokens
-    val challenger = Player(challengeMessage.user, challengerToken, Challenger)
-    val defender = Player(acceptMessage.user, defenderToken, Defender)
+    val challenger = Player(challengeMessage.user, challengerToken)
+    val defender = Player(acceptMessage.user, defenderToken)
     // Game is set in channel where the defender accepts it
     val slackGameState = new SlackGameState(acceptMessage.channel, acceptMessage.thread_ts, challenger, defender)
 

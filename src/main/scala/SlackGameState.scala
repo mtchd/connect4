@@ -54,7 +54,8 @@ case class SlackGameState(gameState: GameState,
     }
 
     // TODO: Should be version of replaceCell which updates the last move as well.
-    val newState = gameState.replaceCell(gameState, move.row, move.col, player.role)
+    // TODO: MEGA DANGEROUS, JUST MOCKED CHALLENGER HERE WHILE WORKING ON THINGS
+    val newState = gameState.replaceCell(gameState, move.row, move.col, Challenger)
 
     Some(SlackGameState(
       newState.updateLastMoveOnly(Some(move)),

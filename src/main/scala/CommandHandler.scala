@@ -2,38 +2,51 @@
 object CommandHandler {
 
   // TODO: Side effect leak here...needs to be some way of handling these ids
-  def challenge(challengePairs: List[PlayerPair], opponentId: String, challengerId: String): (List[PlayerPair], String) = {
+  // TODO: In future, we give the ability to customise token
+  // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
+  def challenge(challengePairs: List[PlayerPair], defenderId: String, challengerId: String): (List[PlayerPair], String) = {
 
-    // Make challenger and defender
+    // TODO: Maybe a for-comprehension is better here
+    // This could be done in one line, but I've spaced it out here for better readability
 
-    val challenger = Player(challengerId)
-    // Make a new playerPair
+    val challenger = Player.newDefaultPlayer(challengerId, Challenger)
+    val defender = Player.newDefaultPlayer(defenderId, Defender)
 
-    // s"Challenging <@$opponentId>...${Strings.newChallengeHelp}
+    val pair = PlayerPair(challenger, defender)
 
-    // Return some prompt to start listening for challenge response?
+    val newChallengePairs = challengePairs :+ pair
+
+    val reply = s"Challenging <@$defenderId>...${Strings.newChallengeHelp}"
+
+    (newChallengePairs, reply)
 
   }
 
-  def accept(): Unit = {
-    /**
+  // TODO: Best way to format this?
+  def accept(gameInstances: GameInstance, challengePairs: List[PlayerPair], accepterId: String):
+  (List[GameInstance], List[PlayerPair], String) = {
+
     // TODO: Fix this, we shouldn't need this var to do this logic
     var foundOne = false
+
     // Check the player is part of a pair
     challengePairs.foreach( pair =>
-    // If true, delete pair and make game
-    if (pair.defender.id == message.authorId.toString) {
-    val (gameState, message) = CommandHandler.newGame()
-    val gameInstance = new gameInstance(gameState, pair)
-    gameInstances = gameInstances :+ gameInstance
-    foundOne = true
-    }
+      // If true, delete pair and make game
+      if (pair.defender.id == accepterId) {
+
+        val gameState = GameState.newDefaultBoard()
+        val gameInstance = GameInstance(gameState, pair)
+        val newGameInstances = gameInstances :+ gameInstance
+        foundOne = true
+      }
     )
 
     if (!foundOne) {
     // If not, tell player they stupid
     }
-    **/
+
+
+    (List.empty, List.empty, "")
   }
 
   def drop: Unit = {

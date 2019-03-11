@@ -46,7 +46,7 @@ class GameStateTests extends FunSuite {
       startRow,
       startCol,
       direction,
-      Move(Player(Strings.testChallengerId, Strings.ChallengerToken, Challenger), startRow, startCol))
+      Move(Player(Strings.testChallengerId, Strings.ChallengerToken), startRow, startCol))
   }
 
   def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
