@@ -27,17 +27,17 @@ case class SlackGameState(gameState: GameState,
 
     // TODO: Use map here?
     if (gameState.lastMove.isDefined) {
-      if (gameState.lastMove.get.player.slackId == player.slackId) {
+      if (gameState.lastMove.get.player.id == player.id) {
         //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
         //But I think it could be possible we could put a lot of this in SlackWrapper. Not a high priority tho.
-        SlackWrapper.messageUser("It's not your turn.", player.slackId, this)
+        SlackWrapper.messageUser("It's not your turn.", player.id, this)
         return None
       }
     }
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      SlackWrapper.messageUser("Col is out of bounds.", player.slackId, this)
+      SlackWrapper.messageUser("Col is out of bounds.", player.id, this)
       return None
     }
 
@@ -49,7 +49,7 @@ case class SlackGameState(gameState: GameState,
 
     // If column was full
     if (move.row < 0) {
-      SlackWrapper.messageUser("Column is full.", player.slackId, this)
+      SlackWrapper.messageUser("Column is full.", player.id, this)
       return None
     }
 
@@ -74,7 +74,7 @@ case class SlackGameState(gameState: GameState,
     // Done on advice from the fp guild talk on Wed 13th
     gameState.maybeWinningBoard() match {
       case Some(newState) =>
-        SlackWrapper.messageUser(newState.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.slackId)
+        SlackWrapper.messageUser(newState.boardAsString(), channel, thread_ts, gameState.lastMove.get.player.id)
         Some(gameState.lastMove.get.player)
       case _ => None
     }

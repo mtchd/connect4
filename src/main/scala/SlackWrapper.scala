@@ -135,7 +135,7 @@ object SlackWrapper {
     val winner = slackGameState.checkWin()
     if (winner.isDefined) {
       // TODO: Magic String
-      slackMessage(s"<@${winner.get.slackId}> wins!" + "\n" + ":trophy:"*15, slackGameState)
+      slackMessage(s"<@${winner.get.id}> wins!" + "\n" + ":trophy:"*15, slackGameState)
       // End Game
       return
     }
@@ -153,8 +153,8 @@ object SlackWrapper {
 
 
         val player: Option[Player] = newMessage.user match {
-          case slackGameState.challenger.slackId => Some(slackGameState.challenger)
-          case slackGameState.defender.slackId => Some(slackGameState.defender)
+          case slackGameState.challenger.`id` => Some(slackGameState.challenger)
+          case slackGameState.defender.`id` => Some(slackGameState.defender)
           case _ => None
         }
 
@@ -224,7 +224,7 @@ object SlackWrapper {
   }
 
   def messageUser(message: String, player: Player, slackGameState: SlackGameState): Unit = {
-    messageUser(message, slackGameState.channel, slackGameState.thread_ts, player.slackId)
+    messageUser(message, slackGameState.channel, slackGameState.thread_ts, player.id)
   }
 
   // Allows packaging of all info into gamestate, saves rewriting this sendMessage function as it's inputs change.

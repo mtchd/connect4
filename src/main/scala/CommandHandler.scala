@@ -2,7 +2,12 @@
 object CommandHandler {
 
   // TODO: Side effect leak here...needs to be some way of handling these ids
-  def challenge(opponentId: String, challengerId: String): Unit = {
+  def challenge(challengePairs: List[PlayerPair], opponentId: String, challengerId: String): (List[PlayerPair], String) = {
+
+    // Make challenger and defender
+
+    val challenger = Player(challengerId)
+    // Make a new playerPair
 
     // s"Challenging <@$opponentId>...${Strings.newChallengeHelp}
 

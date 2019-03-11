@@ -19,8 +19,8 @@ object DiscordWrapper {
 
     // Make a case class instead of using a tuple
     // Maybe make a case class with two players and a gameState
-    var gameInstances = List.empty
-    var challengePairs = List.empty
+    var gameInstances: List[GameInstance] = List.empty
+    var challengePairs: List[PlayerPair] = List.empty
 
     val clientSettings = ClientSettings(token)
     val futureClient = clientSettings.createClient()
@@ -49,10 +49,10 @@ object DiscordWrapper {
                   case CommandsRegex.Challenge(_, opponentId, _) =>
 
                     // Might not be in commandHandler's scope
-                    val (pair, reply) =
-                      CommandHandler.challenge(opponentId, message.authorId.toString)
+                    val (newChallengePairs, reply) =
+                      CommandHandler.challenge(challengePairs, opponentId, message.authorId.toString)
 
-                    challengePairs = challengePairs :+ pair
+                    challengePairs = newChallengePairs
                     run (replyMessage(message, reply))
 
                   case CommandsRegex.Accept(_, _) =>
