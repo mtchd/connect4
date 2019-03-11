@@ -12,7 +12,7 @@ class CommandHandlerTests extends FunSuite {
 
     val (newPairs, reply) = CommandHandler.challenge(pairs, defenderId, challengerId)
 
-    assert(reply == s"Challenging <@$defenderId>...${Strings.newChallengeHelp}")
+    assert(reply == s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}")
     assert(newPairs.length == 1)
     assert(newPairs.contains(testPair))
   }

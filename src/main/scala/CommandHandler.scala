@@ -13,7 +13,7 @@ object CommandHandler {
 
     val newChallengePairs = challengePairs :+ pair
 
-    val reply = s"Challenging <@$defenderId>...${Strings.newChallengeHelp}"
+    val reply = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
     (newChallengePairs, reply)
 
@@ -27,13 +27,13 @@ object CommandHandler {
     var foundOne = false
     var newGameInstances = gameInstances
     var newChallengePairs = challengePairs
+    var gameStatePrintout =
 
     // Check the player is part of a pair
     // TODO: Abstract this to function which returns foundOne, newGameInstances and newChallengePairs?
     challengePairs.foreach( pair =>
       // If true, delete pair and make game
       if (pair.defender.id == accepterId) {
-
         val gameState = GameState.newDefaultBoard()
         val gameInstance = GameInstance(gameState, pair)
         newGameInstances = newGameInstances :+ gameInstance
@@ -43,7 +43,7 @@ object CommandHandler {
     )
 
     if (foundOne) {
-      (newGameInstances, newChallengePairs, Strings.inGameCommands)
+      (newGameInstances, newChallengePairs, Strings.InGameCommands + "\n" + )
     } else {
       // If not, tell player they stupid
       (gameInstances, challengePairs, Strings.FailedAcceptOrReject)
@@ -53,31 +53,23 @@ object CommandHandler {
 
   def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    // First find OUR game instance. This will be the instance with a pair that contains our playerId
+    // TODO: Shouldn't need to use var here
+    var reply = "Something went wrong."
 
-    var reply = ""
-
-    // Then, we need to extract the gameState and playMove on it. Put that new gameState back, save the reply and move on.
-    gameInstances.map{ gameInstance =>
-
+    // TODO: Should only change one game instance...but has the potential to do many.
+    val newGameInstances = gameInstances.map{ gameInstance =>
       val (newGameInstance, sReply) = playIf(col, gameInstance, playerId)
       reply = sReply
       newGameInstance
-
-      for {
-        (optionGameState, role) <- gameInstance.has(playerId)
-        (gameState, reply) <- optionGameState.map(gameState => playMove(gameState, col, role))
-        newGameInstance
-      } yield gameInstance
-
-
     }
+
+    (newGameInstances, reply)
   }
 
-  def playIf(col: Int, gameInstance: GameInstance, playerId: String): GameInstance = {
+  def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
 
     val optionRole = gameInstance.has(playerId)
-    val role = optionRole.getOrElse{ return gameInstance }
+    val role = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
 
     val gameState = gameInstance.gameState
 

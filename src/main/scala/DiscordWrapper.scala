@@ -79,7 +79,7 @@ object DiscordWrapper {
                     client.sourceRequesterRunner.unit
 
                   case _ =>
-                    run (replyMessage(message, Strings.help))
+                    run (replyMessage(message, Strings.Help))
                 }
 
               }

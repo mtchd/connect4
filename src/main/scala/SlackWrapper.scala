@@ -27,7 +27,7 @@ object SlackWrapper {
 
         message.text match {
           case CommandsRegex.Challenge(_, opponent, _) => challenge(message, opponent)
-          case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.help}")
+          case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.Help}")
         }
       }
     }
@@ -44,7 +44,7 @@ object SlackWrapper {
     // Looks like you can do it through Dialog.scala under slack-scala-client/src/main/scala/slack/models/
     client.sendMessage(
       challengeMessage.channel,
-      s"<@${challengeMessage.user}>: Challenging <@$opponentId>...${Strings.newChallengeHelp}",
+      s"<@${challengeMessage.user}>: Challenging <@$opponentId>...${Strings.NewChallengeHelp}",
       Some(challengeMessage.ts)
     )
 
@@ -74,7 +74,7 @@ object SlackWrapper {
           case _ =>
             client.sendMessage(
               acceptMessage.channel,
-              s"<@${acceptMessage.user}>: ${Strings.challengeHelp}",
+              s"<@${acceptMessage.user}>: ${Strings.ChallengeHelp}",
               Some(thread))
         }
       }
@@ -121,7 +121,7 @@ object SlackWrapper {
 
     client.sendMessage(
       acceptMessage.channel,
-      Strings.inGameCommands,
+      Strings.InGameCommands,
       acceptMessage.thread_ts
     )
 
@@ -194,7 +194,7 @@ object SlackWrapper {
                 )
               )
             case _ =>
-              messageUser(s"I don't understand.\n${Strings.inGameCommands}", newMessage.user, slackGameState)
+              messageUser(s"I don't understand.\n${Strings.InGameCommands}", newMessage.user, slackGameState)
           }
         }
         else {
