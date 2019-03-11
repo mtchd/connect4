@@ -8,7 +8,7 @@ class GameStateTests extends FunSuite {
   }
 
   def newStateWithFourCells(token: CellContents): GameState = {
-    val gameState = new GameState()
+    val gameState = GameState.newDefaultBoard()
     val newState =
       gameState.replaceCells(0,0, GameState.Horizontal, token)
     println(newState.boardAsString())
@@ -52,7 +52,7 @@ class GameStateTests extends FunSuite {
   def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
                            ): Option[GameState] = {
 
-    val gameState = new GameState()
+    val gameState = GameState.newDefaultBoard()
 
     val newState =
       gameState.replaceCells(startRow, startCol, direction, Challenger)
@@ -70,7 +70,7 @@ class GameStateTests extends FunSuite {
   }
 
   test("GameState.getDiagonal") {
-    val gameState = new GameState()
+    val gameState = GameState.newDefaultBoard()
 
     // Down and to right replace cells
     val newState = gameState.replaceCells(0,0,GameState.LowerRight, Challenger)
@@ -87,7 +87,7 @@ class GameStateTests extends FunSuite {
 
   // TODO: Finish this test
   test("GameState.fourInARow") {
-    val gameState = new GameState()
+    val gameState = GameState.newDefaultBoard()
 
     // Down and to right replace cells
     val newState = gameState.replaceCells(0,0, GameState.LowerRight, Challenger)

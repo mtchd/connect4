@@ -9,10 +9,7 @@ object CommandHandler {
     // TODO: Maybe a for-comprehension is better here
     // This could be done in one line, but I've spaced it out here for better readability
 
-    val challenger = Player.newDefaultPlayer(challengerId, Challenger)
-    val defender = Player.newDefaultPlayer(defenderId, Defender)
-
-    val pair = PlayerPair(challenger, defender)
+    val pair = PlayerPair.newPairFromIds(challengerId, defenderId)
 
     val newChallengePairs = challengePairs :+ pair
 
