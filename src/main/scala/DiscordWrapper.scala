@@ -70,11 +70,12 @@ object DiscordWrapper {
 
                   case CommandsRegex.Drop(_, col, _) =>
 
-//                    val (newGameInstances, reply) = CommandHandler.drop(col, gameInstances, message.authorId.toString)
-//
-//                    gameInstances = newGameInstances
-//
-//                    run (replyMessage(message, reply))
+                    // TODO: Is using toString okay?
+                    val (newGameInstances, reply) = CommandHandler.drop(col.toInt, gameInstances, message.authorId.toString)
+
+                    gameInstances = newGameInstances
+
+                    run (replyMessage(message, reply))
                     client.sourceRequesterRunner.unit
 
                   case _ =>

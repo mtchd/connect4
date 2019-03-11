@@ -14,7 +14,7 @@ class CommandHandlerTests extends FunSuite {
 
     assert(reply == s"Challenging <@$defenderId>...${Strings.newChallengeHelp}")
     assert(newPairs.length == 1)
-    assert(newPairs.contains( testPair ))
+    assert(newPairs.contains(testPair))
   }
 
 }

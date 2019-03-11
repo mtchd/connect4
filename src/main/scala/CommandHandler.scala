@@ -51,16 +51,77 @@ object CommandHandler {
 
   }
 
-  def drop: Unit = {
-    /**
-    gameInstances.map(gameInstance =>
+  def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    // CellContents is confusing here. We are really referring to the role of a player (challenger / defender)
-    val Option[CellContents] = gameInstance.returnRoleIfExists(message.authorId)
-    if (gameInstance.pairHas(message.authorId)) {
-      CommandHandler.playMove(col, )
-    })
-      */
+    // First find OUR game instance. This will be the instance with a pair that contains our playerId
+
+    var reply = ""
+
+    // Then, we need to extract the gameState and playMove on it. Put that new gameState back, save the reply and move on.
+    gameInstances.map{ gameInstance =>
+
+      val (newGameInstance, sReply) = playIf(col, gameInstance, playerId)
+      reply = sReply
+      newGameInstance
+
+      for {
+        (optionGameState, role) <- gameInstance.has(playerId)
+        (gameState, reply) <- optionGameState.map(gameState => playMove(gameState, col, role))
+        newGameInstance
+      } yield gameInstance
+
+
+    }
+  }
+
+  def playIf(col: Int, gameInstance: GameInstance, playerId: String): GameInstance = {
+
+    val optionRole = gameInstance.has(playerId)
+    val role = optionRole.getOrElse{ return gameInstance }
+
+    val gameState = gameInstance.gameState
+
+    // Check it's this players turn
+
+    // TODO: Use map here?
+    if (gameState.lastMove.isDefined) {
+      if (gameState.lastMove.get.player.id == player.id) {
+        //TODO: I guess the idea of SlackGameState is that it handles side effects so GameState doesn't have to.
+        //But I think it could be possible we could put a lot of this in SlackWrapper. Not a high priority tho.
+        SlackWrapper.messageUser("It's not your turn.", player.id, this)
+        return None
+      }
+    }
+
+    // Check col is valid
+    if (col < 0 || col > gameState.nBoardCols - 1) {
+      SlackWrapper.messageUser("Col is out of bounds.", player.id, this)
+      return None
+    }
+
+    // Get corresponding column
+    val transposedBoard = gameState.board.transpose
+
+    // nBoardRows - 1 is the bottom row of the board, and where we start checking for a valid cell in the column
+    val move = gameState.findRow(transposedBoard(col), gameState.nBoardRows - 1, col, player)
+
+    // If column was full
+    if (move.row < 0) {
+      SlackWrapper.messageUser("Column is full.", player.id, this)
+      return None
+    }
+
+    // TODO: Should be version of replaceCell which updates the last move as well.
+    // TODO: MEGA DANGEROUS, JUST MOCKED CHALLENGER HERE WHILE WORKING ON THINGS
+    val newState = gameState.replaceCell(gameState, move.row, move.col, Challenger)
+
+    Some(SlackGameState(
+      newState.updateLastMoveOnly(Some(move)),
+      channel,
+      thread_ts,
+      challenger,
+      defender
+    ))
   }
 
 
