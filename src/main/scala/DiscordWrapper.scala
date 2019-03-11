@@ -23,7 +23,6 @@ object DiscordWrapper {
     var challengePairs = List.empty
 
     val clientSettings = ClientSettings(token)
-
     val futureClient = clientSettings.createClient()
 
     futureClient.foreach { client =>
@@ -44,72 +43,39 @@ object DiscordWrapper {
                 client.sourceRequesterRunner.unit
               } else {
 
+                // TODO: Abstract this to it's own function
+                // TODO: Perhaps each part of it could be a function
                 message.content match {
                   case CommandsRegex.Challenge(_, opponentId, _) =>
 
-                    // Kick off a new game instance?
-                    println(message.content)
-
-                    // We create a whole new game, even though they could be rejected...
-                    // An alternative to this is creating a pair of players, saving that to a list, then creating the
-                    // game instance apon accept. But I think this is cleaner code, although less efficient.
-                    val (gameInstance, reply) =
+                    // Might not be in commandHandler's scope
+                    val (pair, reply) =
                       CommandHandler.challenge(opponentId, message.authorId.toString)
 
-                    gameInstances = gameInstances :+ gameInstance
+                    challengePairs = challengePairs :+ pair
                     run (replyMessage(message, reply))
 
-                  case CommandsRegex.Accept(_,_) =>
+                  case CommandsRegex.Accept(_, _) =>
                     // We assume a player is only in one game at once. Discord does not have threading like
                     // slack, so we'll need a new alternative to disambiguate what game they are referring to.
 
-                    // Now, do a search of pairs for the first one that has the accepting player as the defender.
+                    // Passing side effects to command handler?
+                    // Could make a ID type known as DiscordId that handles this, makes it less side effecty
+                    val (newGameInstances, newChallengePairs, reply) = CommandHandler.accept(challengePairs, message.authorId.toString)
 
-                    if (gameInstances.exists( gameInstance =>
-                      gameInstance.defender.id == message.authorId.toString
-                        && gameInstance.phase == ChallengingPhase)) {
+                    gameInstances = newGameInstances
+                    challengePairs = newChallengePairs
 
-                      // Okay, move game to "playing" phase
-                    }
-
-                    gameInstances.map(gameInstance =>
-
-                      if (gameInstance.defender.id == message.authorId.toString
-                        && gameInstance.phase == ChallengingPhase) {
-                        gameInstance.changePhase(PlayingPhase)
-                      } else {
-
-                      }
-                    )
-
-                    // TODO: Fix this, we shouldn't need this var to do this logic
-                    var foundOne = false
-                    // Check the player is part of a pair
-                    challengePairs.foreach( pair =>
-                      // If true, delete pair and make game
-                      if (pair.defender.id == message.authorId.toString) {
-                        val (gameState, message) = CommandHandler.newGame()
-                        val gameInstance = new gameInstance(gameState, pair)
-                        gameInstances = gameInstances :+ gameInstance
-                        foundOne = true
-                      }
-                    )
-
-                    if (!foundOne) {
-                      // If not, tell player they stupid
-                    }
-
-
-
-
-                    // Make playerPair class that you can 2 tuple with gameState, then search games for that.
-                    // This keeps player in the side effect layer, as it's id and token are both side effects.
-                    // The 'role' is then passed down, which the side effect free part.
-                    run (replyMessage(message, CommandHandler.accept()))
+                    run (replyMessage(message, reply))
 
                   case CommandsRegex.Drop(_, col, _) =>
-                    // Find the players responsible and pass the command down. (So command with two users?
-                    // How do we know what game the users are associated with?
+
+                    val (newGameInstances, reply) = CommandHandler.drop(col, gameInstances, message.authorId.toString)
+
+                    gameInstances = newGameInstances
+
+                    run (replyMessage(message, reply))
+
                   case _ =>
                     run (replyMessage(message, Strings.help))
                 }
@@ -125,14 +91,7 @@ object DiscordWrapper {
     }
   }
 
-  def parseMessageIntoCommand(message: String): Option[Command] = {
-    message match {
-      case CommandsRegex.Challenge(_, opponent, _) => Some(Command(Challenge))
-      case _ => None
-    }
-  }
-
-  // TODO: Why does request need _ ?
+  // TODO: Why does request need _ and NotUsed?
   // Formats our reply message nicely, we can @ the user here
   def replyMessage(message: Message, reply: String): Request[_, NotUsed] = {
     CreateMessage.mkContent(message.channelId, reply)
