@@ -35,4 +35,8 @@ object Strings {
   // Column is full
   val ColFull = "Column is full."
 
+  val Forfeit = "You gave up. Game over, man."
+
+  val FailedForfeit = "You're not in a game, don't go giving up already!"
+
 }

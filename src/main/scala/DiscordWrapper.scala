@@ -77,6 +77,14 @@ object DiscordWrapper {
 
                     run (replyMessage(message, reply))
 
+                  case CommandsRegex.Forfeit(_) =>
+
+                    val (newGameInstances, reply) = CommandHandler.forfeit(gameInstances, message.authorId.toString)
+
+                    gameInstances = newGameInstances
+
+                    run (replyMessage(message, reply))
+
                   case _ =>
                     run (replyMessage(message, Strings.Help))
                 }

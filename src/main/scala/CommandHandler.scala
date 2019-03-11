@@ -68,10 +68,22 @@ object CommandHandler {
     (newGameInstances, reply)
   }
 
+  def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+
+    val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.has(playerId).isDefined)
+
+    if (newGameInstances.length == gameInstances.length) {
+      (gameInstances, Strings.FailedForfeit)
+    } else {
+      (newGameInstances, Strings.Forfeit)
+    }
+
+  }
+
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
   // TODO: Could bring out the gameInstance part and have only gameState in here
-  def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+  private def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
 
     val optionRole = gameInstance.has(playerId)
     val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
