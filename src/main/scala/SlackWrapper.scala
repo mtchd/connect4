@@ -60,6 +60,7 @@ object SlackWrapper {
 
     val thread = acceptMessage.thread_ts.getOrElse{ return }
 
+    // TODO: Some kind of pure concept of a user?
     if (thread == challengeMessage.ts) {
       if (acceptMessage.user == opponentId) {
 
