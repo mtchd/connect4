@@ -19,7 +19,6 @@ object DiscordWrapper {
 
     //TODO: Investigate using a ListBuffer instead of a list, seeing as we are going mutable.
     var gameInstances: List[GameInstance] = List.empty
-    var challengePairs: List[PlayerPair] = List.empty
 
     val clientSettings = ClientSettings(token)
     val futureClient = clientSettings.createClient()
@@ -61,10 +60,9 @@ object DiscordWrapper {
                     // Passing side effects to command handler?
                     // Could make a ID type known as DiscordId that handles this, makes it less side effecty
                     val (newGameInstances, newChallengePairs, reply) =
-                      CommandHandler.accept(gameInstances, challengePairs, message.authorId.toString)
+                      CommandHandler.accept(gameInstances, message.authorId.toString)
 
                     gameInstances = newGameInstances
-                    challengePairs = newChallengePairs
 
                     run (replyMessage(message, reply))
 

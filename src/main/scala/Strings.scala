@@ -41,4 +41,6 @@ object Strings {
 
   val Reject = "Rejected!"
 
+  val FailedRenderBoard = "No game playing with this pair."
+
 }

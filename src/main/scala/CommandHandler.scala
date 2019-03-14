@@ -1,3 +1,4 @@
+import scala.concurrent.Future
 
 object CommandHandler {
 
@@ -18,35 +19,30 @@ object CommandHandler {
   }
 
   // TODO: Best way to format this?
-  def accept(gameInstances: List[GameInstance], challengePairs: List[PlayerPair], accepterId: String):
-  (List[GameInstance], List[PlayerPair], String) = {
+  def accept(gameInstances: List[GameInstance], accepterId: String):
+  (List[GameInstance], String) = {
 
-    // TODO: Fix this, we shouldn't need this var to do this logic
-    var foundOne = false
-    var newGameInstances = gameInstances
-    var newChallengePairs = challengePairs
-    var gameStatePrintout = "Failed to render game."
-
-    // Check the player is part of a pair
-    // TODO: Abstract this to function which returns foundOne, newGameInstances and newChallengePairs?
-    challengePairs.foreach( pair =>
-      // If true, delete pair and make game
-      if (pair.defender.id == accepterId) {
-        val gameState = GameState.newDefaultBoard()
-        val gameInstance = GameInstance(gameState, pair)
-        newGameInstances = newGameInstances :+ gameInstance
-        newChallengePairs = challengePairs.filterNot( cPair => pair == cPair)
-        foundOne = true
-        gameStatePrintout = gameState.boardAsString(pair.defender, pair.challenger)
+    val challengeToAccept: Option[GameInstance] =
+      gameInstances.find{
+        case Challenged(playerPair) => playerPair.defender.id == accepterId
+        case Playing(_, _) => false
       }
-    )
 
-    if (foundOne) {
-      (newGameInstances, newChallengePairs, Strings.InGameCommands + "\n" + gameStatePrintout )
-    } else {
-      // If not, tell player they stupid
-      (gameInstances, challengePairs, Strings.FailedAcceptOrReject)
+    val (playing, reply) = challengeToAccept match {
+      case Some(gameInstance) => {
+        val playing: Playing = gameInstance.startPlaying
+        val gameStatePrintout = playing.boardAsString
+        (playing, Strings.InGameCommands + "\n" + gameStatePrintout)
+      }
+      case None => (gameInstances, Strings.FailedAcceptOrReject)
     }
+
+    val newGameInstances = gameInstances.map {
+      case challenged @ Challenged(playerPair) if playerPair.defender.id == accepterId => challenged.startPlaying
+      case gameInstance => gameInstance
+    }
+
+    (newGameInstances, reply)
 
   }
 
@@ -90,6 +86,8 @@ object CommandHandler {
     } else {
       (newChallengerPairs, Strings.Reject)
     }
+
+
   }
 
   // TODO: Better name for function
