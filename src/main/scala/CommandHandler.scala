@@ -19,23 +19,22 @@ object CommandHandler {
 
   }
 
-  // TODO: Best way to format this?
-  def accept(gameInstances: List[GameInstance], accepterId: String):
-  (List[GameInstance], String) = {
+  // TODO: Come back to this with Jake, at the moment it goes through the list twice.
+  def accept(gameInstances: List[GameInstance], accepterId: String): (List[GameInstance], String) = {
 
     val challengeToAccept: Option[GameInstance] =
-      gameInstances.find{
+      gameInstances.find {
         case Challenged(playerPair) => playerPair.defender.id == accepterId
         case Playing(_, _) => false
       }
 
-    val (playing, reply) = challengeToAccept match {
+    val reply = challengeToAccept match {
       case Some(gameInstance) => {
         val playing: Playing = gameInstance.startPlaying
         val gameStatePrintout = playing.boardAsString
-        (playing, Strings.InGameCommands + "\n" + gameStatePrintout)
+        Strings.InGameCommands + "\n" + gameStatePrintout
       }
-      case None => (gameInstances, Strings.FailedAcceptOrReject)
+      case None => Strings.FailedAcceptOrReject
     }
 
     val newGameInstances = gameInstances.map {
@@ -44,13 +43,22 @@ object CommandHandler {
     }
 
     (newGameInstances, reply)
-
   }
 
   def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
     // TODO: Shouldn't need to use var here
     var reply = "Something went wrong."
+
+    // Find game instance to drop into and return it
+    val playing: Option[GameInstance] = {
+      gameInstances.find {
+        case Challenged(_) => false
+        case Playing(_, playerPair) => playerPair.roleFromPair(playerId).isDefined
+      }
+    }
+
+    // drop into, get modified thing back
 
     // TODO: Should only change one game instance...but has the potential to do many.
     val newGameInstances = gameInstances.map{ gameInstance =>
@@ -81,31 +89,33 @@ object CommandHandler {
   // TODO: This is very similar to forfeit, perhaps they can be merged somehow
   def reject(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.pair.defender.id == playerId)
-
-    if (newGameInstances.length == gameInstances.length) {
-      (gameInstances, Strings.FailedAcceptOrReject)
-    } else {
-      (newGameInstances, Strings.Reject)
+    // Checks we have a game where this guy exists
+    // We need to actually check if we have a Challenged() if this guy exists...
+    val newGameInstances = gameInstances.filterNot {
+      case Challenged(playerPair) => playerPair.roleFromPair(playerId).isDefined
+      case Playing(_,_) => false
     }
 
-
+    if (newGameInstances.length == gameInstances.length)
+      (gameInstances, Strings.FailedAcceptOrReject)
+    else
+      (newGameInstances, Strings.Reject)
   }
 
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
   // TODO: Could bring out the gameInstance part and have only gameState in here
-  private def playIf(col: Int, thing: GameInstance, playerId: String): (GameInstance, String) = {
+  private def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
 
 
-    val optionRole = thing.playerRole(playerId)
-    val playerRole = optionRole.getOrElse{ return (thing, Strings.FailedDrop) }
-    val gameInstance = thing match {
-      case Challenged(_) => return (thing, Strings.FailedDrop)
+    val optionRole = gameInstance.playerRole(playerId)
+    val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
+    val playing = gameInstance match {
+      case Challenged(_) => { return (gameInstance, Strings.FailedDrop) }
       case playing @ Playing(_,_) => playing
     }
 
-    val gameState = gameInstance.gameState
+    val gameState = playing.gameState
 
     println("In playIf")
 
@@ -113,7 +123,7 @@ object CommandHandler {
     // TODO: I highly doubt this works due to the return in the map
     gameState.lastMove.map{ lastMove =>
       if (lastMove.playerRole == playerRole) {
-        return (gameInstance, Strings.WrongTurn)
+        return (playing, Strings.WrongTurn)
       } else {
         lastMove
       }
@@ -121,7 +131,7 @@ object CommandHandler {
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      return (gameInstance, Strings.OutOfBounds)
+      return (playing, Strings.OutOfBounds)
     }
 
     // Get corresponding column
@@ -132,16 +142,16 @@ object CommandHandler {
 
     // If column was full
     if (move.row < 0) {
-      return (gameInstance, Strings.ColFull)
+      return (playing, Strings.ColFull)
     }
 
     // TODO: Should be version of replaceCell which updates the last move as well.
     val newState = gameState.replaceCell(gameState, move.row, move.col, playerRole).updateLastMoveOnly(Some(move))
 
-    val newInstance = Playing(newState, gameInstance.playerPair)
+    val newInstance = Playing(newState, playing.playerPair)
 
     // TODO: This could be less verbose
-    (newInstance, newState.boardAsString(gameInstance.playerPair.defender, gameInstance.playerPair.challenger))
+    (newInstance, newState.boardAsString(playing.playerPair.defender, playing.playerPair.challenger))
 
   }
 }

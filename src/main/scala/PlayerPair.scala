@@ -1,4 +1,11 @@
-case class PlayerPair(challenger: Player, defender: Player)
+case class PlayerPair(challenger: Player, defender: Player) {
+
+  def roleFromPair(playerId: String): Option[CellContents] = playerId match {
+    case challenger.id => Some(Challenger)
+    case defender.id => Some(Defender)
+    case _ => None
+  }
+}
 
 object PlayerPair {
 

@@ -16,15 +16,17 @@ sealed trait GameInstance {
   // Returns role of player, if they are in our pair
   def playerRole(playerId: String): Option[CellContents] = this match {
 
-    case Challenged(_) => None
-    case Playing(_, playerPair) => {
-      playerId match {
-        case playerPair.challenger.id => Some(Challenger)
-        case playerPair.defender.id => Some(Defender)
-        case _ => None
-      }
-    }
+    case Challenged(playerPair) => playerPair.roleFromPair(playerId)
+    case Playing(_, playerPair) => playerPair.roleFromPair(playerId)
   }
+
+//  def findInstanceWithDefender(playerId: String, gameInstances: List[GameInstance]): Unit ={
+//
+//    gameInstances.find {
+//      case Challenged(playerPair) => playerPair.defender.id == playerId
+//      case Playing(_, _) => false
+//    }
+//  }
 }
 
 case class Challenged(playerPair: PlayerPair) extends GameInstance

@@ -13,6 +13,7 @@ object DiscordWrapper {
   val GeneralCommands = "!"
   private val token = ConfigFactory.load().getString("secrets.discordApiKey")
   private val settings = ClientSettings(token, commandSettings = CommandSettings(prefixes = Set(GeneralCommands), needsMention = true))
+  import settings.executionContext
 
   def startListening(): Unit = {
 
