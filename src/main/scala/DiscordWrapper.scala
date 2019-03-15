@@ -13,7 +13,6 @@ object DiscordWrapper {
   val GeneralCommands = "!"
   private val token = ConfigFactory.load().getString("secrets.discordApiKey")
   private val settings = ClientSettings(token, commandSettings = CommandSettings(prefixes = Set(GeneralCommands), needsMention = true))
-  import settings.executionContext
 
   def startListening(): Unit = {
 
@@ -47,10 +46,10 @@ object DiscordWrapper {
                   case CommandsRegex.Challenge(_, opponentId, _) =>
 
                     // Might not be in commandHandler's scope
-                    val (newChallengePairs, reply) =
-                      CommandHandler.challenge(challengePairs, opponentId, message.authorId.toString)
+                    val (newGameInstances, reply) =
+                      CommandHandler.challenge(gameInstances, opponentId, message.authorId.toString)
 
-                    challengePairs = newChallengePairs
+                    gameInstances = newGameInstances
                     run (replyMessage(message, reply))
 
                   case CommandsRegex.Accept(_, _) =>
@@ -59,7 +58,7 @@ object DiscordWrapper {
 
                     // Passing side effects to command handler?
                     // Could make a ID type known as DiscordId that handles this, makes it less side effecty
-                    val (newGameInstances, newChallengePairs, reply) =
+                    val (newGameInstances, reply) =
                       CommandHandler.accept(gameInstances, message.authorId.toString)
 
                     gameInstances = newGameInstances
@@ -85,9 +84,9 @@ object DiscordWrapper {
 
                   case CommandsRegex.Reject(_) =>
 
-                    val (newChallengePairs, reply) = CommandHandler.reject(challengePairs, message.authorId.toString)
+                    val (newGameInstances, reply) = CommandHandler.reject(gameInstances, message.authorId.toString)
 
-                    challengePairs = newChallengePairs
+                    gameInstances = newGameInstances
 
                     run (replyMessage(message, reply))
 

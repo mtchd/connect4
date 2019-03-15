@@ -5,16 +5,17 @@ object CommandHandler {
   // TODO: Side effect leak here...needs to be some way of handling these ids
   // TODO: In future, we give the ability to customise token
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
-  def challenge(challengePairs: List[PlayerPair], defenderId: String, challengerId: String): (List[PlayerPair], String) = {
+  def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
 
     // TODO: Maybe a for-comprehension is better here
     // This could be done in one line, but I've spaced it out here for better readability
 
-    val pair = PlayerPair.newPairFromIds(challengerId, defenderId)
-    val newChallengePairs = challengePairs :+ pair
-    val reply = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
+    val pair             = PlayerPair.newPairFromIds(challengerId, defenderId)
+    val newGameInstance  = Challenged(pair)
+    val newGameInstances = gameInstances :+ newGameInstance
+    val reply            = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
-    (newChallengePairs, reply)
+    (newGameInstances, reply)
 
   }
 
@@ -67,7 +68,7 @@ object CommandHandler {
   // TODO: Logic could be nicer
   def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.has(playerId).isDefined)
+    val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.playerRole(playerId).isDefined)
 
     if (newGameInstances.length == gameInstances.length) {
       (gameInstances, Strings.FailedForfeit)
@@ -78,13 +79,14 @@ object CommandHandler {
   }
 
   // TODO: This is very similar to forfeit, perhaps they can be merged somehow
-  def reject(challengePairs: List[PlayerPair], playerId: String): (List[PlayerPair], String) = {
-    val newChallengerPairs = challengePairs.filterNot(pair => pair.defender.id == playerId)
+  def reject(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    if (newChallengerPairs.length == challengePairs.length) {
-      (challengePairs, Strings.FailedAcceptOrReject)
+    val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.pair.defender.id == playerId)
+
+    if (newGameInstances.length == gameInstances.length) {
+      (gameInstances, Strings.FailedAcceptOrReject)
     } else {
-      (newChallengerPairs, Strings.Reject)
+      (newGameInstances, Strings.Reject)
     }
 
 
@@ -93,10 +95,15 @@ object CommandHandler {
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
   // TODO: Could bring out the gameInstance part and have only gameState in here
-  private def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+  private def playIf(col: Int, thing: GameInstance, playerId: String): (GameInstance, String) = {
 
-    val optionRole = gameInstance.has(playerId)
-    val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
+
+    val optionRole = thing.playerRole(playerId)
+    val playerRole = optionRole.getOrElse{ return (thing, Strings.FailedDrop) }
+    val gameInstance = thing match {
+      case Challenged(_) => return (thing, Strings.FailedDrop)
+      case playing @ Playing(_,_) => playing
+    }
 
     val gameState = gameInstance.gameState
 
@@ -131,7 +138,7 @@ object CommandHandler {
     // TODO: Should be version of replaceCell which updates the last move as well.
     val newState = gameState.replaceCell(gameState, move.row, move.col, playerRole).updateLastMoveOnly(Some(move))
 
-    val newInstance = GameInstance(newState, gameInstance.playerPair)
+    val newInstance = Playing(newState, gameInstance.playerPair)
 
     // TODO: This could be less verbose
     (newInstance, newState.boardAsString(gameInstance.playerPair.defender, gameInstance.playerPair.challenger))
