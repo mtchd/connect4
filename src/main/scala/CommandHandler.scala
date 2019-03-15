@@ -50,16 +50,6 @@ object CommandHandler {
     // TODO: Shouldn't need to use var here
     var reply = "Something went wrong."
 
-    // Find game instance to drop into and return it
-    val playing: Option[GameInstance] = {
-      gameInstances.find {
-        case Challenged(_) => false
-        case Playing(_, playerPair) => playerPair.roleFromPair(playerId).isDefined
-      }
-    }
-
-    // drop into, get modified thing back
-
     // TODO: Should only change one game instance...but has the potential to do many.
     val newGameInstances = gameInstances.map{ gameInstance =>
       val (newGameInstance, sReply) = playIf(col, gameInstance, playerId)

@@ -20,13 +20,6 @@ sealed trait GameInstance {
     case Playing(_, playerPair) => playerPair.roleFromPair(playerId)
   }
 
-//  def findInstanceWithDefender(playerId: String, gameInstances: List[GameInstance]): Unit ={
-//
-//    gameInstances.find {
-//      case Challenged(playerPair) => playerPair.defender.id == playerId
-//      case Playing(_, _) => false
-//    }
-//  }
 }
 
 case class Challenged(playerPair: PlayerPair) extends GameInstance
