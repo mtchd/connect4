@@ -1,13 +1,29 @@
-import scala.concurrent.Future
-
 object CommandHandler {
+
+  def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], String) = {
+    message match {
+      // Might not be in commandHandler's scope
+      case CommandsRegex.Challenge(_, opponentId, _) => challenge(gameInstances, opponentId, authorId)
+      case CommandsRegex.Accept(_, _) =>
+        // We assume a player is only in one game at once. Discord does not have threading like
+        // slack, so we'll need a new alternative to disambiguate what game they are referring to.
+
+        // Passing side effects to command handler?
+        // Could make a ID type known as DiscordId that handles this, makes it less side effecty
+        CommandHandler.accept(gameInstances, authorId)
+      // TODO: Is using toString okay?
+      case CommandsRegex.Drop(_, col, _) => drop(col.toInt, gameInstances, authorId)
+      case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
+      case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
+      case _ => (gameInstances, Strings.Help)
+    }
+  }
 
   // TODO: Side effect leak here...needs to be some way of handling these ids
   // TODO: In future, we give the ability to customise token
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
-  def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
+  private def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
 
-    // TODO: Maybe a for-comprehension is better here
     // This could be done in one line, but I've spaced it out here for better readability
 
     val pair             = PlayerPair.newPairFromIds(challengerId, defenderId)
@@ -20,7 +36,7 @@ object CommandHandler {
   }
 
   // TODO: Come back to this with Jake, at the moment it goes through the list twice.
-  def accept(gameInstances: List[GameInstance], accepterId: String): (List[GameInstance], String) = {
+  private def accept(gameInstances: List[GameInstance], accepterId: String): (List[GameInstance], String) = {
 
     val challengeToAccept: Option[GameInstance] =
       gameInstances.find {
@@ -45,42 +61,41 @@ object CommandHandler {
     (newGameInstances, reply)
   }
 
-  def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+  private def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
     // TODO: Shouldn't need to use var here
-    var reply = "Something went wrong."
+    var reply = "You're not in a game"
 
     // TODO: Should only change one game instance...but has the potential to do many.
     val newGameInstances = gameInstances.map{ gameInstance =>
-      val (newGameInstance, sReply) = playIf(col, gameInstance, playerId)
+      val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
       // TODO: This reply is canoodled
-      println("Mapping game instances...")
-      reply = sReply
+      reply = newReply
       newGameInstance
     }
 
-    println("Reply:" + reply)
     (newGameInstances, reply)
   }
 
-  // TODO: Logic could be nicer
-  def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+  private def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    val newGameInstances = gameInstances.filterNot(gameInstance => gameInstance.playerRole(playerId).isDefined)
-
-    if (newGameInstances.length == gameInstances.length) {
-      (gameInstances, Strings.FailedForfeit)
-    } else {
-      (newGameInstances, Strings.Forfeit)
+    // Changes list
+    val newGameInstances = gameInstances.filterNot {
+      case Challenged(_) => false
+      case Playing(_, playerPair) => playerPair.roleFromPair(playerId).isDefined
     }
+
+    // Determines what reply to give
+    if (newGameInstances.length == gameInstances.length)
+      (gameInstances, Strings.FailedForfeit)
+    else
+      (newGameInstances, Strings.Forfeit)
 
   }
 
   // TODO: This is very similar to forfeit, perhaps they can be merged somehow
-  def reject(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+  private def reject(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    // Checks we have a game where this guy exists
-    // We need to actually check if we have a Challenged() if this guy exists...
     val newGameInstances = gameInstances.filterNot {
       case Challenged(playerPair) => playerPair.roleFromPair(playerId).isDefined
       case Playing(_,_) => false

@@ -1,16 +1,12 @@
 object ConsoleWrapper {
 
   def startListening(): Unit = {
-
     val gameState = GameState.newDefaultBoard()
-
     println("Game ready")
-
     listen(gameState)
-
   }
 
-  def listen(gameState: GameState): Unit = {
+  private def listen(gameState: GameState): Unit = {
 
     val playerRole = askRole()
 
@@ -24,7 +20,7 @@ object ConsoleWrapper {
     listen(newGameState)
   }
 
-  def askRole(): CellContents = {
+  private def askRole(): CellContents = {
     println("\nEnter 'D' for defender or 'C' for challenger:")
 
     val input = scala.io.StdIn.readLine()
@@ -36,7 +32,7 @@ object ConsoleWrapper {
     }
   }
 
-  def interpretCommand(gameState: GameState, playerRole: CellContents, input: String): (GameState, String) = {
+  private def interpretCommand(gameState: GameState, playerRole: CellContents, input: String): (GameState, String) = {
 
     input match {
 

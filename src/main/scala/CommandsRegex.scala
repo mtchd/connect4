@@ -18,7 +18,7 @@ object CommandsRegex {
   val DefenderRole: Regex = simpleRegex("d")
   val ChallengerRole: Regex = simpleRegex("c")
 
-  def atUserRegex(command: String): Regex = {
+  private def atUserRegex(command: String): Regex = {
     // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,
     // source: https://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html#special
     s"(?i)(.*$command.*<@)(.*)(>.*)".r
@@ -27,7 +27,7 @@ object CommandsRegex {
   // This is a bit loose, they just have to mention the word anywhere in what they are saying and it will accept.
   // However given the tendency of users to capitalise (esp. on phone) and add accidental spaces, this seems best.
   // Especially given the command will always be in a thread for the game
-  def simpleRegex(command: String): Regex = {
+  private def simpleRegex(command: String): Regex = {
     s"(?i)(.*$command.*)".r
   }
 

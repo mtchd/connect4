@@ -9,9 +9,9 @@ object Main {
     // Starts slack version of game
     // SlackWrapper.startListening()
 
-    // DiscordWrapper.startListening
+    DiscordWrapper.startListening()
 
-    ConsoleWrapper.startListening()
+    // ConsoleWrapper.startListening()
 
   }
 
