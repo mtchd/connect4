@@ -14,6 +14,10 @@ object CommandsRegex {
   // Flags
   val TokenFlag: Regex = "(?i)(.*-token.*=.*)(:.*:)(.*)".r
 
+  // For Console
+  val DefenderRole: Regex = simpleRegex("d")
+  val ChallengerRole: Regex = simpleRegex("c")
+
   def atUserRegex(command: String): Regex = {
     // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,
     // source: https://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html#special

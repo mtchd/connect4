@@ -33,28 +33,51 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   val nBoardCols: Int = board.head.length
   val nBoardRows: Int = board.length
 
-  def boardAsString(defender: Player, challenger: Player): String = {
-    // Need to multiply boardCols by 2 because the emojis are two characters each
-    val markers = Strings.ColMarkers.take(nBoardCols*2)
+  def boardAsString(
+                     defenderToken: String,
+                     challengerToken: String,
+                     winningToken: String,
+                     emptyToken: String,
+                     colMarkers: String
+                   )
+  : String = {
+
     // Makes each row into string
     val stringBoard = board.map{ row =>
       row.map { cell =>
         cell.contents match {
-          case Challenger => challenger.token
-          case Defender => defender.token
-          case Winner => Strings.WinningToken
-          case _ => Strings.EmptySpace
+          case Challenger => challengerToken
+          case Defender => defenderToken
+          case Winner => winningToken
+          case _ => emptyToken
         }
-      // Rows become strings, not lists
+        // Rows become strings, not lists
       }.mkString("")
     }
     // Constructs whole board with markers on top and bottom
-    "\nGame Board:\n" + markers + "\n" + stringBoard.mkString("\n") + "\n" + markers
+    "\nGame Board:\n" + colMarkers + "\n" + stringBoard.mkString("\n") + "\n" + colMarkers
+  }
+
+  def boardAsString(defender: Player, challenger: Player): String = {
+    boardAsString(
+      defender.token,
+      challenger.token,
+      Strings.WinningToken,
+      Strings.EmptySpace,
+      // Need to multiply boardCols by 2 because the emojis are two characters each
+      Strings.ColMarkers.take(nBoardCols*2))
   }
 
   // TODO: Maybe this should override toString
+  // For console printing
   def boardAsString(): String = {
-    boardAsString(Player("-1", Strings.DefenderToken), Player("-1", Strings.ChallengerToken))
+    boardAsString(
+      Strings.ConsoleDefenderToken,
+      Strings.ConsoleChallengerToken,
+      Strings.ConsoleWinningToken,
+      Strings.ConsoleEmptySpace,
+      Strings.ConsoleColMarkers.take(nBoardCols)
+    )
   }
 
   // This is really where the win check happens

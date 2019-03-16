@@ -4,12 +4,12 @@ object Strings {
   // There's obviously a better way of storing this but I'll figure it out later
   // TODO: Better way of storing strings
 
-  // Markers for board columns
-  val ColMarkers = "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣"
   // Help text sent with a challenge
   val NewChallengeHelp = "\nThey must respond with 'accept [-flags] (optional)' or 'reject.'"
   // Help text when failing to respond to a challenge
   val ChallengeHelp = "You will need to answer the challenge with 'accept' or 'reject"
+
+  // Slack / Discord Tokens
   // Token for empty space on the board.
   val EmptySpace = ":white_circle:"
   // Default token for a challenger
@@ -18,12 +18,26 @@ object Strings {
   val DefenderToken = ":large_blue_circle:"
   // Turns winning 4 tokens into these
   val WinningToken = ":medal:"
+  // Markers for board columns
+  val ColMarkers = "0⃣1⃣2⃣3⃣4⃣5⃣6⃣7⃣8⃣9⃣"
+
+  // Console Tokens
+  // Token for empty space on the board.
+  val ConsoleEmptySpace = "_"
+  // Default token for a challenger
+  val ConsoleChallengerToken = "C"
+  // Default token for a defender
+  val ConsoleDefenderToken = "D"
+  // Turns winning 4 tokens into these
+  val ConsoleWinningToken = "W"
+  val ConsoleColMarkers = "123456789"
+
   // Test challenger slack ID
   val TestChallengerId = "X"
   // General help, lists available commands
   val Help = "Available commands:\n@connect4 challenge @username -flags\n"
   // Help during game
-  val InGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'\n'reset'"
+  val InGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'"
   // When accepting or rejecting when not challenged by anyone
   val FailedAcceptOrReject = "You have not been challenged here, although you do seem mentally challenged."
   // When a play enters a drop command but isn't in a game
@@ -42,5 +56,7 @@ object Strings {
   val Reject = "Rejected!"
 
   val FailedRenderBoard = "No game playing with this pair."
+
+  def dropSuccess(col: Int): String = s"Dropped into column $col"
 
 }

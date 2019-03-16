@@ -97,7 +97,6 @@ object CommandHandler {
   // TODO: Could bring out the gameInstance part and have only gameState in here
   private def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
 
-
     val optionRole = gameInstance.playerRole(playerId)
     val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
     val playing = gameInstance match {
@@ -106,8 +105,6 @@ object CommandHandler {
     }
 
     val gameState = playing.gameState
-
-    println("In playIf")
 
     // Check it's this players turn
     // TODO: I highly doubt this works due to the return in the map
@@ -119,9 +116,22 @@ object CommandHandler {
       }
     }
 
+    val (newState, reply) = play(col, gameState, playerRole)
+
+    val newInstance = Playing(newState, playing.playerPair)
+
+    // TODO: This could be less verbose
+    val replyWithBoard = reply + "\n" + newState.boardAsString(playing.playerPair.defender, playing.playerPair.challenger)
+
+    (newInstance, replyWithBoard)
+
+  }
+
+  def play(col: Int, gameState: GameState, playerRole: CellContents): (GameState, String) = {
+
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {
-      return (playing, Strings.OutOfBounds)
+      return (gameState, Strings.OutOfBounds)
     }
 
     // Get corresponding column
@@ -132,16 +142,15 @@ object CommandHandler {
 
     // If column was full
     if (move.row < 0) {
-      return (playing, Strings.ColFull)
+      return (gameState, Strings.ColFull)
     }
 
     // TODO: Should be version of replaceCell which updates the last move as well.
     val newState = gameState.replaceCell(gameState, move.row, move.col, playerRole).updateLastMoveOnly(Some(move))
 
-    val newInstance = Playing(newState, playing.playerPair)
-
-    // TODO: This could be less verbose
-    (newInstance, newState.boardAsString(playing.playerPair.defender, playing.playerPair.challenger))
+    (newState, Strings.dropSuccess(col))
 
   }
+
+
 }
