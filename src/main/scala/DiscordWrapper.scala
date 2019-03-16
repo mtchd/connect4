@@ -24,85 +24,45 @@ object DiscordWrapper {
     val futureClient = clientSettings.createClient()
 
     futureClient.foreach { client =>
-
       client.onEvent {
         client.withCache[SourceRequest, APIMessage] { implicit c => {
-
           case APIMessage.Ready(_) => Monad[SourceRequest].pure(println("Now ready"))
-
           case APIMessage.MessageCreate(message, _) =>
-
             import client.sourceRequesterRunner._
-
             for {
               user <- liftOptionT(UserId(message.authorId).resolve)
               // TODO: Fix if statement hack
               _ <- if (user.bot.getOrElse(false)) {
                 client.sourceRequesterRunner.unit
               } else {
-
-                // TODO: Abstract this to it's own function
-                // TODO: Perhaps each part of it could be a function
-                message.content match {
-                  case CommandsRegex.Challenge(_, opponentId, _) =>
-
-                    // Might not be in commandHandler's scope
-                    val (newGameInstances, reply) =
-                      CommandHandler.challenge(gameInstances, opponentId, message.authorId.toString)
-
-                    gameInstances = newGameInstances
-                    run (replyMessage(message, reply))
-
-                  case CommandsRegex.Accept(_, _) =>
-                    // We assume a player is only in one game at once. Discord does not have threading like
-                    // slack, so we'll need a new alternative to disambiguate what game they are referring to.
-
-                    // Passing side effects to command handler?
-                    // Could make a ID type known as DiscordId that handles this, makes it less side effecty
-                    val (newGameInstances, reply) =
-                      CommandHandler.accept(gameInstances, message.authorId.toString)
-
-                    gameInstances = newGameInstances
-
-                    run (replyMessage(message, reply))
-
-                  case CommandsRegex.Drop(_, col, _) =>
-
-                    // TODO: Is using toString okay?
-                    val (newGameInstances, reply) = CommandHandler.drop(col.toInt, gameInstances, message.authorId.toString)
-
-                    gameInstances = newGameInstances
-
-                    run (replyMessage(message, reply))
-
-                  case CommandsRegex.Forfeit(_) =>
-
-                    val (newGameInstances, reply) = CommandHandler.forfeit(gameInstances, message.authorId.toString)
-
-                    gameInstances = newGameInstances
-
-                    run (replyMessage(message, reply))
-
-                  case CommandsRegex.Reject(_) =>
-
-                    val (newGameInstances, reply) = CommandHandler.reject(gameInstances, message.authorId.toString)
-
-                    gameInstances = newGameInstances
-
-                    run (replyMessage(message, reply))
-
-                  case _ =>
-                    run (replyMessage(message, Strings.Help))
-                }
-
+                val (newGameInstances, reply) = handleMessage(message, gameInstances)
+                gameInstances = newGameInstances
+                run (replyMessage(message, reply))
               }
             } yield ()
-
           case _ => client.sourceRequesterRunner.unit
         } }
       }
-
       client.login()
+    }
+  }
+
+  def handleMessage(message: Message, gameInstances: List[GameInstance]): (List[GameInstance], String) = {
+    message.content match {
+      // Might not be in commandHandler's scope
+      case CommandsRegex.Challenge(_, opponentId, _) => CommandHandler.challenge(gameInstances, opponentId, message.authorId.toString)
+      case CommandsRegex.Accept(_, _) =>
+        // We assume a player is only in one game at once. Discord does not have threading like
+        // slack, so we'll need a new alternative to disambiguate what game they are referring to.
+
+        // Passing side effects to command handler?
+        // Could make a ID type known as DiscordId that handles this, makes it less side effecty
+        CommandHandler.accept(gameInstances, message.authorId.toString)
+      // TODO: Is using toString okay?
+      case CommandsRegex.Drop(_, col, _) => CommandHandler.drop(col.toInt, gameInstances, message.authorId.toString)
+      case CommandsRegex.Forfeit(_) => CommandHandler.forfeit(gameInstances, message.authorId.toString)
+      case CommandsRegex.Reject(_) => CommandHandler.reject(gameInstances, message.authorId.toString)
+      case _ => (gameInstances, Strings.Help)
     }
   }
 
