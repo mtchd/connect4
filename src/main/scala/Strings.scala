@@ -30,7 +30,7 @@ object Strings {
   val ConsoleDefenderToken = "D"
   // Turns winning 4 tokens into these
   val ConsoleWinningToken = "W"
-  val ConsoleColMarkers = "123456789"
+  val ConsoleColMarkers = "0123456789"
 
   // Test challenger slack ID
   val TestChallengerId = "X"

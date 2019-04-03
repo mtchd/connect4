@@ -19,15 +19,17 @@ object SlackWrapper {
   // TODO: Divide the command parsing and the side effects up
   def startListening(): Unit = {
 
+    var gameInstances: List[GameInstance] = List.empty
+
     client.onMessage { message =>
 
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
-      if(mentionedIds.contains(selfId)) {
-
-        message.text match {
-          case _ => client.sendMessage(message.channel, s"<@${message.user}>: ${Strings.Help}")
-        }
+      // TODO: Add threading fucntionality
+      if (mentionedIds.contains(selfId)) {
+        val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
+        gameInstances = newGameInstances
+        client.sendMessage(message.channel, reply)
       }
     }
   }

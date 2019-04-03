@@ -22,7 +22,7 @@ object CommandHandler {
   // TODO: Side effect leak here...needs to be some way of handling these ids
   // TODO: In future, we give the ability to customise token
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
-  private def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
+  def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
 
     // This could be done in one line, but I've spaced it out here for better readability
 
@@ -67,7 +67,7 @@ object CommandHandler {
     var reply = "You're not in a game"
 
     // TODO: Should only change one game instance...but has the potential to do many.
-    val newGameInstances = gameInstances.map{ gameInstance =>
+    val newGameInstances = gameInstances.map { gameInstance =>
       val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
       // TODO: This reply is canoodled
       reply = newReply
