@@ -7,19 +7,12 @@ object Main {
   def main(args: Array[String]) {
 
     // Starts slack version of game
-    // SlackWrapper.startListening()
+    SlackWrapper.startListening()
 
     // DiscordWrapper.startListening()
 
-    ConsoleWrapper.startListening()
+    // ConsoleWrapper.startListening()
 
-    val fruits = ["apple", "bannana"]
-    fruits.map(fruit =>  )
-
-  }
-
-  def helloWorld(): Unit = {
-    println("Hello World!")
   }
 
 }

@@ -29,12 +29,12 @@ object SlackWrapper {
       if (mentionedIds.contains(selfId)) {
         val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
         gameInstances = newGameInstances
-        client.sendMessage(message.channel, reply)
+        println(message.thread_ts)
+        client.sendMessage(message.channel, s"<@${message.user}>: $reply", message.thread_ts)
       }
     }
   }
 
-  // TODO: Something has to be bad about this aggressive overloading
   def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
     client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
   }

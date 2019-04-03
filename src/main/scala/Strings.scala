@@ -15,6 +15,7 @@ object Strings {
   // Default token for a challenger
   val ChallengerToken = ":red_circle:"
   // Default token for a defender
+  // TODO: Should be yellow
   val DefenderToken = ":large_blue_circle:"
   // Turns winning 4 tokens into these
   val WinningToken = ":medal:"
