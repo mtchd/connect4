@@ -36,7 +36,7 @@ object Strings {
   // Test challenger slack ID
   val TestChallengerId = "X"
   // General help, lists available commands
-  val Help = "Available commands:\n@connect4 challenge @username -flags\n"
+  val Help = "To challenge a player, use:\n@connect4 challenge @username -flags\n"
   // Help during game
   val InGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'"
   // When accepting or rejecting when not challenged by anyone

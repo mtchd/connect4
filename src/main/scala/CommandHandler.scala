@@ -64,7 +64,7 @@ object CommandHandler {
   private def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
     // TODO: Shouldn't need to use var here
-    var reply = "You're not in a game"
+    var reply = "You don't seem to be associated with a game here."
 
     // TODO: Should only change one game instance...but has the potential to do many.
     val newGameInstances = gameInstances.map { gameInstance =>

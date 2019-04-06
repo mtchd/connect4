@@ -28,9 +28,18 @@ object SlackWrapper {
 
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
-      // TODO: Add threading fucntionality
+      // TODO: Add threading functionality
+      // Out of game commands
       if (mentionedIds.contains(selfId)) {
-        val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
+
+        // Clean the @connect4 off the message, as the number can cause a false positive with Drop?
+        // TODO: Better way of doing this
+        val cleanedText = message.text match {
+          case CommandsRegex.Clean(_, cleanedMessage) => cleanedMessage
+          case _ => message.text
+        }
+
+        val (newGameInstances, reply) = CommandHandler.interpret(cleanedText, message.user, gameInstances)
         gameInstances = newGameInstances
         println(message.thread_ts)
         client.sendMessage(message.channel, s"<@${message.user}>: $reply", message.thread_ts)
