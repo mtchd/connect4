@@ -10,16 +10,19 @@ object SlackWrapper {
 
   implicit val system: ActorSystem = ActorSystem("slack")
   implicit val ec: ExecutionContextExecutor = system.dispatcher
-  val client = SlackRtmClient(ConfigFactory.load().getString("secrets.slackApiKey"))
-  val selfId: String = client.state.self.id
 
   /**
     * Start point of the program, handles all incoming messages in channels the bot is present in.
     */
   // TODO: Divide the command parsing and the side effects up
-  def startListening(): Unit = {
+  def startListening(apiKeyPath: String): Unit = {
+
+    val client = SlackRtmClient(ConfigFactory.load().getString(apiKeyPath))
+    val selfId: String = client.state.self.id
 
     var gameInstances: List[GameInstance] = List.empty
+
+    println("starting to listen...")
 
     client.onMessage { message =>
 
@@ -35,7 +38,7 @@ object SlackWrapper {
     }
   }
 
-  def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
-    client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
-  }
+//  def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
+//    client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
+//  }
 }

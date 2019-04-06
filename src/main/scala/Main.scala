@@ -7,7 +7,7 @@ object Main {
   def main(args: Array[String]) {
 
     // Starts slack version of game
-    SlackWrapper.startListening()
+    SlackWrapper.startListening("secrets.reaSlackOauth")
 
     // DiscordWrapper.startListening()
 
