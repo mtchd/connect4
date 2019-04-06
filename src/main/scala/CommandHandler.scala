@@ -1,7 +1,15 @@
 object CommandHandler {
 
   def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], String) = {
-    message match {
+
+    // Clean the @connect4 off the message, as the number can cause a false positive with Drop?
+    // TODO: Better way of doing this
+    val cleanedText = message match {
+      case CommandsRegex.Clean(_, cleanedMessage) => cleanedMessage
+      case _ => message
+    }
+
+    cleanedText match {
       // Might not be in commandHandler's scope
       case CommandsRegex.Challenge(_, opponentId, _) => challenge(gameInstances, opponentId, authorId)
       case CommandsRegex.Accept(_, _) =>

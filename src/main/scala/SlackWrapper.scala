@@ -22,27 +22,26 @@ object SlackWrapper {
 
     var gameInstances: List[GameInstance] = List.empty
 
-    println("starting to listen...")
+    println("Now listening to Slack...")
 
     client.onMessage { message =>
 
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
+      // First, check if the message is in a thread. If it is, then we check if that thread fits one of our game
+      // instances.
+      // Then, we need to play exclusively on that gameInstance.
+      // If it doesn't have a game associated with it, check if we are mentioned in it.
+
+      // Two options here. We can take that single game instances, put it in a list, and feed it to interpret. Or make custom code.
+
       // TODO: Add threading functionality
       // Out of game commands
       if (mentionedIds.contains(selfId)) {
-
-        // Clean the @connect4 off the message, as the number can cause a false positive with Drop?
-        // TODO: Better way of doing this
-        val cleanedText = message.text match {
-          case CommandsRegex.Clean(_, cleanedMessage) => cleanedMessage
-          case _ => message.text
-        }
-
-        val (newGameInstances, reply) = CommandHandler.interpret(cleanedText, message.user, gameInstances)
+        val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
         gameInstances = newGameInstances
-        println(message.thread_ts)
-        client.sendMessage(message.channel, s"<@${message.user}>: $reply", message.thread_ts)
+        // Send the message.ts (timestamp) as the thread_ts parameter to reply as thread
+        client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(message.ts))
       }
     }
   }
