@@ -1,8 +1,10 @@
+import SlackWrapper.messageUser
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import slack.SlackUtil
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
+
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
@@ -31,17 +33,19 @@ object SlackWrapper {
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
       gameInstances = newGameInstances
-      println(message.ts)
-      println(message.thread_ts)
       message.thread_ts match {
-        case Some(thread_ts) => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(thread_ts))
-        case None => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(message.ts))
+        case Some(thread_ts) => messageUser(reply, message.channel, Some(thread_ts), message.user, client)
+        case None => messageUser(reply, message.channel, Some(message.ts), message.user, client)
       }
 
     }
   }
 
-//  def messageUser(message: String, channel: String, thread_ts: Option[String], slackId: String): Unit = {
-//    client.sendMessage(channel, s"<@$slackId>: $message", thread_ts)
-//  }
+  def messageUser(message: Option[String], channel: String, thread_ts: Option[String], slackId: String, client: SlackRtmClient): Unit = {
+    message match {
+      case Some(messageText) => client.sendMessage(channel, s"<@$slackId>: $messageText", thread_ts)
+      case None => ()
+    }
+
+  }
 }

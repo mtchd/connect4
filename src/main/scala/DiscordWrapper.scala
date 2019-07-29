@@ -34,7 +34,10 @@ object DiscordWrapper {
                 // Check that statement begins with @connect4
                 val (newGameInstances, reply) = CommandHandler.interpret(message.content, message.authorId.toString, gameInstances)
                 gameInstances = newGameInstances
-                run (replyMessage(message, reply))
+                reply match {
+                  case Some(text) => run (replyMessage(message, text))
+                  case None => client.sourceRequesterRunner.unit
+                }
               }
             } yield ()
           case _ => client.sourceRequesterRunner.unit
