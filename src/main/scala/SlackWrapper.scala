@@ -22,7 +22,6 @@ object SlackWrapper {
     val token = config.getString(apiKeyPath)
 
     val client = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 10.seconds)
-    val selfId: String = client.state.self.id
 
     var gameInstances: List[GameInstance] = List.empty
 
@@ -30,20 +29,15 @@ object SlackWrapper {
 
     client.onMessage { message =>
 
-      val mentionedIds = SlackUtil.extractMentionedIds(message.text)
-
-      // TODO: Add threading functionality
-      if (mentionedIds.contains(selfId)) {
-        val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
-        gameInstances = newGameInstances
-        println(message.ts)
-        println(message.thread_ts)
-        message.thread_ts match {
-          case Some(thread_ts) => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(thread_ts))
-          case None => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(message.ts))
-        }
-
+      val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
+      gameInstances = newGameInstances
+      println(message.ts)
+      println(message.thread_ts)
+      message.thread_ts match {
+        case Some(thread_ts) => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(thread_ts))
+        case None => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(message.ts))
       }
+
     }
   }
 
