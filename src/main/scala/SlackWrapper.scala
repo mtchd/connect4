@@ -26,7 +26,7 @@ object SlackWrapper {
 
     var gameInstances: List[GameInstance] = List.empty
 
-    println("starting to listen...")
+    println("Now listening to Slack...")
 
     client.onMessage { message =>
 

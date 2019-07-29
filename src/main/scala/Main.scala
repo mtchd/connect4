@@ -8,7 +8,6 @@ object Main {
 
     // Starts slack version of game
     SlackWrapper.startListening("secrets.rea")
-
     // DiscordWrapper.startListening()
 
     // ConsoleWrapper.startListening()

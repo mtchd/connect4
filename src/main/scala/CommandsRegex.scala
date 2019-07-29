@@ -7,7 +7,7 @@ object CommandsRegex {
   val Accept: Regex = "(?i)(.*accept)(.*)".r
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game
-  val Drop: Regex = "(?i)(.*)(\\d)(.*)".r
+  val Drop: Regex = "(?i)(.*)(\\d+)(.*)".r
   val Forfeit: Regex = simpleRegex("forfeit")
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
@@ -17,6 +17,9 @@ object CommandsRegex {
   // For Console
   val DefenderRole: Regex = simpleRegex("d")
   val ChallengerRole: Regex = simpleRegex("c")
+
+  // Other
+  val Clean: Regex = "(?i)(<@.*>)(.*)".r
 
   private def atUserRegex(command: String): Regex = {
     // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,
