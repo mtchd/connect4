@@ -1,6 +1,6 @@
 object CommandHandler {
 
-  def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], String) = {
+  def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String]) = {
 
     // Clean the @connect4 off the message, as the number can cause a false positive with Drop?
     // TODO: Better way of doing this
@@ -9,7 +9,7 @@ object CommandHandler {
       case _ => message
     }
 
-    cleanedText match {
+    val (gi, reply) = cleanedText match {
       // Might not be in commandHandler's scope
       case CommandsRegex.Challenge(_, opponentId, _) => challenge(gameInstances, opponentId, authorId)
       case CommandsRegex.Accept(_, _) =>
@@ -23,8 +23,15 @@ object CommandHandler {
       case CommandsRegex.Drop(_, col, _) => drop(col.toInt, gameInstances, authorId)
       case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
       case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
-      case _ => (gameInstances, Strings.Help)
+      // TODO: Update to return None cleanly
+      case _ => (gameInstances, "")
     }
+
+    reply match {
+      case "" => (gi, None)
+      case x => (gi, Some(x))
+    }
+
   }
 
   // TODO: Side effect leak here...needs to be some way of handling these ids
