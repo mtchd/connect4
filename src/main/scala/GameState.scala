@@ -41,7 +41,6 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
                      colMarkers: String
                    )
   : String = {
-
     // Makes each row into string
     val stringBoard = board.map{ row =>
       row.map { cell =>

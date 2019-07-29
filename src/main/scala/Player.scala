@@ -2,9 +2,7 @@
   * Represents player of a game.
   * @param token Character used to represent players token/disc in the board.
   */
-case class Player(id: String, token: String) {
-
-}
+case class Player(id: String, token: String)
 
 object Player {
 

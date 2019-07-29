@@ -1,14 +1,16 @@
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import slack.SlackUtil
-import slack.models.Message
+import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
-
 import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration._
 
 object SlackWrapper {
 
-  implicit val system: ActorSystem = ActorSystem("slack")
+  private val config = ConfigFactory.load()
+
+  implicit val system: ActorSystem = ActorSystem("slack"/* config.getConfig("akka")*/)
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
   /**
@@ -17,7 +19,9 @@ object SlackWrapper {
   // TODO: Divide the command parsing and the side effects up
   def startListening(apiKeyPath: String): Unit = {
 
-    val client = SlackRtmClient(ConfigFactory.load().getString(apiKeyPath))
+    val token = config.getString(apiKeyPath)
+
+    val client = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 10.seconds)
     val selfId: String = client.state.self.id
 
     var gameInstances: List[GameInstance] = List.empty
@@ -28,12 +32,17 @@ object SlackWrapper {
 
       val mentionedIds = SlackUtil.extractMentionedIds(message.text)
 
-      // TODO: Add threading fucntionality
+      // TODO: Add threading functionality
       if (mentionedIds.contains(selfId)) {
         val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
         gameInstances = newGameInstances
+        println(message.ts)
         println(message.thread_ts)
-        client.sendMessage(message.channel, s"<@${message.user}>: $reply", message.thread_ts)
+        message.thread_ts match {
+          case Some(thread_ts) => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(thread_ts))
+          case None => client.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(message.ts))
+        }
+
       }
     }
   }
