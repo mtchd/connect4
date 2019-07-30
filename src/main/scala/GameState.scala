@@ -94,31 +94,31 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     // This is pretty complex. Essentially, we check each of the 4 directions (e.g. Up/down or diagonal up right/down
     // left) for a "connect 4" and then replace those cells with medals if true, returning that winning board.
     fourInARow(board(move.row), playerRole)
-      .map(horizontal => replaceCells(move.row, horizontal, GameState.Horizontal))
+      .map(horizontal => replace4CellsWithWin(move.row, horizontal, GameState.Horizontal))
 
       .orElse(
         fourInARow(transposedBoard(move.col), playerRole)
-          .map(vertical => replaceCells(vertical, move.col, GameState.Vertical))
+          .map(vertical => replace4CellsWithWin(vertical, move.col, GameState.Vertical))
       )
       // TODO: Still magic numbers left
       // Index starts at -3 along diagonals, because that's the offset diagonally from the move, so when we return the
       // index, we know it's the start of our four in a row.
       .orElse(
         fourInARow(getDiagonal(move.row, move.col, -1), playerRole)
-          .map(upperRightDiag => replaceCells(move.row - (upperRightDiag - 3), move.col + (upperRightDiag - 3), GameState.UpperRight))
+          .map(upperRightDiag => replace4CellsWithWin(move.row - (upperRightDiag - 3), move.col + (upperRightDiag - 3), GameState.UpperRight))
       )
       .orElse(
         fourInARow(getDiagonal(move.row, move.col, 1), playerRole)
-          .map(lowerRightDiag => replaceCells(move.row + lowerRightDiag - 3, move.col + lowerRightDiag - 3, GameState.LowerRight))
+          .map(lowerRightDiag => replace4CellsWithWin(move.row + lowerRightDiag - 3, move.col + lowerRightDiag - 3, GameState.LowerRight))
       )
 
   }
 
-  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int)): GameState = {
+  def replace4CellsWithWin(startRow: Int, startCol: Int, direction: (Int,Int)): GameState = {
     replaceCells(startRow, startCol, direction, 3, Winner)
   }
 
-  def replaceCells(startRow: Int, startCol: Int, direction: (Int,Int), token: CellContents): GameState = {
+  def replace4Cells(startRow: Int, startCol: Int, direction: (Int,Int), token: CellContents): GameState = {
     replaceCells(startRow, startCol, direction, 3, token)
   }
 

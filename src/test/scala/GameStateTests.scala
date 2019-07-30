@@ -10,7 +10,7 @@ class GameStateTests extends FunSuite {
   def newStateWithFourCells(token: CellContents): GameState = {
     val gameState = GameState.newDefaultBoard()
     val newState =
-      gameState.replaceCells(0,0, GameState.Horizontal, token)
+      gameState.replace4Cells(0,0, GameState.Horizontal, token)
     println(newState.boardAsString())
     newState
   }
@@ -55,7 +55,7 @@ class GameStateTests extends FunSuite {
     val gameState = GameState.newDefaultBoard()
 
     val newState =
-      gameState.replaceCells(startRow, startCol, direction, Challenger)
+      gameState.replace4Cells(startRow, startCol, direction, Challenger)
 
     // println(newState.boardAsString())
 
@@ -73,7 +73,7 @@ class GameStateTests extends FunSuite {
     val gameState = GameState.newDefaultBoard()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0,GameState.LowerRight, Challenger)
+    val newState = gameState.replace4Cells(0,0,GameState.LowerRight, Challenger)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)
@@ -90,7 +90,7 @@ class GameStateTests extends FunSuite {
     val gameState = GameState.newDefaultBoard()
 
     // Down and to right replace cells
-    val newState = gameState.replaceCells(0,0, GameState.LowerRight, Challenger)
+    val newState = gameState.replace4Cells(0,0, GameState.LowerRight, Challenger)
 
     // Get diagonal from 0,0, going down and right as well as up and left.
     val diagonal = newState.getDiagonal(0,0,1)

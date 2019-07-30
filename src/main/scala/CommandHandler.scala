@@ -34,7 +34,6 @@ object CommandHandler {
 
   }
 
-  // TODO: Side effect leak here...needs to be some way of handling these ids
   // TODO: In future, we give the ability to customise token
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
   def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
@@ -82,14 +81,57 @@ object CommandHandler {
     var reply = "You don't seem to be associated with a game here."
 
     // TODO: Should only change one game instance...but has the potential to do many.
-    val newGameInstances = gameInstances.map { gameInstance =>
+    val playedGameInstances = gameInstances.map { gameInstance =>
       val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
       // TODO: This reply is canoodled
       reply = newReply
       newGameInstance
     }
 
-    (newGameInstances, reply)
+    checkWin(playedGameInstances, reply)
+
+  }
+
+  private def checkWin(gameInstances: List[GameInstance], currentReply: String): (List[GameInstance], String) = {
+
+    val (newGameInstances, maybeWinningGame) = lookForWinningGame(gameInstances)
+
+    maybeWinningGame match {
+      case Some(game) => (newGameInstances, replyWithBoard(game, Strings.Win))
+      case None => (gameInstances, currentReply)
+    }
+
+  }
+
+  // TODO: This should only loop through once, and just pop the value out
+  // Returns new game instances and maybe a winning game
+  def lookForWinningGame(gameInstances: List[GameInstance]): (List[GameInstance], Option[GameInstance]) = {
+
+    // Just get winning game
+    val maybeWinningGame = returnMaybeWinningGame(gameInstances)
+
+    // Just remove winning game
+    val newGameInstances = gameInstances.filterNot {
+      case Challenged(_) => false
+      case Playing(gameInstance, _) => gameInstance.maybeWinningBoard() match {
+        case Some(game) => true
+        case _ => false
+      }
+    }
+
+    (newGameInstances, maybeWinningGame)
+  }
+
+  // TODO: This is fucked
+  def returnMaybeWinningGame(gameInstances: List[GameInstance]): Option[GameInstance] = {
+    gameInstances.foreach {
+      case Challenged(_) => ()
+      case Playing(gameState, playerPair) => gameState.maybeWinningBoard() match {
+        case Some(winningGame) => return Some(Playing(winningGame, playerPair))
+        case _ => ()
+      }
+    }
+    None
   }
 
   private def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
@@ -150,11 +192,12 @@ object CommandHandler {
 
     val newInstance = Playing(newState, playing.playerPair)
 
-    // TODO: This could be less verbose
-    val replyWithBoard = reply + "\n" + newState.boardAsString(playing.playerPair.defender, playing.playerPair.challenger)
+    (newInstance, replyWithBoard(newInstance, reply))
 
-    (newInstance, replyWithBoard)
+  }
 
+  private def replyWithBoard(gameInstance: GameInstance, reply: String): String = {
+    reply + "\n" + gameInstance.boardAsString
   }
 
   def play(col: Int, gameState: GameState, playerRole: CellContents): (GameState, String) = {

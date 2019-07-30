@@ -23,7 +23,7 @@ object SlackWrapper {
 
     val token = config.getString(apiKeyPath)
 
-    val client = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 10.seconds)
+    val client = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
 
     var gameInstances: List[GameInstance] = List.empty
 

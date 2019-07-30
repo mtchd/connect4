@@ -58,6 +58,8 @@ object Strings {
 
   val FailedRenderBoard = "No game playing with this pair."
 
+  val Win = "You win!"
+
   def dropSuccess(col: Int): String = s"Dropped into column $col"
 
 }
