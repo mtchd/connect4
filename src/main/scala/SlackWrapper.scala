@@ -23,22 +23,32 @@ object SlackWrapper {
 
     val token = config.getString(apiKeyPath)
 
-    val client = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
+    val rtmClient = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
 
     var gameInstances: List[GameInstance] = List.empty
 
     println("Now listening to Slack...")
 
-    client.onMessage { message =>
+    // TODO: Get scope from slack admins to do this
+//    apiKeyPath match {
+//      case Strings.reaKeyPath => {
+//        val apiClient = SlackApiClient(token, SlackApiClient.defaultSlackApiBaseUri)
+//        apiClient.setChannelTopic("GHMTHENB0", "Server Status: Online :green:")
+//      }
+//      case _ => ()
+//    }
+
+    rtmClient.onMessage { message =>
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
       gameInstances = newGameInstances
       message.thread_ts match {
-        case Some(thread_ts) => messageUser(reply, message.channel, Some(thread_ts), message.user, client)
-        case None => messageUser(reply, message.channel, Some(message.ts), message.user, client)
+        case Some(thread_ts) => messageUser(reply, message.channel, Some(thread_ts), message.user, rtmClient)
+        case None => messageUser(reply, message.channel, Some(message.ts), message.user, rtmClient)
       }
 
     }
+
   }
 
   def messageUser(message: Option[String], channel: String, thread_ts: Option[String], slackId: String, client: SlackRtmClient): Unit = {

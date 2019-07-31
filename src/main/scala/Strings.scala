@@ -62,4 +62,6 @@ object Strings {
 
   def dropSuccess(col: Int): String = s"Dropped into column $col"
 
+  val reaKeyPath = "secrets.rea"
+
 }
