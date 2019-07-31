@@ -29,15 +29,6 @@ object SlackWrapper {
 
     println("Now listening to Slack...")
 
-    // TODO: Get scope from slack admins to do this
-//    apiKeyPath match {
-//      case Strings.reaKeyPath => {
-//        val apiClient = SlackApiClient(token, SlackApiClient.defaultSlackApiBaseUri)
-//        apiClient.setChannelTopic("GHMTHENB0", "Server Status: Online :green:")
-//      }
-//      case _ => ()
-//    }
-
     rtmClient.onMessage { message =>
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)

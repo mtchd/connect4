@@ -12,7 +12,7 @@ object Player {
     if (role == Defender) {
       Player(id, Strings.DefenderToken)
     } else {
-      Player(id, Strings.ChallengerToken )
+      Player(id, Strings.ChallengerToken)
     }
 
   }

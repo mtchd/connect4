@@ -4,14 +4,14 @@ class CommandHandlerTests extends FunSuite {
 
   val challengerId = "007"
   val defenderId = "666"
-  val testPair: PlayerPair = PlayerPair.newPairFromIds(challengerId, defenderId)
+  val testPair: PlayerPair = PlayerPair.newDefaultPairFromIds(challengerId, defenderId)
 
   test("CommandHandler.challenge") {
 
     // Mock values
     val instances: List[GameInstance] = List.empty
 
-    val (newInstances, reply) = CommandHandler.challenge(instances, defenderId, challengerId)
+    val (newInstances, reply) = CommandHandler.challenge(instances, defenderId, challengerId, "")
 
     assert(reply == s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}")
     assert(newInstances.length == 1)

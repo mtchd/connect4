@@ -8,6 +8,16 @@ sealed trait GameInstance {
     case playing @ Playing(_,_) => playing
   }
 
+  def startPlayingWithDefenderToken(token: String): Playing = this match{
+    case Challenged(playerPair) => {
+      // Update the playerPair with the defender token
+      val newPlayerPair = playerPair.updateDefenderToken(token)
+      val gameState = GameState.newDefaultBoard()
+      Playing(gameState, newPlayerPair)
+    }
+    case playing @ Playing(_,_) => playing
+  }
+
   def boardAsString: String = this match {
     case Challenged(_) => Strings.FailedRenderBoard
     case Playing(gameState, playerPair) => gameState.boardAsString(playerPair.defender, playerPair.challenger)

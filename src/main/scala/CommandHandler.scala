@@ -11,18 +11,19 @@ object CommandHandler {
 
     val (gi, reply) = cleanedText match {
       // Might not be in commandHandler's scope
-      case CommandsRegex.Challenge(_, opponentId, _) => challenge(gameInstances, opponentId, authorId)
-      case CommandsRegex.Accept(_, _) =>
+      case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstances, opponentId, authorId, flags)
+      case CommandsRegex.Accept(_, flags) =>
         // We assume a player is only in one game at once. Discord does not have threading like
         // slack, so we'll need a new alternative to disambiguate what game they are referring to.
 
         // Passing side effects to command handler?
         // Could make a ID type known as DiscordId that handles this, makes it less side effecty
-        CommandHandler.accept(gameInstances, authorId)
+        CommandHandler.accept(gameInstances, authorId, flags)
       // TODO: Is using toString okay?
       case CommandsRegex.Drop(_, col, _) => drop(col.toInt, gameInstances, authorId)
       case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
       case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
+      case CommandsRegex.Help(_) => (gameInstances, Strings.Help)
       // TODO: Update to return None cleanly
       case _ => (gameInstances, "")
     }
@@ -34,13 +35,19 @@ object CommandHandler {
 
   }
 
-  // TODO: In future, we give the ability to customise token
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
-  def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String): (List[GameInstance], String) = {
+  def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String, flags: String): (List[GameInstance], String) = {
+
+    // Read flags
+    // TODO: Only allows one flag
+    val challengerToken = flags match {
+      case CommandsRegex.TokenFlag(_, token, _) => token
+      case _ => Strings.ChallengerToken
+    }
 
     // This could be done in one line, but I've spaced it out here for better readability
-
-    val pair             = PlayerPair.newPairFromIds(challengerId, defenderId)
+    // TODO: Inconsistent wat of doing custom tokens
+    val pair             = PlayerPair.newPairFromIdsWithChallengerToken(challengerId, defenderId, challengerToken)
     val newGameInstance  = Challenged(pair)
     val newGameInstances = gameInstances :+ newGameInstance
     val reply            = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
@@ -50,13 +57,19 @@ object CommandHandler {
   }
 
   // TODO: Come back to this with Jake, at the moment it goes through the list twice.
-  private def accept(gameInstances: List[GameInstance], accepterId: String): (List[GameInstance], String) = {
+  private def accept(gameInstances: List[GameInstance], accepterId: String, flags: String): (List[GameInstance], String) = {
 
     val challengeToAccept: Option[GameInstance] =
       gameInstances.find {
         case Challenged(playerPair) => playerPair.defender.id == accepterId
         case Playing(_, _) => false
       }
+
+    // TODO: Only allows one flag
+    val token = flags match {
+      case CommandsRegex.TokenFlag(_, emoji, _) => emoji
+      case _ => Strings.DefenderToken
+    }
 
     val reply = challengeToAccept match {
       case Some(gameInstance) => {
@@ -67,8 +80,9 @@ object CommandHandler {
       case None => Strings.FailedAcceptOrReject
     }
 
+    // TODO: Inconsistent way of doing custom tokens
     val newGameInstances = gameInstances.map {
-      case challenged @ Challenged(playerPair) if playerPair.defender.id == accepterId => challenged.startPlaying
+      case challenged @ Challenged(playerPair) if playerPair.defender.id == accepterId => challenged.startPlayingWithDefenderToken(token)
       case gameInstance => gameInstance
     }
 
