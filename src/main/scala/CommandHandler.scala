@@ -1,37 +1,14 @@
 object CommandHandler {
 
-  def getSpecificGame(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String])
-
-  // If a player sends a message it's either:
-  // A challenge, in which case we need to make a new game
-  // Or something relating to an existing game
-
-  // TODO: Need challenge/accept layer that whittles down to only one game instance
   def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String]) = {
 
-    // Clean the @connect4 off the message, as the number can cause a false positive with Drop?
-    // TODO: Better way of doing this
-    val cleanedText = message match {
-      case CommandsRegex.Clean(_, cleanedMessage) => cleanedMessage
-      case _ => message
-    }
-
-    // If it's a challenge, we need to create a new one game
-
-    // Get the specific game this person is referring to.
-
-    val (gi, reply) = cleanedText match {
-      // Might not be in commandHandler's scope
+    val (gi, reply) = message match {
       case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstances, opponentId, authorId, flags)
-
       case CommandsRegex.Accept(_, flags) =>
         // We assume a player is only in one game at once. Discord does not have threading like
         // slack, so we'll need a new alternative to disambiguate what game they are referring to.
-
-        // Passing side effects to command handler?
-        // Could make a ID type known as DiscordId that handles this, makes it less side effecty
+        // TODO: Passing the playerRole is better than the ID
         CommandHandler.accept(gameInstances, authorId, flags)
-      // TODO: Is using toString okay?
       case CommandsRegex.Drop(col) => drop(col.toInt, gameInstances, authorId)
       case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
       case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
@@ -50,7 +27,12 @@ object CommandHandler {
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
   def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String, flags: String): (List[GameInstance], String) = {
 
-    // TODO: Check that person hasn't challenged anyone else in these game instances
+     if (gameInstances.exists {
+      case Challenged(playerPair) => playerPair.isPlayerInPair(defenderId, challengerId)
+      case Playing(_, playerPair) => playerPair.isPlayerInPair(defenderId, challengerId)
+    }) {
+       return (gameInstances, Strings.AlreadyInGame)
+     }
 
     // Read flags
     // TODO: Only allows one flag

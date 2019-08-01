@@ -10,6 +10,15 @@ case class PlayerPair(challenger: Player, defender: Player) {
     val defender = Player(this.defender.id, token)
     PlayerPair(this.challenger, defender)
   }
+
+  def isPlayerInPair(playerId: String): Boolean = {
+    case challenger.id => true
+    case defender.id => true
+    case _ => false
+  }
+
+  def isPlayerInPair(challengerId: String, defenderId: String): Boolean =
+    isPlayerInPair(challengerId) || isPlayerInPair(defenderId)
 }
 
 object PlayerPair {
