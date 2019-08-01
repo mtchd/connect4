@@ -1,7 +1,5 @@
-import SlackWrapper.messageUser
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
-import slack.SlackUtil
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
@@ -25,28 +23,23 @@ object SlackWrapper {
 
     val rtmClient = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
 
-    var gameInstances: List[GameInstance] = List.empty
+    var threadAndGameInstances: Map[String, List[GameInstance]] = Map.empty
 
     println("Now listening to Slack...")
 
     rtmClient.onMessage { message =>
 
+      val thread = message.thread_ts.getOrElse(message.ts)
+
+      val gameInstances = threadAndGameInstances.getOrElse(thread, List.empty)
+
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
-      gameInstances = newGameInstances
-      message.thread_ts match {
-        case Some(thread_ts) => messageUser(reply, message.channel, Some(thread_ts), message.user, rtmClient)
-        case None => messageUser(reply, message.channel, Some(message.ts), message.user, rtmClient)
+
+      threadAndGameInstances = threadAndGameInstances.updated(thread, newGameInstances)
+
+      reply.foreach { replyText =>
+        rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread))
       }
-
     }
-
-  }
-
-  def messageUser(message: Option[String], channel: String, thread_ts: Option[String], slackId: String, client: SlackRtmClient): Unit = {
-    message match {
-      case Some(messageText) => client.sendMessage(channel, s"<@$slackId>: $messageText", thread_ts)
-      case None => ()
-    }
-
   }
 }

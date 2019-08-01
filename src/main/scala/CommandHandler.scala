@@ -20,7 +20,7 @@ object CommandHandler {
         // Could make a ID type known as DiscordId that handles this, makes it less side effecty
         CommandHandler.accept(gameInstances, authorId, flags)
       // TODO: Is using toString okay?
-      case CommandsRegex.Drop(_, col, _) => drop(col.toInt, gameInstances, authorId)
+      case CommandsRegex.Drop(col) => drop(col.toInt, gameInstances, authorId)
       case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
       case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
       case CommandsRegex.Help(_) => (gameInstances, Strings.Help)
@@ -185,6 +185,7 @@ object CommandHandler {
 
     val optionRole = gameInstance.playerRole(playerId)
     val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
+
     val playing = gameInstance match {
       case Challenged(_) => { return (gameInstance, Strings.FailedDrop) }
       case playing @ Playing(_,_) => playing

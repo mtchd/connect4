@@ -42,7 +42,7 @@ object Strings {
     "\nWhen in a game, simply type the number of the column you want to drop into." +
     "\nYou can also type 'forfeit' to give up."
   // Help during game
-  val InGameCommands = "Available commands:\n'drop $columnNumber'\n'forfeit'"
+  val InGameCommands = "Available commands:\n'$columnNumber'\n'forfeit'"
   // When accepting or rejecting when not challenged by anyone
   val FailedAcceptOrReject = "You have not been challenged here, although you do seem mentally challenged."
   // When a play enters a drop command but isn't in a game

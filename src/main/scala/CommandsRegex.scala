@@ -7,7 +7,7 @@ object CommandsRegex {
   val Accept: Regex = "(?i)(.*accept)(.*)".r
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game
-  val Drop: Regex = "(?i)(.*)(\\d+)(.*)".r
+  val Drop: Regex = "(?i)(\\d+)".r
   val Forfeit: Regex = simpleRegex("forfeit")
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
