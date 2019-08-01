@@ -1,5 +1,11 @@
 object CommandHandler {
 
+  def getSpecificGame(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String])
+
+  // If a player sends a message it's either:
+  // A challenge, in which case we need to make a new game
+  // Or something relating to an existing game
+
   // TODO: Need challenge/accept layer that whittles down to only one game instance
   def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String]) = {
 
@@ -10,9 +16,14 @@ object CommandHandler {
       case _ => message
     }
 
+    // If it's a challenge, we need to create a new one game
+
+    // Get the specific game this person is referring to.
+
     val (gi, reply) = cleanedText match {
       // Might not be in commandHandler's scope
       case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstances, opponentId, authorId, flags)
+
       case CommandsRegex.Accept(_, flags) =>
         // We assume a player is only in one game at once. Discord does not have threading like
         // slack, so we'll need a new alternative to disambiguate what game they are referring to.
@@ -38,6 +49,8 @@ object CommandHandler {
 
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
   def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String, flags: String): (List[GameInstance], String) = {
+
+    // TODO: Check that person hasn't challenged anyone else in these game instances
 
     // Read flags
     // TODO: Only allows one flag
