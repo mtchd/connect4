@@ -19,9 +19,7 @@ object SlackWrapper {
   def startListening(apiKeyPath: String): Unit = {
 
     val token = config.getString(apiKeyPath)
-
     val rtmClient = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
-
     var threadAndGameInstances: Map[String, List[GameInstance]] = Map.empty
 
     println("Now listening to Slack...")
@@ -29,9 +27,7 @@ object SlackWrapper {
     rtmClient.onMessage { message =>
 
       val thread = message.thread_ts.getOrElse(message.ts)
-
       val gameInstances = threadAndGameInstances.getOrElse(thread, List.empty)
-
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
 
       threadAndGameInstances = threadAndGameInstances.updated(thread, newGameInstances)
