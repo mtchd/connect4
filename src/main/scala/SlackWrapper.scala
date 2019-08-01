@@ -16,7 +16,6 @@ object SlackWrapper {
   /**
     * Start point of the program, handles all incoming messages in channels the bot is present in.
     */
-  // TODO: Divide the command parsing and the side effects up
   def startListening(apiKeyPath: String): Unit = {
 
     val token = config.getString(apiKeyPath)

@@ -1,5 +1,6 @@
 object CommandHandler {
 
+  // TODO: Need challenge/accept layer that whittles down to only one game instance
   def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String]) = {
 
     // Clean the @connect4 off the message, as the number can cause a false positive with Drop?
