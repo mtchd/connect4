@@ -12,9 +12,11 @@ case class PlayerPair(challenger: Player, defender: Player) {
   }
 
   def isPlayerInPair(playerId: String): Boolean = {
-    case challenger.id => true
-    case defender.id => true
-    case _ => false
+    playerId match {
+      case challenger.id => true
+      case defender.id => true
+      case _ => false
+    }
   }
 
   def isPlayerInPair(challengerId: String, defenderId: String): Boolean =
