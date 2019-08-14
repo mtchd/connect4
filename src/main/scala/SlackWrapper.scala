@@ -16,9 +16,8 @@ object SlackWrapper {
   /**
     * Start point of the program, handles all incoming messages in channels the bot is present in.
     */
-  def startListening(apiKeyPath: String): Unit = {
+  def startListening(token: String): Unit = {
 
-    val token = config.getString(apiKeyPath)
     val rtmClient = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
     var threadAndGameInstances: Map[String, List[GameInstance]] = Map.empty
 
