@@ -11,15 +11,19 @@ case class PlayerPair(challenger: Player, defender: Player) {
     PlayerPair(this.challenger, defender)
   }
 
-  def isPlayerInPair(playerId: String): Boolean = {
-    playerId match {
-      case challenger.id => true
-      case defender.id => true
-      case _ => false
+  def updateToken(role: CellContents, token: String): PlayerPair = {
+    role match {
+      case Defender => this.copy(defender = defender.copy(token = token))
+      case Challenger => this.copy(challenger = challenger.copy(token = token))
+      case _ => this
     }
   }
 
-  def isPlayerInPair(challengerId: String, defenderId: String): Boolean =
+  def isPlayerInPair(playerId: String): Boolean = {
+    roleFromPair(playerId).isDefined
+  }
+
+  def atLeastOneInPair(challengerId: String, defenderId: String): Boolean =
     isPlayerInPair(challengerId) || isPlayerInPair(defenderId)
 }
 

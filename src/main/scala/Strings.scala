@@ -64,8 +64,12 @@ object Strings {
 
   val AlreadyInGame = "You or your opponent are already in a game in this context."
 
+  val NotInGame = "You don't seem to be associated with a game here."
+
   val Win = "You win!"
 
   def dropSuccess(col: Int): String = s"Dropped into column $col"
+
+  def tokenChange(token: String): String = s"You changed your token to $token"
 
 }

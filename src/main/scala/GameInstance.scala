@@ -1,5 +1,7 @@
 sealed trait GameInstance {
 
+  val playerPair: PlayerPair
+
   def startPlaying: Playing = this match {
     case Challenged(playerPair) => {
       val gameState = GameState.newDefaultBoard()
@@ -28,6 +30,16 @@ sealed trait GameInstance {
 
     case Challenged(playerPair) => playerPair.roleFromPair(playerId)
     case Playing(_, playerPair) => playerPair.roleFromPair(playerId)
+  }
+
+  def changeToken(role: CellContents, token: String): GameInstance = {
+    val newPlayerPair = playerPair.updateToken(role, token)
+
+    this match {
+      case challenged @ Challenged(_) => challenged.copy(playerPair = newPlayerPair)
+      case playing @ Playing(_, _) => playing.copy(playerPair = newPlayerPair)
+
+    }
   }
 
 }

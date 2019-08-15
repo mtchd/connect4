@@ -12,6 +12,7 @@ object CommandHandler {
       case CommandsRegex.Drop(col) => drop(col.toInt, gameInstances, authorId)
       case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
       case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
+      case CommandsRegex.Token(_, token, _) => changeToken(gameInstances, token, authorId)
       case CommandsRegex.Help(_) => (gameInstances, Strings.Help)
       // TODO: Update to return None cleanly
       case _ => (gameInstances, "")
@@ -27,17 +28,15 @@ object CommandHandler {
   // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
   def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String, flags: String): (List[GameInstance], String) = {
 
-     if (gameInstances.exists {
-      case Challenged(playerPair) => playerPair.isPlayerInPair(defenderId, challengerId)
-      case Playing(_, playerPair) => playerPair.isPlayerInPair(defenderId, challengerId)
-    }) {
+    // TODO: Use Map to enforce player in only one game at one time
+     if (gameInstances.exists(_.playerPair.atLeastOneInPair(defenderId, challengerId))) {
        return (gameInstances, Strings.AlreadyInGame)
      }
 
     // Read flags
     // TODO: Only allows one flag
     val challengerToken = flags match {
-      case CommandsRegex.TokenFlag(_, token, _) => token
+      case CommandsRegex.Token(_, token, _) => token
       case _ => Strings.ChallengerToken
     }
 
@@ -63,7 +62,7 @@ object CommandHandler {
 
     // TODO: Only allows one flag
     val token = flags match {
-      case CommandsRegex.TokenFlag(_, emoji, _) => emoji
+      case CommandsRegex.Token(_, emoji, _) => emoji
       case _ => Strings.DefenderToken
     }
 
@@ -87,20 +86,29 @@ object CommandHandler {
 
   private def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
 
-    // TODO: Shouldn't need to use var here
-    var reply = "You don't seem to be associated with a game here."
-
-    // TODO: Should only change one game instance...but has the potential to do many.
-    val playedGameInstances = gameInstances.map { gameInstance =>
-      val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
-      // TODO: This reply is canoodled
-      reply = newReply
-      newGameInstance
+    val (newGameInstances, reply) = mapGameInstanceWithReply( gameInstances, Strings.NotInGame) {
+      gameInstance => playIf(col, gameInstance, playerId)
     }
 
-    checkWin(playedGameInstances, reply)
+//    // TODO: Shouldn't need to use var here
+//    var reply =
+//
+//    // TODO: Should only change one game instance...but has the potential to do many.
+//    val playedGameInstances = gameInstances.map { gameInstance =>
+//      val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
+//      // TODO: This reply is canoodled
+//      reply = newReply
+//      newGameInstance
+//    }
+
+    checkWin(newGameInstances, reply)
 
   }
+
+  private def mapGameInstanceWithReply(
+    gameInstances: List[GameInstance],
+    noInstanceReply: String)
+    (f: GameInstance => (GameInstance, String)): (List[GameInstance], String) = ???
 
   private def checkWin(gameInstances: List[GameInstance], currentReply: String): (List[GameInstance], String) = {
 
@@ -172,6 +180,25 @@ object CommandHandler {
       (gameInstances, Strings.FailedAcceptOrReject)
     else
       (newGameInstances, Strings.Reject)
+  }
+
+  private def changeToken(gameInstances: List[GameInstance], playerId: String, token: String): (List[GameInstance], String) = {
+
+    mapGameInstanceWithReply(gameInstances, Strings.NotInGame) { gameInstance =>
+      val playerRole = gameInstance.playerPair.roleFromPair(playerId)
+
+      val newGameInstance = playerRole match {
+        case Some(role) => gameInstance.changeToken(role, token)
+        case None => gameInstance
+      }
+
+      val reply = playerRole match {
+        case Some(role) => Strings.tokenChange(token)
+        case None => Strings.NotInGame
+      }
+
+      (newGameInstance, reply)
+    }
   }
 
   // TODO: Better name for function

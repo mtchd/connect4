@@ -8,8 +8,6 @@ import scala.concurrent.duration._
 
 object SlackWrapper {
 
-  private val config = ConfigFactory.load()
-
   implicit val system: ActorSystem = ActorSystem("slack"/* config.getConfig("akka")*/)
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 

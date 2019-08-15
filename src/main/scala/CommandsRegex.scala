@@ -12,7 +12,7 @@ object CommandsRegex {
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
   // Flags
-  val TokenFlag: Regex = "(?i)(.*-token.*)(:.*:)(.*)".r
+  val Token: Regex = "(?i)(.*token.*)(:.*:)(.*)".r
 
   // For Console
   val DefenderRole: Regex = simpleRegex("d")
