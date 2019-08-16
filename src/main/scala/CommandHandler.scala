@@ -90,17 +90,6 @@ object CommandHandler {
       gameInstance => playIf(col, gameInstance, playerId)
     }
 
-//    // TODO: Shouldn't need to use var here
-//    var reply =
-//
-//    // TODO: Should only change one game instance...but has the potential to do many.
-//    val playedGameInstances = gameInstances.map { gameInstance =>
-//      val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
-//      // TODO: This reply is canoodled
-//      reply = newReply
-//      newGameInstance
-//    }
-
     checkWin(newGameInstances, reply)
 
   }
@@ -108,7 +97,22 @@ object CommandHandler {
   private def mapGameInstanceWithReply(
     gameInstances: List[GameInstance],
     noInstanceReply: String)
-    (f: GameInstance => (GameInstance, String)): (List[GameInstance], String) = ???
+    (f: GameInstance => (GameInstance, String)): (List[GameInstance], String) = {
+
+      // TODO: Shouldn't need to use var here
+      var reply = noInstanceReply
+
+      // TODO: Should only change one game instance...but has the potential to do many.
+      val playedGameInstances = gameInstances.map { gameInstance =>
+        val (newGameInstance, newReply) = f(gameInstance)
+        // TODO: This reply is canoodled
+        reply = newReply
+        newGameInstance
+      }
+
+    (playedGameInstances, reply)
+
+  }
 
   private def checkWin(gameInstances: List[GameInstance], currentReply: String): (List[GameInstance], String) = {
 
