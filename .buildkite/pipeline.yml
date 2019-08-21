@@ -1,0 +1,15 @@
+steps:
+  - name: Build
+    command: 'auto/docker-build-and-push.sh'
+    agents:
+      queue: muppets:build
+
+  - wait
+
+  - name: Deploy Prod
+    command: 'docker/deploy-prod.sh'
+    branches: 'master'
+    agents:
+      queue: psw-internal:deploy
+
+  - wait
