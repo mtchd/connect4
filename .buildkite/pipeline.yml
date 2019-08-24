@@ -5,6 +5,6 @@ steps:
   - wait
 
   - name: Deploy Dev
-    command: 'auto/dev.sh'
+    command: 'terraform apply'
 
   - wait
