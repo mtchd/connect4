@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Set Up
+sudo yum update -y
+sudo yum install docker -y
+sudo usermod -a -G docker ec2-user
+sudo service docker start
+
+sudo docker pull mtchd/connect4
+
+# Get the key!
+TOKEN=`aws kms decrypt --ciphertext-blob fileb://prod.encrypted --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode`
+
+sudo docker run --rm -it -e TOKEN=${TOKEN} mtchd/connect4

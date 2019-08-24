@@ -88,6 +88,11 @@ project/plugins/project/
 
 # Api key secrets
 application.conf
-
-# Moar secrets
 /config
+*.pem
+/secrets
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+/.terraform
