@@ -1,10 +1,11 @@
 case class PlayerPair(challenger: Player, defender: Player) {
 
-  def roleFromPair(playerId: String): Option[CellContents] = playerId match {
-    case challenger.id => Some(Challenger)
-    case defender.id => Some(Defender)
-    case _ => None
-  }
+  def roleFromPair(playerId: String): Option[CellContents] =
+    playerId match {
+      case challenger.id => Some(Challenger)
+      case defender.id => Some(Defender)
+      case _ => None
+    }
 
   def updateDefenderToken(token: String): PlayerPair = {
     val defender = Player(this.defender.id, token)

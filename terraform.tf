@@ -11,6 +11,10 @@ resource "aws_instance" "connect4" {
   subnet_id = "subnet-b5b7a5d2"
   iam_instance_profile = "Connect4"
 
+  tags = {
+    Name = "connect4prod"
+  }
+
   provisioner "file" {
 
     connection {
