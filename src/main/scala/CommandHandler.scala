@@ -90,17 +90,6 @@ object CommandHandler {
       gameInstance => playIf(col, gameInstance, playerId)
     }
 
-//    // TODO: Shouldn't need to use var here
-//    var reply =
-//
-//    // TODO: Should only change one game instance...but has the potential to do many.
-//    val playedGameInstances = gameInstances.map { gameInstance =>
-//      val (newGameInstance, newReply) = playIf(col, gameInstance, playerId)
-//      // TODO: This reply is canoodled
-//      reply = newReply
-//      newGameInstance
-//    }
-
     checkWin(newGameInstances, reply)
 
   }
@@ -197,9 +186,10 @@ object CommandHandler {
       (newGameInstances, Strings.Reject)
   }
 
-  private def changeToken(gameInstances: List[GameInstance], playerId: String, token: String): (List[GameInstance], String) = {
+  private def changeToken(gameInstances: List[GameInstance], token: String, playerId: String): (List[GameInstance], String) = {
 
     mapGameInstanceWithReply(gameInstances, Strings.NotInGame) { gameInstance =>
+
       val playerRole = gameInstance.playerPair.roleFromPair(playerId)
 
       val newGameInstance = playerRole match {
@@ -208,7 +198,7 @@ object CommandHandler {
       }
 
       val reply = playerRole match {
-        case Some(role) => Strings.tokenChange(token)
+        case Some(_) => Strings.tokenChange(token)
         case None => Strings.NotInGame
       }
 
@@ -225,7 +215,7 @@ object CommandHandler {
     val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
 
     val playing = gameInstance match {
-      case Challenged(_) => { return (gameInstance, Strings.FailedDrop) }
+      case Challenged(_) => return (gameInstance, Strings.FailedDrop)
       case playing @ Playing(_,_) => playing
     }
 
