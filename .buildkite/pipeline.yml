@@ -1,0 +1,10 @@
+steps:
+  - name: Build
+    command: 'auto/build-push'
+
+  - wait
+
+  - name: Deploy Dev
+    command: 'auto/dev.sh'
+
+  - wait

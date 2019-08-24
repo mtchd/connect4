@@ -3,6 +3,10 @@ provider "aws" {
   region     = "ap-southeast-2"
 }
 
+variable "env" {
+  default = "dev"
+}
+
 resource "aws_instance" "connect4" {
   ami           = "ami-0dc96254d5535925f"
   instance_type = "t2.micro"
@@ -12,7 +16,7 @@ resource "aws_instance" "connect4" {
   iam_instance_profile = "Connect4"
 
   tags = {
-    Name = "connect4prod"
+    Name = "connect4${var.env}"
   }
 
   provisioner "file" {
@@ -26,8 +30,8 @@ resource "aws_instance" "connect4" {
       agent = false
     }
 
-    source      = "encrypted/prod.encrypted"
-    destination = "prod.encrypted"
+    source      = "encrypted/${var.env}.encrypted"
+    destination = "${var.env}.encrypted"
   }
 
   provisioner "file" {
