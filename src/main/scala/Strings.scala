@@ -37,7 +37,7 @@ object Strings {
   // General help, lists available commands
   val Help = "To challenge a player, use:" +
     "\nchallenge @username" +
-    "\nYou can add a token with this flag'token :your-token-here:'" +
+    "\nYou can add/change a token with this flag 'token :your-token-here:'" +
     "\nWhen in a game, simply type the number of the column you want to drop into." +
     "\nYou can also type 'forfeit' to give up."
   // Help during game
