@@ -38,8 +38,8 @@ resource "aws_instance" "connect4" {
       agent = false
     }
 
-    source      = "encrypted/${var.env}.encrypted"
-    destination = "${var.env}.encrypted"
+    source      = "encrypted/prod.encrypted"
+    destination = "prod.encrypted"
   }
 
   provisioner "file" {
