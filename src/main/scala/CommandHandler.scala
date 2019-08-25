@@ -222,7 +222,7 @@ object CommandHandler {
     val gameState = playing.gameState
 
     // Check it's this players turn
-    // TODO: I highly doubt this works due to the return in the map
+    // TODO: Returning in the middle of a map is not ideal
     gameState.lastMove.map{ lastMove =>
       if (lastMove.playerRole == playerRole) {
         return (playing, Strings.WrongTurn)
