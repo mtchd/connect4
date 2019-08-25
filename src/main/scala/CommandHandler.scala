@@ -29,7 +29,7 @@ object CommandHandler {
   def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String, flags: String): (List[GameInstance], String) = {
 
     // TODO: Use Map to enforce player in only one game at one time
-     if (gameInstances.exists(_.playerPair.atLeastOneInPair(defenderId, challengerId))) {
+     if (gameInstances.exists(_.instancePlayerPair.atLeastOneInPair(defenderId, challengerId))) {
        return (gameInstances, Strings.AlreadyInGame)
      }
 
@@ -190,7 +190,7 @@ object CommandHandler {
 
     mapGameInstanceWithReply(gameInstances, Strings.NotInGame) { gameInstance =>
 
-      val playerRole = gameInstance.playerPair.roleFromPair(playerId)
+      val playerRole = gameInstance.instancePlayerPair.roleFromPair(playerId)
 
       val newGameInstance = playerRole match {
         case Some(role) => gameInstance.changeToken(role, token)
@@ -233,7 +233,7 @@ object CommandHandler {
 
     val (newState, reply) = play(col, gameState, playerRole)
 
-    val newInstance = Playing(newState, playing.playerPair)
+    val newInstance = Playing(newState, playing.instancePlayerPair)
 
     (newInstance, replyWithBoard(newInstance, reply))
 
