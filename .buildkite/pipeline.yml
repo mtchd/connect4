@@ -4,7 +4,10 @@ steps:
 
   - wait
 
-  - name: Deploy Dev
-    command: 'terraform apply'
+  - name: Terraform Init
+    command: 'terraform init'
 
   - wait
+
+  - name: Deploy Dev
+    command: 'terraform apply'
