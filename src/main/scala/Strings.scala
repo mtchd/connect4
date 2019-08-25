@@ -1,7 +1,6 @@
 
 object Strings {
 
-  // There's obviously a better way of storing this but I'll figure it out later
   // TODO: Better way of storing strings
 
   // Help text sent with a challenge
