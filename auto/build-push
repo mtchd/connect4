@@ -3,6 +3,6 @@ set -euo pipefail
 
 sbt assembly
 
-docker build -t mtchd/connect4 .
+sudo docker build -t mtchd/connect4 .
 
-docker push mtchd/connect4
+sudo docker push mtchd/connect4
