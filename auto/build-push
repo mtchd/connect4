@@ -3,7 +3,7 @@ set -euo pipefail
 
 sbt assembly
 
-docker build -t mtchd/connect4 .
+sudo docker build -t mtchd/connect4 .
 
 # Get password
 
