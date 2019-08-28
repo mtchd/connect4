@@ -3,6 +3,14 @@ set -euo pipefail
 
 sbt assembly
 
-sudo docker build -t mtchd/connect4 .
+docker build -t mtchd/connect4 .
 
-sudo docker push mtchd/connect4
+# Get password
+
+PASSWORD=`aws kms decrypt --ciphertext-blob fileb://$(dirname $0)/../docker.encrypted --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode`
+
+docker login --username mtchd --password "${PASSWORD}"
+
+docker push mtchd/connect4
