@@ -9,4 +9,4 @@ TOKEN=`aws kms decrypt --ciphertext-blob fileb://encrypted/connect4.encrypted --
         --query Plaintext \
         --output text | base64 --decode`
 
-terraform apply
+terraform apply -y
