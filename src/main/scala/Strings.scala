@@ -4,7 +4,7 @@ object Strings {
   // TODO: Better way of storing strings
 
   // Help text sent with a challenge
-  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\naccept :emoji:"
+  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\naccept token :emoji:"
   // Help text when failing to respond to a challenge
   val ChallengeHelp = "You will need to answer the challenge with 'accept' or 'reject"
 
@@ -42,21 +42,21 @@ object Strings {
   // Help during game
   val InGameCommands = "Available commands:\ncolumn number (e.g. '1')\nforfeit"
   // When accepting or rejecting when not challenged by anyone
-  val FailedAcceptOrReject = "You have not been challenged here, although you do seem mentally challenged."
+  val FailedAcceptOrReject = "You have not been challenged here!"
   // When a play enters a drop command but isn't in a game
-  val FailedDrop = "You are not in a game."
+  val FailedDrop = "You are not in a game here!"
   // When a player enters a drop command but it's not their turn
-  val WrongTurn = "It's not your turn."
+  val WrongTurn = "It's not your turn!"
   // When player tries to drop in column out of bounds
-  val OutOfBounds = "Column is out of bounds."
+  val OutOfBounds = "Column is out of bounds!"
   // Column is full
-  val ColFull = "Column is full."
+  val ColFull = "Column is full!"
 
   val Forfeit = "You gave up. Game over, man."
 
   val FailedForfeit = "You're not in a game, don't go giving up already!"
 
-  val Reject = "Rejected!"
+  val Reject = "You rejected the challenge!"
 
   val FailedRenderBoard = "No game playing with this pair."
 

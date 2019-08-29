@@ -12,6 +12,10 @@ terraform {
   }
 }
 
+variable "sshkey" {
+  default = ""
+}
+
 resource "aws_instance" "connect4" {
   ami           = "ami-0dc96254d5535925f"
   instance_type = "t2.micro"
@@ -30,7 +34,7 @@ resource "aws_instance" "connect4" {
       host = aws_instance.connect4.public_ip
       type = "ssh"
       user = "ec2-user"
-      private_key = file("connect4.pem")
+      private_key = var.sshkey
       timeout = "10m"
       agent = false
     }
@@ -45,7 +49,7 @@ resource "aws_instance" "connect4" {
       host = aws_instance.connect4.public_ip
       type = "ssh"
       user = "ec2-user"
-      private_key = file("connect4.pem")
+      private_key = var.sshkey
       timeout = "10m"
       agent = false
     }
@@ -60,7 +64,7 @@ resource "aws_instance" "connect4" {
       host = aws_instance.connect4.public_ip
       type = "ssh"
       user = "ec2-user"
-      private_key = file("connect4.pem")
+      private_key = var.sshkey
       timeout = "10m"
       agent = false
     }

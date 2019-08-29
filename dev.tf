@@ -17,7 +17,7 @@ resource "aws_instance" "connect4dev" {
       host = aws_instance.connect4dev.public_ip
       type = "ssh"
       user = "ec2-user"
-      private_key = file("connect4.pem")
+      private_key = var.sshkey
       timeout = "10m"
       agent = false
     }
@@ -32,7 +32,7 @@ resource "aws_instance" "connect4dev" {
       host = aws_instance.connect4dev.public_ip
       type = "ssh"
       user = "ec2-user"
-      private_key = file("connect4.pem")
+      private_key = var.sshkey
       timeout = "10m"
       agent = false
     }
@@ -47,7 +47,7 @@ resource "aws_instance" "connect4dev" {
       host = aws_instance.connect4dev.public_ip
       type = "ssh"
       user = "ec2-user"
-      private_key = file("connect4.pem")
+      private_key = var.sshkey
       timeout = "10m"
       agent = false
     }
