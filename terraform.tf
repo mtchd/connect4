@@ -1,8 +1,3 @@
-provider "aws" {
-  profile    = "Connect4"
-  region     = "ap-southeast-2"
-}
-
 terraform {
   backend "s3" {
     bucket = "mtchd-connect4"
