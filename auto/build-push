@@ -11,6 +11,6 @@ PASSWORD=`aws kms decrypt --ciphertext-blob fileb://"$(dirname "$0")"/../encrypt
         --query Plaintext \
         --output text | base64 --decode`
 
-docker login --username mtchd --password "${PASSWORD}"
+echo "${PASSWORD}" | docker login --username mtchd --password-stdin
 
 docker push mtchd/connect4
