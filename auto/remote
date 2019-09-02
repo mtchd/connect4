@@ -17,4 +17,4 @@ TOKEN=`aws kms decrypt --ciphertext-blob fileb://${ENV}.encrypted --region ap-so
         --query Plaintext \
         --output text | base64 --decode`
 
-sudo docker run --rm -it -e TOKEN=${TOKEN} mtchd/connect4
+sudo docker run -d --rm -e TOKEN=${TOKEN} mtchd/connect4

@@ -1,9 +1,5 @@
 provider "aws" {
   region     = "ap-southeast-2"
-
-  assume_role {
-    role_arn     = "arn:aws:iam::271630769548:role/Connect4"
-  }
 }
 
 terraform {
