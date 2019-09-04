@@ -8,7 +8,7 @@ object CommandsRegex {
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game
   val Drop: Regex = "(?i)(\\d+)".r
-  val Forfeit: Regex = simpleRegex("forfeit")
+  val Forfeit: Regex = exactRegex("forfeit")
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
   // Flags
@@ -32,6 +32,10 @@ object CommandsRegex {
   // Especially given the command will always be in a thread for the game
   private def simpleRegex(command: String): Regex = {
     s"(?i)(.*$command.*)".r
+  }
+
+  private def exactRegex(command: String): Regex = {
+    s"(?i)($command)".r
   }
 
   // Lists commands as string. Currently unused but available for use if needed.
