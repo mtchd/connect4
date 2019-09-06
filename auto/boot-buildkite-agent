@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+yum update -y
+curl https://bintray.com/sbt/rpm/rpm | tee /etc/yum.repos.d/bintray-sbt-rpm.repo
+yum install java docker git sbt -y
+usermod -a -G docker ec2-user
+service docker start
+
+# Buildkite
+sh -c 'echo -e "[buildkite-agent]\nname = Buildkite Pty Ltd\nbaseurl = https://yum.buildkite.com/buildkite-agent/stable/x86_64/\nenabled=1\ngpgcheck=0\npriority=1" > /etc/yum.repos.d/buildkite-agent.repo'
+yum -y install buildkite-agent
+usermod -a -G docker buildkite-agent
+sed -i "s/xxx/66842cc912d69be31ebb6eab36249c8733cd0c46ac1b75f3f3/g" /etc/buildkite-agent/buildkite-agent.cfg
+service buildkite-agent start
+
+# Terraform
+yum install wget unzip
+wget https://releases.hashicorp.com/terraform/0.12.7/terraform_0.12.7_linux_amd64.zip
+unzip ./terraform_0.12.7_linux_amd64.zip -d /usr/local/bin/
