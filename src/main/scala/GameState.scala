@@ -54,7 +54,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
       }.mkString("")
     }
     // Constructs whole board with markers on top and bottom
-    "\nGame Board:\n" + colMarkers + "\n" + stringBoard.mkString("\n") + "\n" + colMarkers
+    "\n" + colMarkers + "\n" + stringBoard.mkString("\n") + "\n" + colMarkers
   }
 
   def boardAsString(defender: Player, challenger: Player): String = {

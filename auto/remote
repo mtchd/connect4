@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+ENV=${1:-dev}
+
 # Set Up
 sudo yum update -y
 sudo yum install docker -y
@@ -11,8 +13,8 @@ sudo service docker start
 sudo docker pull mtchd/connect4
 
 # Get the key!
-TOKEN=`aws kms decrypt --ciphertext-blob fileb://prod.encrypted --region ap-southeast-2 \
+TOKEN=`aws kms decrypt --ciphertext-blob fileb://${ENV}.encrypted --region ap-southeast-2 \
         --query Plaintext \
         --output text | base64 --decode`
 
-sudo docker run --rm -it -e TOKEN=${TOKEN} mtchd/connect4
+sudo docker run -d --rm -e TOKEN=${TOKEN} mtchd/connect4

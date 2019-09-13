@@ -1,6 +1,6 @@
 sealed trait GameInstance {
 
-  val playerPair: PlayerPair
+  val instancePlayerPair: PlayerPair
 
   def startPlaying: Playing = this match {
     case Challenged(playerPair) => {
@@ -33,17 +33,17 @@ sealed trait GameInstance {
   }
 
   def changeToken(role: CellContents, token: String): GameInstance = {
-    val newPlayerPair = playerPair.updateToken(role, token)
+    val newPlayerPair = instancePlayerPair.updateToken(role, token)
 
     this match {
-      case challenged @ Challenged(_) => challenged.copy(playerPair = newPlayerPair)
-      case playing @ Playing(_, _) => playing.copy(playerPair = newPlayerPair)
+      case challenged @ Challenged(_) => challenged.copy(instancePlayerPair = newPlayerPair)
+      case playing @ Playing(_, _) => playing.copy(instancePlayerPair = newPlayerPair)
 
     }
   }
 
 }
 
-case class Challenged(playerPair: PlayerPair) extends GameInstance
+case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance
 
-case class Playing(gameState: GameState, playerPair: PlayerPair) extends GameInstance
+case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance

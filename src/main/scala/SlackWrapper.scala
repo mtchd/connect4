@@ -32,6 +32,8 @@ object SlackWrapper {
       reply.foreach { replyText =>
         rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread))
       }
+
+      //access dynamodb
     }
   }
 }
