@@ -1,4 +1,5 @@
 import akka.actor.ActorSystem
+import com.typesafe.config.ConfigFactory
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
@@ -7,7 +8,7 @@ import scala.concurrent.duration._
 
 object SlackWrapper {
 
-  implicit val system: ActorSystem = ActorSystem("slack")
+  implicit val system: ActorSystem = ActorSystem("slack"/* config.getConfig("akka")*/)
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
   /**

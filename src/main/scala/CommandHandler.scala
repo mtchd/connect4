@@ -118,12 +118,6 @@ object CommandHandler {
 
     val (newGameInstances, maybeWinningGame) = lookForWinningGame(gameInstances)
 
-    // If it exists, then a player has won the game. From here we need to know who has won, then send an update to dynamoDB
-    // to add one "Win" to their count.
-
-    // As this is a side effect, we will need to send it back as a result of the function, so it can later be executed
-    // within the imperative shell.
-
     maybeWinningGame match {
       case Some(game) => (newGameInstances, replyWithBoard(game, Strings.Win))
       case None => (gameInstances, currentReply)
