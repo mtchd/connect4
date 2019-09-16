@@ -5,14 +5,15 @@ object Main {
   // TODO: Run in DMs
   def main(args: Array[String]) {
 
-    val token = sys.env("TOKEN")
+    // val token = sys.env("TOKEN")
 
-    SlackWrapper.startListening(token)
+    // SlackWrapper.startListening(token)
     
     // DiscordWrapper.startListening()
 
     // ConsoleWrapper.startListening()
 
+    DatabaseClient.program()
   }
 
 }
