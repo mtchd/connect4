@@ -1,9 +1,11 @@
+package connect4
+
 import akka.NotUsed
-import com.typesafe.config.ConfigFactory
-import net.katsstuff.ackcord._
-import net.katsstuff.ackcord.data._
-import net.katsstuff.ackcord.http.rest.CreateMessage
 import cats.Monad
+import com.typesafe.config.ConfigFactory
+import net.katsstuff.ackcord.data.{Message, UserId}
+import net.katsstuff.ackcord.http.rest.CreateMessage
+import net.katsstuff.ackcord.{APIMessage, ClientSettings, Request, SourceRequest}
 
 object DiscordWrapper {
 

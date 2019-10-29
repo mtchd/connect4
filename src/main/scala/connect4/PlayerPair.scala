@@ -1,3 +1,5 @@
+package connect4
+
 case class PlayerPair(challenger: Player, defender: Player) {
 
   def roleFromPair(playerId: String): Option[CellContents] =

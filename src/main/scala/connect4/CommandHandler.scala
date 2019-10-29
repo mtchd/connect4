@@ -1,3 +1,5 @@
+package connect4
+
 object CommandHandler {
 
   def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String]) = {

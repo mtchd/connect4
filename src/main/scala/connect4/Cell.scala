@@ -1,3 +1,5 @@
+package connect4
+
 // Using a sum type allows two players to have the same token but be recognised by the game as different
 sealed trait CellContents
 case object Defender extends CellContents

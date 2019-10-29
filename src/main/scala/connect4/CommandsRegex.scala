@@ -1,3 +1,5 @@
+package connect4
+
 import scala.util.matching.Regex
 
 //TODO: Look into Parser Combinators

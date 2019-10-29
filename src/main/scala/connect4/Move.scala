@@ -1,3 +1,5 @@
+package connect4
+
 /**
   * Possible move within the Connect 4 game.
   * @param playerRole Role of player who made the move.

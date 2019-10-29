@@ -1,3 +1,4 @@
+package connect4
 
 object Main {
 
@@ -8,7 +9,7 @@ object Main {
     // val token = sys.env("TOKEN")
 
     // SlackWrapper.startListening(token)
-    
+
     // DiscordWrapper.startListening()
 
     // ConsoleWrapper.startListening()

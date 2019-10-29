@@ -1,10 +1,8 @@
-import doobie._
-import doobie.implicits._
-import doobie.util.ExecutionContexts
+package connect4
 
-import cats._
-import cats.effect._
-import cats.implicits._
+import cats.effect.IO
+import doobie.Transactor
+import doobie.util.ExecutionContexts
 
 object DatabaseClient {
   implicit val cs = IO.contextShift(ExecutionContexts.synchronous)
@@ -24,5 +22,3 @@ object DatabaseClient {
     println("hello")
   }
 }
-
-

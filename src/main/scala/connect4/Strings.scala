@@ -1,3 +1,4 @@
+package connect4
 
 object Strings {
 

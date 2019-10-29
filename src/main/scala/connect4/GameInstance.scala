@@ -1,3 +1,5 @@
+package connect4
+
 sealed trait GameInstance {
 
   val instancePlayerPair: PlayerPair

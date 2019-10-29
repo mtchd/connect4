@@ -1,3 +1,5 @@
+package connect4
+
 object ConsoleWrapper {
 
   def startListening(): Unit = {

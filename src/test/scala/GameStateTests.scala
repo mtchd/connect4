@@ -1,9 +1,10 @@
+import connect4.{Cell, CellContents, Challenger, Empty, GameState, Move}
 import org.scalatest.FunSuite
 
 class GameStateTests extends FunSuite {
 
   // TODO: Make this into real test, which checks the boards are equal. But man that needs a monster string...?
-  test("GameState.replaceCells") {
+  test("connect4.GameState.replaceCells") {
     newStateWithFourCells(Challenger)
   }
 
@@ -15,7 +16,7 @@ class GameStateTests extends FunSuite {
     newState
   }
 
-  test("GameState.maybeWinningBoard") {
+  test("connect4.GameState.maybeWinningBoard") {
 
     // TODO: Finish getting rid of these magic numbers
     // TODO: This only checks if it detects a win, not if it replaces the tokens with winning tokens properly.
@@ -69,7 +70,7 @@ class GameStateTests extends FunSuite {
     maybeBoard
   }
 
-  test("GameState.getDiagonal") {
+  test("connect4.GameState.getDiagonal") {
     val gameState = GameState.newDefaultBoard()
 
     // Down and to right replace cells
@@ -86,7 +87,7 @@ class GameStateTests extends FunSuite {
   }
 
   // TODO: Finish this test
-  test("GameState.fourInARow") {
+  test("connect4.GameState.fourInARow") {
     val gameState = GameState.newDefaultBoard()
 
     // Down and to right replace cells
