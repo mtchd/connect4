@@ -1,4 +1,5 @@
-import connect4.{Cell, CellContents, Challenger, Empty, GameState, Move}
+package connect4
+
 import org.scalatest.FunSuite
 
 class GameStateTests extends FunSuite {

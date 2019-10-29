@@ -1,4 +1,5 @@
-import connect4.{Challenged, CommandHandler, Defender, GameInstance, Move, PlayerPair, Playing, Strings}
+package connect4
+
 import org.scalatest.FunSuite
 
 class CommandHandlerTests extends FunSuite {

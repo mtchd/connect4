@@ -4,9 +4,8 @@ import connect4.GameInstance
 
 trait GameStore {
 
-  // ThreadId => List[connect4.GameInstance]
   def get(threadId: String): List[GameInstance]
 
-  // Persist state (ThreadId, List[connect4.GameInstance]) => Unit
+  def put(threadId: String, gameInstances: List[GameInstance]): Unit
 
 }

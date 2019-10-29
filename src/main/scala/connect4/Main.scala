@@ -14,7 +14,6 @@ object Main {
 
     // ConsoleWrapper.startListening()
 
-    DatabaseClient.program()
   }
 
 }
