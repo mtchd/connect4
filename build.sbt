@@ -2,7 +2,7 @@ name := "Connect4"
 
 version := "0.3.0"
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.6"
 
 // For Discord
 libraryDependencies += "net.katsstuff" %% "ackcord" % "0.12.0"
@@ -10,6 +10,8 @@ libraryDependencies += "net.katsstuff" %% "ackcord" % "0.12.0"
 libraryDependencies += "com.github.slack-scala-client" %% "slack-scala-client" % "0.2.5"
 // For testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
+// For bigquery
+libraryDependencies += "com.github.seratch" %% "bigquery4s" % "0.8"
 
 resolvers += Resolver.JCenterRepository
 
