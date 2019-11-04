@@ -10,8 +10,14 @@ libraryDependencies += "net.katsstuff" %% "ackcord" % "0.12.0"
 libraryDependencies += "com.github.slack-scala-client" %% "slack-scala-client" % "0.2.5"
 // For testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
-// For bigquery
-libraryDependencies += "com.github.seratch" %% "bigquery4s" % "0.8"
+
+val circeVersion = "0.11.1"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
 
 resolvers += Resolver.JCenterRepository
 

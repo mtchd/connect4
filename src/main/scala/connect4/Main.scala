@@ -1,7 +1,5 @@
 package connect4
 
-import connect4.doobietest.doobieTest.fuckingBadIdea
-
 object Main {
 
   // TODO: More tests
@@ -16,7 +14,7 @@ object Main {
 
     // ConsoleWrapper.startListening()
 
-    fuckingBadIdea()
+    GameInstance
 
   }
 

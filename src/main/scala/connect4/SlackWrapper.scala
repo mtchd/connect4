@@ -32,7 +32,6 @@ object SlackWrapper {
       // ThreadId => List[GameInstance]
       val gameInstances = gameStore.get(thread)
 
-
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
 
       // Persist state (ThreadId, List[GameInstance]) => Unit

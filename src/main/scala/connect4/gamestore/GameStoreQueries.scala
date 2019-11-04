@@ -1,31 +1,35 @@
 package connect4.gamestore
 
-import connect4.GameInstance
 import doobie.implicits._
 
 object GameStoreQueries {
 
-  // Setup queries
-  def createDb = {
+  // insert query
+  def insert(gameInstanceRow: GameInstanceRow): doobie.Update0 = {
     sql"""
-         |CREATE DATABASE IF NOT EXISTS connect4
-       """
-      .update
-  }
-
-  def createTable = {
-    sql"""
-         |CREATE TABLE IF NOT EXISTS documents (
-         |  thread VARCHAR(100) PRIMARY KEY,
-         |  name VARCHAR(100),
-         |  timestamp Long
+         |INSERT INTO documents (
+         |  ts,
+         |  challengerId,
+         |  defenderId,
+         |  challengerToken,
+         |  defenderToken,
+         |  lastMovePlayerRole,
+         |  lastMoveCol,
+         |  lastMoveRow,
+         |  board
          |)
-       """.stripMargin
+         |VALUES (
+         |  ${gameInstanceRow.timestamp},
+         |  ${gameInstanceRow.challengerId},
+         |  ${gameInstanceRow.defenderId},
+         |  ${gameInstanceRow.challengerToken},
+         |  ${gameInstanceRow.defenderToken},
+         |  ${gameInstanceRow.lastMovePlayerRole},
+         |  ${gameInstanceRow.lastMoveCol},
+         |  ${gameInstanceRow.lastMoveRow},
+         |  ${gameInstanceRow.board}
+         |)
+        """.stripMargin
       .update
   }
-
-  def convertGameInstance(gameInstance: GameInstance): Unit = {
-
-  }
-
 }

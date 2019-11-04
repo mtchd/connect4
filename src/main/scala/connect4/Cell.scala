@@ -8,3 +8,25 @@ case object Empty extends CellContents
 case object Winner extends CellContents
 
 case class Cell(contents: CellContents)
+
+object Cell {
+
+  def convertToString(cellContents: CellContents): String = {
+    cellContents match {
+      case Defender => "Defender"
+      case Challenger => "Challenger"
+      case Empty => "Empty"
+      case Winner => "Winner"
+    }
+  }
+
+  def convertFromString(string: String): CellContents = {
+    string match {
+      case "Defender" => Defender
+      case "Challenger" => Challenger
+      case "Empty" => Empty
+      case "Winner" => Winner
+    }
+  }
+
+}
