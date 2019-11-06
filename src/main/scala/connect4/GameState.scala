@@ -17,7 +17,7 @@ object GameState {
   }
 
   def newCustomBoard(boardRows: Int, boardCols: Int): GameState = {
-    GameState(List.fill(boardRows)(List.fill(boardCols)(Cell(Empty))), None)
+    GameState(Vector.fill(boardRows)(Vector.fill(boardCols)(Cell(Empty))), None)
   }
 
 }
@@ -27,8 +27,8 @@ object GameState {
   * @param board Connect 4 board, represented as characters for each cell.
   * @param lastMove Last move played, important for checking if game is won.
   */
-// Could be 2d array not list of lists. Would be more efficient implementation. Perhaps vector?
-case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
+// Could be 2d array not Vector of Vectors. Would be more efficient implementation. Perhaps vector?
+case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
 
   // Extract number of columns and rows
   // More efficient to pass in class constructor, but this keeps code a little cleaner I think.
@@ -52,7 +52,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
           case Winner => winningToken
           case _ => emptyToken
         }
-        // Rows become strings, not lists
+        // Rows become strings, not Vectors
       }.mkString("")
     }
     // Constructs whole board with markers on top and bottom
@@ -88,7 +88,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
 
     val playerRole = move.playerRole
 
-    // Had to extract this here due to list access syntax being same as function syntax, i.e you can't put brackets
+    // Had to extract this here due to Vector access syntax being same as function syntax, i.e you can't put brackets
     // after transpose otherwise it thinks you're feeding it variables.
     val transposedBoard = board.transpose
 
@@ -163,7 +163,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   }
 
   // Keeping hold of this in case there are more variables in constructor added later, makes life easier
-  def updateBoardOnly(newBoard: List[List[Cell]]): GameState = {
+  def updateBoardOnly(newBoard: Vector[Vector[Cell]]): GameState = {
     new GameState(newBoard, lastMove)
   }
 
@@ -172,14 +172,14 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   }
 
   /**
-    * Checks a list of game board cells for 4 of the players token in a row.
-    * @param cells List of cells to check.
+    * Checks a Vector of game board cells for 4 of the players token in a row.
+    * @param cells Vector of cells to check.
     * @param playerToken Token of player we are checking has 4 in a row.
     * @return Index of start cell of the 4 in a row, if there is 4 in a row. Otherwise none.
     */
-  def fourInARow(cells: List[Cell], playerToken: CellContents): Option[Int] = {
+  def fourInARow(cells: Vector[Cell], playerToken: CellContents): Option[Int] = {
 
-    val index = cells.indexOfSlice(List.fill(4)(Cell(playerToken)))
+    val index = cells.indexOfSlice(Vector.fill(4)(Cell(playerToken)))
 
     if ( index >= 0 ) {
       Some(index)
@@ -190,7 +190,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
   }
 
   // Starts with -3 default offset
-  def getDiagonal(row: Int, col: Int, NEorSE: Int): List[Cell] = {
+  def getDiagonal(row: Int, col: Int, NEorSE: Int): Vector[Cell] = {
     getDiagonal(row, col, -3, NEorSE)
   }
 
@@ -201,15 +201,15 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
     * @param col Column number of centre cell
     * @param offset current offset from centre cell, along diagonal. Usually starts at -3.
     * @param NEorSE 1 is southeast (right and down / left and up ). -1 is opposite.
-    * @return List of cells that were along that diagonal, seven long.
+    * @return Vector of cells that were along that diagonal, seven long.
     */
-  def getDiagonal(row: Int, col: Int, offset: Int, NEorSE: Int): List[Cell] = {
+  def getDiagonal(row: Int, col: Int, offset: Int, NEorSE: Int): Vector[Cell] = {
 
     if (offset == 3) {
-      List(safeGet(row + (offset*NEorSE), col + offset))
+      Vector(safeGet(row + (offset*NEorSE), col + offset))
     }
     else {
-      safeGet(row + (offset*NEorSE), col + offset) :: getDiagonal(row, col, offset + 1, NEorSE)
+      safeGet(row + (offset*NEorSE), col + offset) +: getDiagonal(row, col, offset + 1, NEorSE)
     }
   }
 
@@ -225,7 +225,7 @@ case class GameState(board: List[List[Cell]], lastMove: Option[Move]) {
 
   // TODO: Col and column are ambiguous, need better names.
   // TODO: Could potentially put this in the companion object
-  def findRow(column: List[Cell], row: Int, col: Int, player: CellContents): Move = {
+  def findRow(column: Vector[Cell], row: Int, col: Int, player: CellContents): Move = {
 
     // Column is full if row < 0
     // Return the <0 row to signify it's full

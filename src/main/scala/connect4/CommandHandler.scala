@@ -2,7 +2,7 @@ package connect4
 
 object CommandHandler {
 
-  def interpret(message: String, authorId: String, gameInstances: List[GameInstance]): (List[GameInstance], Option[String]) = {
+  def interpret(message: String, authorId: String, gameInstances: Vector[GameInstance]): (Vector[GameInstance], Option[String]) = {
 
     val (gi, reply) = message match {
       case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstances, opponentId, authorId, flags)
@@ -27,8 +27,8 @@ object CommandHandler {
 
   }
 
-  // Adds the challenging and defending players to list of games in initiation, and acknowledges with message.
-  def challenge(gameInstances: List[GameInstance], defenderId: String, challengerId: String, flags: String): (List[GameInstance], String) = {
+  // Adds the challenging and defending players to Vector of games in initiation, and acknowledges with message.
+  def challenge(gameInstances: Vector[GameInstance], defenderId: String, challengerId: String, flags: String): (Vector[GameInstance], String) = {
 
     // TODO: Use Map to enforce player in only one game at one time
      if (gameInstances.exists(_.instancePlayerPair.atLeastOneInPair(defenderId, challengerId))) {
@@ -53,8 +53,8 @@ object CommandHandler {
 
   }
 
-  // TODO: Come back to this with Jake, at the moment it goes through the list twice.
-  private def accept(gameInstances: List[GameInstance], accepterId: String, flags: String): (List[GameInstance], String) = {
+  // TODO: Come back to this with Jake, at the moment it goes through the Vector twice.
+  private def accept(gameInstances: Vector[GameInstance], accepterId: String, flags: String): (Vector[GameInstance], String) = {
 
     val challengeToAccept: Option[GameInstance] =
       gameInstances.find {
@@ -86,7 +86,7 @@ object CommandHandler {
     (newGameInstances, reply)
   }
 
-  private def drop(col: Int, gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+  private def drop(col: Int, gameInstances: Vector[GameInstance], playerId: String): (Vector[GameInstance], String) = {
 
     val (newGameInstances, reply) = mapGameInstanceWithReply( gameInstances, Strings.NotInGame) {
       gameInstance => playIf(col, gameInstance, playerId)
@@ -97,9 +97,9 @@ object CommandHandler {
   }
 
   private def mapGameInstanceWithReply(
-    gameInstances: List[GameInstance],
+    gameInstances: Vector[GameInstance],
     noInstanceReply: String)
-    (f: GameInstance => (GameInstance, String)): (List[GameInstance], String) = {
+    (f: GameInstance => (GameInstance, String)): (Vector[GameInstance], String) = {
 
     // TODO: Shouldn't need to use var here
     var reply = noInstanceReply
@@ -116,7 +116,7 @@ object CommandHandler {
 
   }
 
-  private def checkWin(gameInstances: List[GameInstance], currentReply: String): (List[GameInstance], String) = {
+  private def checkWin(gameInstances: Vector[GameInstance], currentReply: String): (Vector[GameInstance], String) = {
 
     val (newGameInstances, maybeWinningGame) = lookForWinningGame(gameInstances)
 
@@ -129,7 +129,7 @@ object CommandHandler {
 
   // TODO: This should only loop through once, and just pop the value out
   // Returns new game instances and maybe a winning game
-  def lookForWinningGame(gameInstances: List[GameInstance]): (List[GameInstance], Option[GameInstance]) = {
+  def lookForWinningGame(gameInstances: Vector[GameInstance]): (Vector[GameInstance], Option[GameInstance]) = {
 
     // Just get winning game
     val maybeWinningGame = returnMaybeWinningGame(gameInstances)
@@ -147,7 +147,7 @@ object CommandHandler {
   }
 
   // TODO: This is fucked
-  def returnMaybeWinningGame(gameInstances: List[GameInstance]): Option[GameInstance] = {
+  def returnMaybeWinningGame(gameInstances: Vector[GameInstance]): Option[GameInstance] = {
     gameInstances.foreach {
       case Challenged(_) => ()
       case Playing(gameState, playerPair) => gameState.maybeWinningBoard() match {
@@ -158,9 +158,9 @@ object CommandHandler {
     None
   }
 
-  private def forfeit(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+  private def forfeit(gameInstances: Vector[GameInstance], playerId: String): (Vector[GameInstance], String) = {
 
-    // Changes list
+    // Changes Vector
     val newGameInstances = gameInstances.filterNot {
       case Challenged(_) => false
       case Playing(_, playerPair) => playerPair.roleFromPair(playerId).isDefined
@@ -175,7 +175,7 @@ object CommandHandler {
   }
 
   // TODO: This is very similar to forfeit, perhaps they can be merged somehow
-  private def reject(gameInstances: List[GameInstance], playerId: String): (List[GameInstance], String) = {
+  private def reject(gameInstances: Vector[GameInstance], playerId: String): (Vector[GameInstance], String) = {
 
     val newGameInstances = gameInstances.filterNot {
       case Challenged(playerPair) => playerPair.roleFromPair(playerId).isDefined
@@ -188,7 +188,7 @@ object CommandHandler {
       (newGameInstances, Strings.Reject)
   }
 
-  private def changeToken(gameInstances: List[GameInstance], token: String, playerId: String): (List[GameInstance], String) = {
+  private def changeToken(gameInstances: Vector[GameInstance], token: String, playerId: String): (Vector[GameInstance], String) = {
 
     mapGameInstanceWithReply(gameInstances, Strings.NotInGame) { gameInstance =>
 

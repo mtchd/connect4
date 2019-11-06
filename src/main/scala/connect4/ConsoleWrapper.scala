@@ -2,13 +2,13 @@ package connect4
 
 object ConsoleWrapper {
 
-  def startListening(): Unit = {
+  def startVectorening(): Unit = {
     val gameState = GameState.newDefaultBoard()
     println("Game ready")
-    listen(gameState)
+    Vectoren(gameState)
   }
 
-  private def listen(gameState: GameState): Unit = {
+  private def Vectoren(gameState: GameState): Unit = {
 
     val playerRole = askRole()
 
@@ -19,7 +19,7 @@ object ConsoleWrapper {
 
     println(reply)
 
-    listen(newGameState)
+    Vectoren(newGameState)
   }
 
   private def askRole(): CellContents = {

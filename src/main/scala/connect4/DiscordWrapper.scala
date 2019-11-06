@@ -11,10 +11,10 @@ object DiscordWrapper {
 
   // Side effects be here, yarr
 
-  def startListening(): Unit = {
+  def startVectorening(): Unit = {
 
-    //TODO: Investigate using a ListBuffer instead of a list, seeing as we are going mutable.
-    var gameInstances: List[GameInstance] = List.empty
+    //TODO: Investigate using a VectorBuffer instead of a Vector, seeing as we are going mutable.
+    var gameInstances: Vector[GameInstance] = Vector.empty
 
     val token = ConfigFactory.load().getString("secrets.discordApiKey")
     val clientSettings = ClientSettings(token)

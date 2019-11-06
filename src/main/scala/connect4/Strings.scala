@@ -34,7 +34,7 @@ object Strings {
 
   // Test challenger slack ID
   val TestChallengerId = "X"
-  // General help, lists available commands
+  // General help, Vectors available commands
   val Help = "To challenge a player, use:" +
     "\nchallenge @username" +
     "\nYou can add/change a token with this flag 'token :your-token-here:'" +

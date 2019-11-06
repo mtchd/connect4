@@ -1,5 +1,7 @@
 package connect4
 
+import connect4.gamestore.DoobieTest
+
 object Main {
 
   // TODO: More tests
@@ -8,13 +10,13 @@ object Main {
 
 //     val token = sys.env("TOKEN")
 
-//     SlackWrapper.startListening(token)
+//     SlackWrapper.startVectorening(token)
 
-    // DiscordWrapper.startListening()
+    // DiscordWrapper.startVectorening()
 
-    // ConsoleWrapper.startListening()
+    // ConsoleWrapper.startVectorening()
 
-    GameInstance
+    DoobieTest.test()
 
   }
 

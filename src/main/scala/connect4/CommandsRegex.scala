@@ -40,18 +40,4 @@ object CommandsRegex {
     s"(?i)($command)".r
   }
 
-  // Lists commands as string. Currently unused but available for use if needed.
-  def listCommandsAsString(): String = {
-    val fields = CommandsRegex.getClass.getDeclaredFields
-
-    var list: List[AnyRef] = List()
-
-    fields.foreach { f =>
-      f.setAccessible(true)
-      list = list :+ f.get(CommandsRegex)
-    }
-
-    list.mkString("\n")
-  }
-
 }

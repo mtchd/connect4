@@ -16,7 +16,7 @@ object GameStoreQueries {
          |  lastMovePlayerRole,
          |  lastMoveCol,
          |  lastMoveRow,
-         |  board
+         |
          |)
          |VALUES (
          |  ${gameInstanceRow.timestamp},
@@ -27,7 +27,7 @@ object GameStoreQueries {
          |  ${gameInstanceRow.lastMovePlayerRole},
          |  ${gameInstanceRow.lastMoveCol},
          |  ${gameInstanceRow.lastMoveRow},
-         |  ${gameInstanceRow.board}
+         |
          |)
         """.stripMargin
       .update

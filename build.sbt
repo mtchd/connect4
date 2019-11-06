@@ -21,24 +21,17 @@ libraryDependencies ++= Seq(
 
 resolvers += Resolver.JCenterRepository
 
+// Doobie stuff
 scalacOptions += "-Ypartial-unification" // 2.11.9+
 
-libraryDependencies ++= {
+lazy val doobieVersion = "0.8.4"
 
-  lazy val doobieVersion = "0.5.4"
-
-  Seq(
-    "org.tpolecat"          %% "doobie-core"            % doobieVersion,
-    "org.tpolecat"          %% "doobie-h2"              % doobieVersion,
-    "org.tpolecat"          %% "doobie-hikari"          % doobieVersion,
-    "org.tpolecat"          %% "doobie-specs2"          % doobieVersion,
-    "org.tpolecat"          %% "doobie-scalatest"       % doobieVersion       % "test",
-    "mysql"                 % "mysql-connector-java"    % "5.1.34",
-    "org.slf4j"             % "slf4j-api"               % "1.7.5",
-    "ch.qos.logback"        % "logback-classic"         % "1.0.9"
-  )
-
-}
+libraryDependencies ++= Seq(
+  "org.tpolecat" %% "doobie-core"     % doobieVersion,
+  "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+  "org.tpolecat" %% "doobie-specs2"   % doobieVersion
+)
+// End Doobie stuff
 
 resolvers ++= Seq(
   "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"

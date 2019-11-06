@@ -17,11 +17,11 @@ object SlackWrapper {
   /**
     * Start point of the program, handles all incoming messages in channels the bot is present in.
     */
-  def startListening(token: String): Unit = {
+  def startVectorening(token: String): Unit = {
 
     val rtmClient = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
 
-    println("Now listening to Slack...")
+    println("Now Vectorening to Slack...")
 
     rtmClient.onMessage { message =>
 
@@ -29,12 +29,12 @@ object SlackWrapper {
 
       val thread = message.thread_ts.getOrElse(message.ts)
 
-      // ThreadId => List[GameInstance]
+      // ThreadId => Vector[GameInstance]
       val gameInstances = gameStore.get(thread)
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
 
-      // Persist state (ThreadId, List[GameInstance]) => Unit
+      // Persist state (ThreadId, Vector[GameInstance]) => Unit
       gameStore.put(thread, newGameInstances)
 
       reply.foreach { replyText =>

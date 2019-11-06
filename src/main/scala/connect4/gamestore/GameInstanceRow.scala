@@ -48,7 +48,7 @@ case class GameInstanceRow(
 
   }
 
-  def convertBoard(board: List[List[Cell]]): List[List[String]] = {
+  def convertBoard(board: Vector[Vector[Cell]]): Vector[Vector[String]] = {
 
     board.map{ row =>
       row.map { cell =>

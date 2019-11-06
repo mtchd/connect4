@@ -11,7 +11,7 @@ class CommandHandlerTests extends FunSuite {
   test("CommandHandler.challenge") {
 
     // Mock values
-    val instances: List[GameInstance] = List.empty
+    val instances: Vector[GameInstance] = Vector.empty
 
     val (newInstances, reply) = CommandHandler.challenge(instances, defenderId, challengerId, "")
 
@@ -21,7 +21,7 @@ class CommandHandlerTests extends FunSuite {
   }
 
   test("CommandHandler.lookForWinningGame should return None if empty") {
-    val instances: List[GameInstance] = List.empty
+    val instances: Vector[GameInstance] = Vector.empty
     val (_, maybeWinningGame) = CommandHandler.lookForWinningGame(instances)
     assert(maybeWinningGame.isEmpty)
   }
@@ -36,7 +36,7 @@ class CommandHandlerTests extends FunSuite {
 
     val gameInstance = Playing(boardWithPrevMove, testPair)
 
-    val instances: List[GameInstance] = List(gameInstance)
+    val instances: Vector[GameInstance] = Vector(gameInstance)
 
     val (newInstances, maybeWinningGame) = CommandHandler.lookForWinningGame(instances)
 

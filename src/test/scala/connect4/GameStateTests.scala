@@ -81,10 +81,10 @@ class GameStateTests extends FunSuite {
     val diagonal = newState.getDiagonal(0,0,1)
 
     // What to expect
-    val firstHalf = List.fill(3)(Cell(Empty))
-    val secondHalf = List.fill(4)(Cell(Challenger))
+    val firstHalf = Vector.fill(3)(Cell(Empty))
+    val secondHalf = Vector.fill(4)(Cell(Challenger))
 
-    assert(diagonal == (firstHalf ::: secondHalf))
+    assert(diagonal == (firstHalf ++ secondHalf))
   }
 
   // TODO: Finish this test
