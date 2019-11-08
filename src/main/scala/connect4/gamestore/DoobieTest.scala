@@ -1,15 +1,16 @@
 package connect4.gamestore
 
-import doobie._
-import doobie.implicits._
-import cats._
 import cats.effect._
 import cats.implicits._
+import connect4.{Challenged, Defender, PlayerPair}
+import doobie._
+import doobie.implicits._
 import doobie.util.ExecutionContexts
 
 object DoobieTest {
 
   def test(): Unit = {
+
     implicit val cs = IO.contextShift(ExecutionContexts.synchronous)
 
     val xa = Transactor.fromDriverManager[IO](
@@ -26,11 +27,33 @@ object DoobieTest {
       (a, b).tupled
     }
 
-    val valuesList = program3a.replicateA(5)
+    GameStoreQueries.createTable.run.transact(xa).unsafeRunSync()
+
+    val playerPair = PlayerPair.newTestPair()
+
+    val newPlayerPair = playerPair.updateToken(Defender, ":white_circle:")
+
+    val thing = GameInstanceRow.convertGameInstance(Challenged(newPlayerPair), "11")
+
+    println(thing)
+
+    val ooo = GameStoreQueries.insert(thing)
+
+    val oohhh = ooo.run.transact(xa)
+
+    println(ooo)
+
+    println(oohhh)
+
+    println(oohhh.unsafeRunSync)
+
+    val valuesList: doobie.ConnectionIO[List[(Int, Double)]] = program3a.replicateA(5)
 
     val result = valuesList.transact(xa)
 
     result.unsafeRunSync.foreach(println)
+
+    println(GameStoreQueries.searchWithTs("11").option.transact(xa).unsafeRunSync)
   }
 
 }

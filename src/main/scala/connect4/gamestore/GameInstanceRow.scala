@@ -1,8 +1,8 @@
 package connect4.gamestore
 
-import connect4.{Cell, Challenged, GameInstance, Playing}
-
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import connect4.{Cell, Challenged, Playing}
+import io.circe._
+import io.circe.syntax._
 
 case class GameInstanceRow(
                             timestamp: String,
@@ -15,22 +15,6 @@ case class GameInstanceRow(
                             lastMoveRow: Option[Int],
                             board: Option[Json]
                           ) {
-
-  def convertGameInstance(gameInstance: Challenged, timeStamp: String): GameInstanceRow = {
-
-    GameInstanceRow(
-      timeStamp,
-      gameInstance.instancePlayerPair.challenger.id,
-      gameInstance.instancePlayerPair.defender.id,
-      gameInstance.instancePlayerPair.challenger.token,
-      gameInstance.instancePlayerPair.defender.token,
-      None,
-      None,
-      None,
-      None
-    )
-
-  }
 
   def convertGameInstance(gameInstance: Playing, timeStamp: String): GameInstanceRow = {
 
@@ -55,5 +39,23 @@ case class GameInstanceRow(
         Cell.convertToString(cell.contents)
       }
     }
+  }
+}
+
+object GameInstanceRow {
+  def convertGameInstance(gameInstance: Challenged, timeStamp: String): GameInstanceRow = {
+
+    GameInstanceRow(
+      timeStamp,
+      gameInstance.instancePlayerPair.challenger.id,
+      gameInstance.instancePlayerPair.defender.id,
+      gameInstance.instancePlayerPair.challenger.token,
+      gameInstance.instancePlayerPair.defender.token,
+      None,
+      None,
+      None,
+      None
+    )
+
   }
 }

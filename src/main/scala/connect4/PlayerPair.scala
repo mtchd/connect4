@@ -39,6 +39,10 @@ object PlayerPair {
     PlayerPair(challenger, defender)
   }
 
+  def newTestPair(): PlayerPair = {
+    newDefaultPairFromIds("1","2")
+  }
+
   def newPairFromIdsWithChallengerToken(challengerId: String, defenderId: String, token: String): PlayerPair = {
     val challenger = Player(challengerId, token)
     val defender = Player.newDefaultPlayer(defenderId, Defender)
