@@ -49,4 +49,10 @@ object PlayerPair {
 
     PlayerPair(challenger, defender)
   }
+
+  def newPairWithTokens(challengerId: String, challengerToken: String, defenderId: String, defenderToken: String): PlayerPair = {
+    val defender = Player(defenderId, defenderToken)
+    val challenger = Player(challengerId, challengerToken)
+    PlayerPair(challenger, defender)
+  }
 }

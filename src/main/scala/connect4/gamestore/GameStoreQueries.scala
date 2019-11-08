@@ -1,8 +1,7 @@
 package connect4.gamestore
 
-import cats.data.NonEmptyList
 import doobie.implicits._
-import doobie.util.{Meta, Put}
+import doobie.util.Meta
 import io.circe.Json
 import io.circe.parser._
 import org.postgresql.util.PGobject
@@ -38,7 +37,7 @@ object GameStoreQueries {
     )
 
   // insert query
-  def insert(gameInstanceRow: GameInstanceRow): doobie.Update0 = {
+  def insert(gameInstanceRow: GameStoreRow): doobie.Update0 = {
     sql"""
          |INSERT INTO connect4 (
          |  ts,
@@ -75,12 +74,12 @@ object GameStoreQueries {
   }
 
   // search id
-  def searchWithTs(ts: String): doobie.Query0[GameInstanceRow] = {
+  def searchWithTs(ts: String): doobie.Query0[GameStoreRow] = {
     sql"""
          |SELECT * FROM connect4
          |WHERE ts = $ts
          |LIMIT 1
        """.stripMargin
-      .query[GameInstanceRow]
+      .query[GameStoreRow]
   }
 }

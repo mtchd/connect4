@@ -20,6 +20,7 @@ object Cell {
     }
   }
 
+  // TODO: Program poops if we get a string that's not one of these
   def convertFromString(string: String): CellContents = {
     string match {
       case "Defender" => Defender

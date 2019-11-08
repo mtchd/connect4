@@ -17,11 +17,11 @@ object SlackWrapper {
   /**
     * Start point of the program, handles all incoming messages in channels the bot is present in.
     */
-  def startVectorening(token: String): Unit = {
+  def startListening(token: String): Unit = {
 
     val rtmClient = SlackRtmClient(token, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
 
-    println("Now Vectorening to Slack...")
+    println("Now listening to Slack...")
 
     rtmClient.onMessage { message =>
 

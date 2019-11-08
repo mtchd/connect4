@@ -10,7 +10,7 @@ object Main {
 
 //     val token = sys.env("TOKEN")
 
-//     SlackWrapper.startVectorening(token)
+//     SlackWrapper.startListening(token)
 
     // DiscordWrapper.startVectorening()
 
