@@ -5,13 +5,13 @@ import doobie.Transactor
 import doobie.implicits._
 import doobie.util.ExecutionContexts
 
-object LocalGameStore extends GameStore {
+object RDSGameStore extends GameStore {
 
   implicit val cs = IO.contextShift(ExecutionContexts.synchronous)
 
   val xa = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",     // driver classname
-    "jdbc:postgresql:world",     // connect URL (driver-specific)
+    "connect4.csmziitufcpp.ap-southeast-2.rds.amazonaws.com",     // connect URL (driver-specific)
     "postgres",                  // user
     "",                          // password
     Blocker.liftExecutionContext(ExecutionContexts.synchronous) // just for testing

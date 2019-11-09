@@ -8,7 +8,7 @@ import org.postgresql.util.PGobject
 
 object GameStoreQueries {
 
-  def createTable = {
+  def createTable: doobie.Update0 = {
     sql"""
          |CREATE TABLE IF NOT EXISTS connect4 (
          |  ts VARCHAR(100) PRIMARY KEY,

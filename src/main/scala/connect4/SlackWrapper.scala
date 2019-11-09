@@ -1,7 +1,7 @@
 package connect4
 
 import akka.actor.ActorSystem
-import connect4.gamestore.{GameStore, InMemoryGameStore, LocalGameStore}
+import connect4.gamestore.{GameStore, InMemoryGameStore, RDSGameStore}
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
@@ -28,13 +28,13 @@ object SlackWrapper {
       val thread = message.thread_ts.getOrElse(message.ts)
 
       // ThreadId => Vector[GameInstance]
-      val gameInstances = LocalGameStore.get(thread)
+      val gameInstances = RDSGameStore.get(thread)
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
 
       println(reply, newGameInstances, thread)
       // Persist state (ThreadId, Vector[GameInstance]) => Unit
-      LocalGameStore.put(thread, newGameInstances)
+      RDSGameStore.put(thread, newGameInstances)
 
       reply.foreach { replyText =>
         rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread))

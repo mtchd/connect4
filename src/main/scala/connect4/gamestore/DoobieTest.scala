@@ -27,9 +27,9 @@ object DoobieTest {
     val oo = Challenged(playerPair)
     val ooo = Vector(oo)
 
-    LocalGameStore.put("11", ooo)
+    RDSGameStore.put("11", ooo)
 
-    println(LocalGameStore.get("11"))
+    println(RDSGameStore.get("11"))
 
   }
 
