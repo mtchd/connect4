@@ -11,14 +11,24 @@ case class RDSGameStore(password: String) extends GameStore {
 
   val xa = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",     // driver classname
-    "connect4.csmziitufcpp.ap-southeast-2.rds.amazonaws.com",     // connect URL (driver-specific)
+    "jdbc:postgresql://connect4.csmziitufcpp.ap-southeast-2.rds.amazonaws.com:5432/connect4",     // connect URL (driver-specific)
     "connect4",                  // user
     password,                          // password
     Blocker.liftExecutionContext(ExecutionContexts.synchronous) // just for testing
   )
 
+  def setup(): Unit = {
+    println(GameStoreQueries.createTable.run.transact(xa).unsafeRunSync())
+  }
+
   override def get(threadTimeStamp: String): Vector[GameInstance] = {
+
+    println(threadTimeStamp)
+
     val maybeGameStoreRow = GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa).unsafeRunSync
+
+    println(maybeGameStoreRow)
+
     val maybeGameInstance = maybeGameStoreRow match {
       case Some(gameStoreRow) => Some(gameStoreRow.convertToGameInstance)
       case None => None

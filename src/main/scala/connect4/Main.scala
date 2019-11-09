@@ -15,8 +15,6 @@ object Main {
 
     // ConsoleWrapper.startVectorening()
 
-//    DoobieTest.test()
-
   }
 
 }

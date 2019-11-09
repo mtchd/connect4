@@ -1,10 +1,17 @@
 #! /bin/bash
 set -euo pipefail
 
-sbt assembly
+docker pull mtchd/connect4
 
-docker build -t connect4 .
+echo "Decrypting slack api key..."
+SLACK_TOKEN=`aws kms decrypt --ciphertext-blob fileb://encrypted/dev.encrypted --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode`
 
-. $(dirname $0)/../config/dev.env
+echo "Decrypting database password..."
+DB_PASS=`aws kms decrypt --ciphertext-blob fileb://encrypted/db.encrypted --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode`
 
-docker run --rm -it -e TOKEN connect4
+echo "Starting connect 4..."
+docker run --rm -e SLACK_TOKEN=${SLACK_TOKEN} -e DB_PASS=${DB_PASS} mtchd/connect4
