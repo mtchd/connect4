@@ -12,9 +12,13 @@ sudo service docker start
 
 sudo docker pull mtchd/connect4
 
-# Get the key!
-TOKEN=`aws kms decrypt --ciphertext-blob fileb://${ENV}.encrypted --region ap-southeast-2 \
+# Get the slack api key!
+SLACK_TOKEN=`aws kms decrypt --ciphertext-blob fileb://${ENV}.encrypted --region ap-southeast-2 \
         --query Plaintext \
         --output text | base64 --decode`
 
-sudo docker run -d --rm -e TOKEN=${TOKEN} mtchd/connect4
+DB_PASS=`aws kms decrypt --ciphertext-blob fileb://${ENV}.encrypted --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode`
+
+sudo docker run -d --rm -e SLACK_TOKEN=${SLACK_TOKEN} -e DB_PASS=${DB_PASS} mtchd/connect4

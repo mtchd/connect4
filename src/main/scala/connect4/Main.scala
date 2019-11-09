@@ -1,16 +1,15 @@
 package connect4
 
-import connect4.gamestore.DoobieTest
-
 object Main {
 
   // TODO: More tests
   // TODO: Run in DMs
   def main(args: Array[String]) {
 
-//     val token = sys.env("TOKEN")
+    val slackToken = sys.env("SLACK_TOKEN")
+    val dbPassword = sys.env("DB_PASS")
 
-     SlackWrapper.startListening("1")
+     SlackWrapper.startListening(slackToken, dbPassword)
 
     // DiscordWrapper.startVectorening()
 

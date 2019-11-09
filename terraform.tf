@@ -17,7 +17,7 @@ variable "sshkey" {
 
 resource "aws_instance" "connect4" {
   ami           = "ami-0dc96254d5535925f"
-  instance_type = "t3.micro"
+  instance_type = "t2.micro"
   key_name = "connect4"
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   subnet_id = "subnet-b5b7a5d2"

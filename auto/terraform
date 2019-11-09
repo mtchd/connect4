@@ -4,10 +4,10 @@ set -euo pipefail
 
 terraform init
 
-# Get the key!
-TOKEN=`aws kms decrypt --ciphertext-blob fileb://encrypted/connect4.encrypted --region ap-southeast-2 \
+# Get the ssh key!
+SSH_KEY=`aws kms decrypt --ciphertext-blob fileb://encrypted/connect4.encrypted --region ap-southeast-2 \
         --query Plaintext \
         --output text | base64 --decode`
 
 terraform apply -auto-approve \
-        -var 'sshkey='"${TOKEN}"''
+        -var 'sshkey='"${SSH_KEY}"''
