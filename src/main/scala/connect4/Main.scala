@@ -10,13 +10,13 @@ object Main {
 
 //     val token = sys.env("TOKEN")
 
-//     SlackWrapper.startListening(token)
+     SlackWrapper.startListening("xoxb-510194167889-510803498946-8e7NQWSEqnfIiUcTP4oKLzZj")
 
     // DiscordWrapper.startVectorening()
 
     // ConsoleWrapper.startVectorening()
 
-    DoobieTest.test()
+//    DoobieTest.test()
 
   }
 

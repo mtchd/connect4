@@ -87,15 +87,20 @@ object GameStoreRow {
 
   def convertGameInstance(gameInstance: Playing, timeStamp: String): GameStoreRow = {
 
+    val (lastMovePlayerRole, lastMoveCol, lastMoveRow) = gameInstance.gameState.lastMove match {
+      case Some(lastMove) => (Some(Cell.convertToString(lastMove.playerRole)), Some(lastMove.col), Some(lastMove.row))
+      case None => (None, None, None)
+    }
+
     GameStoreRow(
       timeStamp,
       gameInstance.instancePlayerPair.challenger.id,
       gameInstance.instancePlayerPair.defender.id,
       gameInstance.instancePlayerPair.challenger.token,
       gameInstance.instancePlayerPair.defender.token,
-      Some(Cell.convertToString(gameInstance.gameState.lastMove.orNull.playerRole)),
-      Some(gameInstance.gameState.lastMove.orNull.col),
-      Some(gameInstance.gameState.lastMove.orNull.row),
+      lastMovePlayerRole,
+      lastMoveCol,
+      lastMoveRow,
       Some(convertToStringBoard(gameInstance.gameState.board).asJson)
     )
 

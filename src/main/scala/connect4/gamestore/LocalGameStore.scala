@@ -17,8 +17,8 @@ object LocalGameStore extends GameStore {
     Blocker.liftExecutionContext(ExecutionContexts.synchronous) // just for testing
   )
 
-  override def get(threadId: String): Vector[GameInstance] = {
-    val maybeGameStoreRow = GameStoreQueries.searchWithTs("11").option.transact(xa).unsafeRunSync
+  override def get(threadTimeStamp: String): Vector[GameInstance] = {
+    val maybeGameStoreRow = GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa).unsafeRunSync
     val maybeGameInstance = maybeGameStoreRow match {
       case Some(gameStoreRow) => Some(gameStoreRow.convertToGameInstance)
       case None => None
@@ -30,13 +30,15 @@ object LocalGameStore extends GameStore {
     }
   }
 
-  override def put(threadId: String, gameInstances: Vector[GameInstance]): Unit = {
+  override def put(threadTs: String, gameInstances: Vector[GameInstance]): Unit = {
     val gameInstance = gameInstances.head
 
-    val gameStoreRow = GameStoreRow.convertGameInstance(gameInstance, "11")
+    println(gameInstance, threadTs)
+
+    val gameStoreRow = GameStoreRow.convertGameInstance(gameInstance, threadTs)
 
     val insertQuery = GameStoreQueries.insert(gameStoreRow)
 
-    insertQuery.run.transact(xa)
+    insertQuery.run.transact(xa).unsafeRunSync()
   }
 }
