@@ -9,11 +9,7 @@ object Main {
     val slackToken = sys.env("SLACK_TOKEN")
     val dbPassword = sys.env("DB_PASS")
 
-     SlackWrapper.startListening(slackToken, dbPassword)
-
-    // DiscordWrapper.startVectorening()
-
-    // ConsoleWrapper.startVectorening()
+    SlackWrapper.startListening(slackToken, dbPassword)
 
   }
 

@@ -1,7 +1,7 @@
 package connect4
 
 import akka.actor.ActorSystem
-import connect4.gamestore.{GameStore, InMemoryGameStore, RDSGameStore}
+import connect4.gamestore.RDSGameStore
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
@@ -22,23 +22,18 @@ object SlackWrapper {
     val gameStore = RDSGameStore(password)
     gameStore.setup()
 
-      println("Now listening to Slack...")
+    println("Now listening to Slack...")
 
     rtmClient.onMessage { message =>
 
-      println("here")
-
       // Use information in message to *maybe* query database for relevant thread
       val thread = message.thread_ts.getOrElse(message.ts)
-
-      println(thread)
 
       // ThreadId => Vector[GameInstance]
       val gameInstances = gameStore.get(thread)
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
 
-      println(reply, newGameInstances, thread)
       // Persist state (ThreadId, Vector[GameInstance]) => Unit
       gameStore.put(thread, newGameInstances)
 

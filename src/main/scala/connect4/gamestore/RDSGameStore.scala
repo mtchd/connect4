@@ -23,11 +23,7 @@ case class RDSGameStore(password: String) extends GameStore {
 
   override def get(threadTimeStamp: String): Vector[GameInstance] = {
 
-    println(threadTimeStamp)
-
     val maybeGameStoreRow = GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa).unsafeRunSync
-
-    println(maybeGameStoreRow)
 
     val maybeGameInstance = maybeGameStoreRow match {
       case Some(gameStoreRow) => Some(gameStoreRow.convertToGameInstance)
@@ -42,8 +38,6 @@ case class RDSGameStore(password: String) extends GameStore {
 
   override def put(threadTs: String, gameInstances: Vector[GameInstance]): Unit = {
     val gameInstance = gameInstances.head
-
-    println(gameInstance, threadTs)
 
     val gameStoreRow = GameStoreRow.convertGameInstance(gameInstance, threadTs)
 
