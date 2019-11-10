@@ -6,71 +6,10 @@ resource "aws_instance" "connect4dev" {
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   subnet_id = "subnet-b5b7a5d2"
   iam_instance_profile = "Connect4"
+  user_data = file("auto/remote")
 
   tags = {
     Name = "connect4dev"
   }
 
-  provisioner "file" {
-
-    connection {
-      host = aws_instance.connect4dev.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    source      = "encrypted/dev.encrypted"
-    destination = "dev.encrypted"
-  }
-
-  provisioner "file" {
-
-    connection {
-      host = aws_instance.connect4dev.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    source      = "encrypted/db.encrypted"
-    destination = "db.encrypted"
-  }
-
-  provisioner "file" {
-
-    connection {
-      host = aws_instance.connect4dev.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    source      = "auto/remote"
-    destination = "remote"
-  }
-
-  provisioner "remote-exec" {
-
-    connection {
-      host = aws_instance.connect4dev.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    inline = [
-      "chmod +x remote",
-      "./remote dev",
-    ]
-
-  }
 }

@@ -11,7 +11,7 @@ resource "aws_db_instance" "connect4" {
   identifier           = "connect4"
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   skip_final_snapshot  = true
-  publicly_accessible  = false
+  publicly_accessible  = true
 }
 
 variable "dbPassword" {

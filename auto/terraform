@@ -14,6 +14,7 @@ DB_PASS=`aws kms decrypt --ciphertext-blob fileb://encrypted/db.encrypted --regi
         --query Plaintext \
         --output text | base64 --decode`
 
-terraform apply -auto-approve \
+# Removed auto-approve while I'm not using Buildkite
+terraform apply \
         -var 'sshkey='"${SSH_KEY}"'' \
         -var 'dbPassword='"${DB_PASS}"''

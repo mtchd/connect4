@@ -12,15 +12,27 @@ sudo service docker start
 
 sudo docker pull mtchd/connect4
 
+ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
+echo ${ENCRYPTED_DB_PASS} | base64 -D > db.encrypted
+
+if [[ ${ENV} == "prod" ]];
+then
+    ENCRYPTED_PROD_SLACK_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHZksn7tWDDaTqU+C4yQJUaAAAAljCBkwYJKoZIhvcNAQcGoIGFMIGCAgEAMH0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgKs/WZmBmioiYfXJAgEQgFDM5mt4xJAQ8sY/7TKfPOORp/t28xR2hVVbBv4rBXD7Qvo9tLNjElekaVsb+L/rMZ1xeTVGhZo7DPCuug4KnxSs64R8TkJhVoNlrA8N3HGXLw==
+    echo ${ENCRYPTED_PROD_SLACK_TOKEN} | base64 -D > prod.encrypted
+else
+    ENCRYPTED_DEV_SLACK_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwFkp0pQCFWuoAIk74qz5bJ/AAAAmDCBlQYJKoZIhvcNAQcGoIGHMIGEAgEAMH8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3DNwIvmTsqS0Rx99AgEQgFIhfIGK75TtUQdjjNJEiPXvYZZvb4Y4R0hsNuJOgFYi0I8cRZefHDS8E9wtSJEq9KUpfaKCMpyaIeXUNlOBBBIWWYAMjnTDvjqMD5DWE5RyaqUY
+    echo ${ENCRYPTED_DEV_SLACK_TOKEN} | base64 -D > dev.encrypted
+fi
+
 echo "Decrypting slack api key..."
-SLACK_TOKEN=`aws kms decrypt --ciphertext-blob fileb://${ENV}.encrypted --region ap-southeast-2 \
+SLACK_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://"${ENV}".encrypted --region ap-southeast-2 \
         --query Plaintext \
-        --output text | base64 --decode`
+        --output text | base64 --decode)
 
 echo "Decrypting database password..."
-DB_PASS=`aws kms decrypt --ciphertext-blob fileb://db.encrypted --region ap-southeast-2 \
+DB_PASS=$(aws kms decrypt --ciphertext-blob fileb://db.encrypted --region ap-southeast-2 \
         --query Plaintext \
-        --output text | base64 --decode`
+        --output text | base64 --decode)
 
 echo "Starting connect 4..."
-sudo docker run -d --rm -e SLACK_TOKEN=${SLACK_TOKEN} -e DB_PASS=${DB_PASS} mtchd/connect4
+sudo docker run -d --rm -e SLACK_TOKEN="${SLACK_TOKEN}" -e DB_PASS="${DB_PASS}" mtchd/connect4

@@ -17,7 +17,7 @@ variable "sshkey" {
 
 resource "aws_instance" "connect4" {
   ami           = "ami-0dc96254d5535925f"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   key_name = "connect4"
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   subnet_id = "subnet-b5b7a5d2"
@@ -41,6 +41,22 @@ resource "aws_instance" "connect4" {
     source      = "encrypted/prod.encrypted"
     destination = "prod.encrypted"
   }
+
+  provisioner "file" {
+
+    connection {
+      host = aws_instance.connect4.public_ip
+      type = "ssh"
+      user = "ec2-user"
+      private_key = var.sshkey
+      timeout = "10m"
+      agent = false
+    }
+
+    source      = "encrypted/db.encrypted"
+    destination = "db.encrypted"
+  }
+
 
   provisioner "file" {
 
