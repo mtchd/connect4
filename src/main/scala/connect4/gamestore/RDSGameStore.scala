@@ -18,7 +18,7 @@ case class RDSGameStore(password: String) extends GameStore {
   )
 
   def setup(): Unit = {
-    println(GameStoreQueries.createTable.run.transact(xa).unsafeRunSync())
+    GameStoreQueries.createTable.run.transact(xa).unsafeRunSync()
   }
 
   override def get(threadTimeStamp: String): Vector[GameInstance] = {

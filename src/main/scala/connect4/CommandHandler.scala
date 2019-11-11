@@ -38,7 +38,7 @@ object CommandHandler {
     // Read flags
     // TODO: Only allows one flag
     val challengerToken = flags match {
-      case CommandsRegex.Token(_, token, _) => token
+      case CommandsRegex.Emoji(_, token, _) => token
       case _ => Strings.ChallengerToken
     }
 
