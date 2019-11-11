@@ -5,12 +5,12 @@ set -euo pipefail
 ENV=${1:-dev}
 
 # Set Up
-sudo yum update -y
-sudo yum install docker -y
-sudo usermod -a -G docker ec2-user
-sudo service docker start
+yum update -y
+yum install docker -y
+usermod -a -G docker ec2-user
+service docker start
 
-sudo docker pull mtchd/connect4
+docker pull mtchd/connect4
 
 # Base64 takes a lowercase -d on linux
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
@@ -36,4 +36,9 @@ DB_PASS=$(aws kms decrypt --ciphertext-blob fileb://db.encrypted --region ap-sou
         --output text | base64 --decode)
 
 echo "Starting connect 4..."
-sudo docker run -d --rm -e SLACK_TOKEN="${SLACK_TOKEN}" -e DB_PASS="${DB_PASS}" mtchd/connect4
+docker run -d --rm -e SLACK_TOKEN="${SLACK_TOKEN}" -e DB_PASS="${DB_PASS}" mtchd/connect4
+
+if [[ "${ENV}" == dev ]]; then
+    sleep 1h
+    shutdown
+fi
