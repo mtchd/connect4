@@ -15,6 +15,7 @@ object CommandsRegex {
   val Help: Regex = simpleRegex("help")
   // Flags
   val Token: Regex = "(?i)(.*token.*)(:.*:)(.*)".r
+  val Emoji: Regex = "(?i)(.*)(:.*:)(.*)".r
 
   // For Console
   val DefenderRole: Regex = simpleRegex("d")
