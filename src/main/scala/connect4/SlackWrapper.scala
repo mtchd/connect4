@@ -20,7 +20,8 @@ object SlackWrapper {
 
     val rtmClient = SlackRtmClient(slackToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
     val gameStore = RDSGameStore(password)
-    gameStore.setup()
+    // TODO UnsafeRunSync
+    gameStore.setup().unsafeRunSync()
 
     println("Now listening to Slack...")
 
@@ -29,13 +30,15 @@ object SlackWrapper {
       // Use information in message to *maybe* query database for relevant thread
       val thread = message.thread_ts.getOrElse(message.ts)
 
-      // ThreadId => Vector[GameInstance]
-      val gameInstances = gameStore.get(thread)
+      // ThreadId => IO[Option[GameInstance]]
+      val getIo = gameStore.get(thread)
+
+      // TODO UnsafeRunSync
+      val maybeGameInstances = getIo.unsafeRunSync()
+
+      val gameInstances = RDSGameStore.convertGame(maybeGameInstances)
 
       val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
-
-      // Persist state (ThreadId, Vector[GameInstance]) => Unit
-      gameStore.put(thread, newGameInstances)
 
       reply.foreach { replyText =>
         rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread))

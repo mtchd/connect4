@@ -36,8 +36,7 @@ object GameStoreQueries {
       }
     )
 
-  // insert query
-  def insert(gameInstanceRow: GameStoreRow): doobie.Update0 = {
+  def upsert(gameInstanceRow: GameStoreRow): doobie.Update0 = {
     sql"""
          |INSERT INTO connect4 (
          |  ts,
@@ -73,7 +72,6 @@ object GameStoreQueries {
       .update
   }
 
-  // search id
   def searchWithTs(ts: String): doobie.Query0[GameStoreRow] = {
     sql"""
          |SELECT * FROM connect4
@@ -81,5 +79,13 @@ object GameStoreQueries {
          |LIMIT 1
        """.stripMargin
       .query[GameStoreRow]
+  }
+
+  def delete(ts: String): doobie.Update0 ={
+    sql"""
+         |DELETE FROM connect4
+         |WHERE ts = $ts
+       """.stripMargin
+      .update
   }
 }

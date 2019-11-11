@@ -5,7 +5,8 @@ import doobie.Transactor
 import doobie.implicits._
 import doobie.util.ExecutionContexts
 
-case class RDSGameStore(password: String) extends GameStore {
+// TODO: Refactor this to be functional
+case class RDSGameStore(password: String) {
 
   implicit val cs = IO.contextShift(ExecutionContexts.synchronous)
 
@@ -17,14 +18,33 @@ case class RDSGameStore(password: String) extends GameStore {
     Blocker.liftExecutionContext(ExecutionContexts.synchronous) // just for testing
   )
 
-  def setup(): Unit = {
-    GameStoreQueries.createTable.run.transact(xa).unsafeRunSync()
+  def setup(): IO[Int] = GameStoreQueries.createTable.run.transact(xa)
+
+  def get(threadTimeStamp: String): IO[Option[GameStoreRow]] = {
+    GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa)
   }
 
-  override def get(threadTimeStamp: String): Vector[GameInstance] = {
+  def put(threadTs: String, gameInstances: Vector[GameInstance]): IO[Int] = {
+    gameInstances match {
+      case Vector.empty => delete(threadTs)
+      case gameInstances => upsert(threadTs, gameInstances.head)
+    }
+  }
 
-    val maybeGameStoreRow = GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa).unsafeRunSync
+  def upsert(threadTs: String, gameInstance: GameInstance): IO[Int] = {
+    val gameStoreRow = GameStoreRow.convertGameInstance(gameInstance, threadTs)
+    val insertQuery = GameStoreQueries.upsert(gameStoreRow)
+    insertQuery.run.transact(xa)
+  }
 
+  def delete(threadTs: String): IO[Int]  = {
+    GameStoreQueries.delete(threadTs).run.transact(xa)
+  }
+
+}
+
+object RDSGameStore {
+  def convertGame(maybeGameStoreRow: Option[GameStoreRow]): Vector[GameInstance] = {
     val maybeGameInstance = maybeGameStoreRow match {
       case Some(gameStoreRow) => Some(gameStoreRow.convertToGameInstance)
       case None => None
@@ -35,15 +55,4 @@ case class RDSGameStore(password: String) extends GameStore {
       case None => Vector.empty
     }
   }
-
-  override def put(threadTs: String, gameInstances: Vector[GameInstance]): Unit = {
-    val gameInstance = gameInstances.head
-
-    val gameStoreRow = GameStoreRow.convertGameInstance(gameInstance, threadTs)
-
-    val insertQuery = GameStoreQueries.insert(gameStoreRow)
-
-    insertQuery.run.transact(xa).unsafeRunSync()
-  }
-
 }
