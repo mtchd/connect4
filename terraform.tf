@@ -15,6 +15,10 @@ variable "sshkey" {
   default = ""
 }
 
+variable "dbPassword" {
+  type = string
+}
+
 resource "aws_instance" "connect4" {
   ami           = "ami-0dc96254d5535925f"
   instance_type = "t3.micro"
@@ -22,72 +26,40 @@ resource "aws_instance" "connect4" {
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   subnet_id = "subnet-b5b7a5d2"
   iam_instance_profile = "Connect4"
+  user_data = "remote-prod"
 
   tags = {
     Name = "connect4"
   }
+}
 
-  provisioner "file" {
+resource "aws_instance" "connect4dev" {
 
-    connection {
-      host = aws_instance.connect4.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
+  ami           = "ami-0dc96254d5535925f"
+  instance_type = "t3.micro"
+  key_name = "connect4"
+  vpc_security_group_ids = ["sg-013088ddfb67a3198"]
+  subnet_id = "subnet-b5b7a5d2"
+  iam_instance_profile = "Connect4"
+  user_data = file("auto/remote")
 
-    source      = "encrypted/prod.encrypted"
-    destination = "prod.encrypted"
+  tags = {
+    Name = "connect4dev"
   }
+}
 
-  provisioner "file" {
-
-    connection {
-      host = aws_instance.connect4.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    source      = "encrypted/db.encrypted"
-    destination = "db.encrypted"
-  }
-
-
-  provisioner "file" {
-
-    connection {
-      host = aws_instance.connect4.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    source      = "auto/remote"
-    destination = "remote"
-  }
-
-  provisioner "remote-exec" {
-
-    connection {
-      host = aws_instance.connect4.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      private_key = var.sshkey
-      timeout = "10m"
-      agent = false
-    }
-
-    inline = [
-      "chmod +x remote",
-      "./remote prod",
-    ]
-
-  }
+resource "aws_db_instance" "connect4" {
+  allocated_storage    = 20
+  storage_type         = "gp2"
+  engine               = "postgres"
+  engine_version       = "11.5"
+  instance_class       = "db.t3.micro"
+  name                 = "connect4"
+  username             = "connect4"
+  password             = var.dbPassword
+  port                 = "5432"
+  identifier           = "connect4"
+  vpc_security_group_ids = ["sg-013088ddfb67a3198"]
+  skip_final_snapshot  = true
+  publicly_accessible  = true
 }
