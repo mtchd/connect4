@@ -42,7 +42,6 @@ sealed trait GameInstance {
     this match {
       case challenged @ Challenged(_) => challenged.copy(instancePlayerPair = newPlayerPair)
       case playing @ Playing(_, _) => playing.copy(instancePlayerPair = newPlayerPair)
-
     }
   }
 
@@ -55,3 +54,10 @@ sealed trait GameInstance {
 case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance
 
 case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance
+
+object GameInstance {
+  def newChallenge(defenderId: String, challengerId: String, challengerToken: String): Challenged = {
+    val pair = PlayerPair.newPairFromIdsWithChallengerToken(challengerId, defenderId, challengerToken)
+    Challenged(pair)
+  }
+}

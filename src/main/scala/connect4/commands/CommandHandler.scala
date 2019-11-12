@@ -1,7 +1,7 @@
 package connect4.commands
 
 import connect4.{game, _}
-import connect4.game.{CellContents, Challenged, GameInstance, GameState, PlayerPair, Playing}
+import connect4.game.{CellContents, Challenged, GameInstance, GameState, Playing}
 
 object CommandHandler {
 
@@ -13,10 +13,8 @@ object CommandHandler {
       case _ => Strings.ChallengerToken
     }
 
-    // TODO: Inconsistent way of doing custom tokens
-    val pair             = PlayerPair.newPairFromIdsWithChallengerToken(challengerId, defenderId, challengerToken)
-    val newGameInstance  = Challenged(pair)
-    val reply            = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
+    val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, challengerToken)
+    val reply           = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
     (newGameInstance, reply)
 
@@ -61,17 +59,14 @@ object CommandHandler {
   }
 
   def forfeit(gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
-
     gameInstance match {
       case instance @ Playing(_, _) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
         (None, Strings.Forfeit)
       }
       case _ => (Some(gameInstance), Strings.FailedForfeit)
     }
-
   }
 
-  // TODO: This is very similar to forfeit, perhaps they can be merged somehow
   def reject(gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
     gameInstance match {
       case instance @ Challenged(_) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
