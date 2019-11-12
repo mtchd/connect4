@@ -44,6 +44,10 @@ sealed trait GameInstance {
     }
   }
 
+  def playing: Option[Playing] = this match {
+    case playing @ Playing(_, _) => Some(playing)
+    case _ => None
+  }
 }
 
 case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance

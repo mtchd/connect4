@@ -26,7 +26,7 @@ case class RDSGameStore(password: String) {
 
   def put(threadTs: String, gameInstances: Vector[GameInstance]): IO[Int] = {
     gameInstances match {
-      case Vector.empty => delete(threadTs)
+      case Vector() => delete(threadTs)
       case gameInstances => upsert(threadTs, gameInstances.head)
     }
   }

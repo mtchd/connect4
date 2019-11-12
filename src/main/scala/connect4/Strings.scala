@@ -61,7 +61,7 @@ object Strings {
 
   val FailedRenderBoard = "No game playing with this pair."
 
-  val AlreadyInGame = "You or your opponent are already in a game in this context."
+  val AlreadyGame = "There already is a game in this context."
 
   val NotInGame = "You don't seem to be associated with a game here."
 

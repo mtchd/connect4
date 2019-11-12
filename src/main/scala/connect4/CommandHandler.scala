@@ -2,22 +2,23 @@ package connect4
 
 object CommandHandler {
 
-  def interpret(message: String, authorId: String, gameInstances: Vector[GameInstance]): (Vector[GameInstance], Option[String]) = {
+  def interpret(message: String, authorId: String, gameInstance: Option[GameInstance]): (Option[GameInstance], Option[String]) = {
 
+    // TODO: Divide into when you have game and when you don't
     val (gi, reply) = message match {
-      case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstances, opponentId, authorId, flags)
+      case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstance, opponentId, authorId, flags)
       case CommandsRegex.Accept(_, flags) =>
         // We assume a player is only in one game at once. Discord does not have threading like
         // slack, so we'll need a new alternative to disambiguate what game they are referring to.
         // TODO: Passing the playerRole is better than the ID
-        CommandHandler.accept(gameInstances, authorId, flags)
-      case CommandsRegex.Drop(col) => drop(col.toInt, gameInstances, authorId)
-      case CommandsRegex.Forfeit(_) => forfeit(gameInstances, authorId)
-      case CommandsRegex.Reject(_) => reject(gameInstances, authorId)
-      case CommandsRegex.Token(_, token, _) => changeToken(gameInstances, token, authorId)
-      case CommandsRegex.Help(_) => (gameInstances, Strings.Help)
+        CommandHandler.accept(gameInstance, authorId, flags)
+      case CommandsRegex.Drop(col) => drop(col.toInt, gameInstance, authorId)
+      case CommandsRegex.Forfeit(_) => forfeit(gameInstance, authorId)
+      case CommandsRegex.Reject(_) => reject(gameInstance, authorId)
+      case CommandsRegex.Token(_, token, _) => changeToken(gameInstance, token, authorId)
+      case CommandsRegex.Help(_) => (gameInstance, Strings.Help)
       // TODO: Update to return None cleanly
-      case _ => (gameInstances, "")
+      case _ => (gameInstance, "")
     }
 
     reply match {
@@ -28,71 +29,54 @@ object CommandHandler {
   }
 
   // Adds the challenging and defending players to Vector of games in initiation, and acknowledges with message.
-  def challenge(gameInstances: Vector[GameInstance], defenderId: String, challengerId: String, flags: String): (Vector[GameInstance], String) = {
+  def challenge(gameInstance: Option[GameInstance], defenderId: String, challengerId: String, emoji: String): (Option[GameInstance], String) = {
 
-    // TODO: Use Map to enforce player in only one game at one time
-     if (gameInstances.exists(_.instancePlayerPair.atLeastOneInPair(defenderId, challengerId))) {
-       return (gameInstances, Strings.AlreadyInGame)
+     if (gameInstance.isDefined) {
+       return (gameInstance, Strings.AlreadyGame)
      }
 
-    // Read flags
-    // TODO: Only allows one flag
-    val challengerToken = flags match {
+    // Read flag
+    val challengerToken = emoji match {
       case CommandsRegex.Emoji(_, token, _) => token
       case _ => Strings.ChallengerToken
     }
 
     // This could be done in one line, but I've spaced it out here for better readability
-    // TODO: Inconsistent wat of doing custom tokens
+    // TODO: Inconsistent way of doing custom tokens
     val pair             = PlayerPair.newPairFromIdsWithChallengerToken(challengerId, defenderId, challengerToken)
-    val newGameInstance  = Challenged(pair)
-    val newGameInstances = gameInstances :+ newGameInstance
+    val newGameInstance  = Some(Challenged(pair))
     val reply            = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
-    (newGameInstances, reply)
+    (newGameInstance, reply)
 
   }
 
-  // TODO: Come back to this with Jake, at the moment it goes through the Vector twice.
-  private def accept(gameInstances: Vector[GameInstance], accepterId: String, flags: String): (Vector[GameInstance], String) = {
+  private def accept(gameInstance: Option[GameInstance], accepterId: String, flags: String): (Option[GameInstance], String) = {
 
-    val challengeToAccept: Option[GameInstance] =
-      gameInstances.find {
-        case Challenged(playerPair) => playerPair.defender.id == accepterId
-        case Playing(_, _) => false
-      }
-
-    // TODO: Only allows one flag
     val token = flags match {
       case CommandsRegex.Token(_, emoji, _) => emoji
       case _ => Strings.DefenderToken
     }
 
-    val reply = challengeToAccept match {
-      case Some(gameInstance) => {
-        val playing: Playing = gameInstance.startPlaying
-        val gameStatePrintout = playing.boardAsString
-        Strings.InGameCommands + "\n" + gameStatePrintout
+    gameInstance match {
+      case Some(instance @ Challenged(playerPair)) if playerPair.defender.id == accepterId => {
+        val playing: GameInstance = instance.startPlayingWithDefenderToken(token)
+        val reply = Strings.InGameCommands + "\n" + playing.boardAsString
+        (Some(playing), reply)
       }
-      case None => Strings.FailedAcceptOrReject
+      case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
 
-    // TODO: Inconsistent way of doing custom tokens
-    val newGameInstances = gameInstances.map {
-      case challenged @ Challenged(playerPair) if playerPair.defender.id == accepterId => challenged.startPlayingWithDefenderToken(token)
-      case gameInstance => gameInstance
-    }
-
-    (newGameInstances, reply)
   }
 
-  private def drop(col: Int, gameInstances: Vector[GameInstance], playerId: String): (Vector[GameInstance], String) = {
+  private def drop(col: Int, gameInstance: Option[GameInstance], playerId: String): (Option[GameInstance], String) = {
 
-    val (newGameInstances, reply) = mapGameInstanceWithReply( gameInstances, Strings.NotInGame) {
-      gameInstance => playIf(col, gameInstance, playerId)
+    val (newGameInstance, reply) = gameInstance match {
+      case Some(instance) => playIf(col, instance, playerId)
+      case None => (gameInstance, Strings.FailedDrop)
     }
 
-    checkWin(newGameInstances, reply)
+    checkWin(newGameInstance, reply)
 
   }
 
@@ -111,18 +95,34 @@ object CommandHandler {
       reply = newReply
       newGameInstance
     }
-
     (playedGameInstances, reply)
-
   }
 
-  private def checkWin(gameInstances: Vector[GameInstance], currentReply: String): (Vector[GameInstance], String) = {
+  private def checkWin(gameInstance: GameInstance, currentReply: String): (Option[GameInstance], String) = {
+    gameInstance match {
+      case Playing(gameState, playerPair) => {
 
-    val (newGameInstances, maybeWinningGame) = lookForWinningGame(gameInstances)
+      }
+
+      case Challenged(_) => Some((gameInstance, ))
+    }
+
+    val maybeWinningGameState = gameInstance.playing.flatMap(_.gameState.maybeWinningBoard())
+    val maybeWinningGameInstance = Playing(maybeWinningGameState, gameInstance.)
+
+
+    val maybeWinningGameInstance = gameInstance match {
+      case Some(playing @ Playing(gameState, playerPair)) => {
+        val maybeWinningGameState = gameState.maybeWinningBoard()
+        playing.copy(gameState = maybeWinningGameState)
+        (None, replyWithBoard(game, Strings.Win))
+      }
+    }
+    val maybeWinningGameState = gameInstance.map()
 
     maybeWinningGame match {
-      case Some(game) => (newGameInstances, replyWithBoard(game, Strings.Win))
-      case None => (gameInstances, currentReply)
+      case Some(game) =>
+      case None => (gameInstance, currentReply)
     }
 
   }
