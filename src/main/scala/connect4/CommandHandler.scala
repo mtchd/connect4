@@ -4,7 +4,7 @@ object CommandHandler {
 
   def challenge(defenderId: String, challengerId: String, emoji: String): (GameInstance, String) = {
 
-    // Read flag
+    // Extract the emoji if they attached one
     val challengerToken = emoji match {
       case CommandsRegex.Emoji(_, token, _) => token
       case _ => Strings.ChallengerToken
