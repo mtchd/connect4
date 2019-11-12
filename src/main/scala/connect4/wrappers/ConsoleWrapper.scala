@@ -6,13 +6,14 @@ import connect4.game.{CellContents, Challenger, Defender, GameState}
 
 object ConsoleWrapper {
 
-  def startVectorening(): Unit = {
+  def startListening(): Unit = {
     val gameState = GameState.newDefaultBoard()
     println("Game ready")
-    Vectoren(gameState)
+    listen(gameState)
   }
 
-  private def Vectoren(gameState: GameState): Unit = {
+  @scala.annotation.tailrec
+  private def listen(gameState: GameState): Unit = {
 
     val playerRole = askRole()
 
@@ -23,9 +24,10 @@ object ConsoleWrapper {
 
     println(reply)
 
-    Vectoren(newGameState)
+    listen(newGameState)
   }
 
+  @scala.annotation.tailrec
   private def askRole(): CellContents = {
     println("\nEnter 'D' for defender or 'C' for challenger:")
 
