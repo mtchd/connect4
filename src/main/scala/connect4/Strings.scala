@@ -65,7 +65,7 @@ object Strings {
 
   val NotInGame = "You don't seem to be associated with a game here."
 
-  val Win = "You win!"
+  val Win = "You win!\n"
 
   def dropSuccess(col: Int): String = s"Dropped into column $col"
 

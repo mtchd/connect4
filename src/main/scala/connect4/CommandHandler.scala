@@ -73,140 +73,59 @@ object CommandHandler {
 
     val (newGameInstance, reply) = gameInstance match {
       case Some(instance) => playIf(col, instance, playerId)
-      case None => (gameInstance, Strings.FailedDrop)
+      case None => return (gameInstance, Strings.FailedDrop)
     }
 
     checkWin(newGameInstance, reply)
 
   }
 
-  private def mapGameInstanceWithReply(
-    gameInstances: Vector[GameInstance],
-    noInstanceReply: String)
-    (f: GameInstance => (GameInstance, String)): (Vector[GameInstance], String) = {
-
-    // TODO: Shouldn't need to use var here
-    var reply = noInstanceReply
-
-    // TODO: Should only change one game instance...but has the potential to do many.
-    val playedGameInstances = gameInstances.map { gameInstance =>
-      val (newGameInstance, newReply) = f(gameInstance)
-      // TODO: This reply is canoodled
-      reply = newReply
-      newGameInstance
-    }
-    (playedGameInstances, reply)
-  }
-
   private def checkWin(gameInstance: GameInstance, currentReply: String): (Option[GameInstance], String) = {
     gameInstance match {
-      case Playing(gameState, playerPair) => {
-
-      }
-
-      case Challenged(_) => Some((gameInstance, ))
-    }
-
-    val maybeWinningGameState = gameInstance.playing.flatMap(_.gameState.maybeWinningBoard())
-    val maybeWinningGameInstance = Playing(maybeWinningGameState, gameInstance.)
-
-
-    val maybeWinningGameInstance = gameInstance match {
-      case Some(playing @ Playing(gameState, playerPair)) => {
-        val maybeWinningGameState = gameState.maybeWinningBoard()
-        playing.copy(gameState = maybeWinningGameState)
-        (None, replyWithBoard(game, Strings.Win))
-      }
-    }
-    val maybeWinningGameState = gameInstance.map()
-
-    maybeWinningGame match {
-      case Some(game) =>
-      case None => (gameInstance, currentReply)
-    }
-
-  }
-
-  // TODO: This should only loop through once, and just pop the value out
-  // Returns new game instances and maybe a winning game
-  def lookForWinningGame(gameInstances: Vector[GameInstance]): (Vector[GameInstance], Option[GameInstance]) = {
-
-    // Just get winning game
-    val maybeWinningGame = returnMaybeWinningGame(gameInstances)
-
-    // Just remove winning game
-    val newGameInstances = gameInstances.filterNot {
-      case Challenged(_) => false
-      case Playing(gameInstance, _) => gameInstance.maybeWinningBoard() match {
-        case Some(game) => true
-        case _ => false
-      }
-    }
-
-    (newGameInstances, maybeWinningGame)
-  }
-
-  // TODO: This is fucked
-  def returnMaybeWinningGame(gameInstances: Vector[GameInstance]): Option[GameInstance] = {
-    gameInstances.foreach {
       case Challenged(_) => ()
-      case Playing(gameState, playerPair) => gameState.maybeWinningBoard() match {
-        case Some(winningGame) => return Some(Playing(winningGame, playerPair))
+      case Playing(gameState, _) => gameState.maybeWinningBoard() match {
+        case Some(winningGame) => (None, Strings.Win + winningGame.boardAsString())
         case _ => ()
       }
     }
-    None
+    (Some(gameInstance), currentReply)
+
   }
 
-  private def forfeit(gameInstances: Vector[GameInstance], playerId: String): (Vector[GameInstance], String) = {
-
-    // Changes Vector
-    val newGameInstances = gameInstances.filterNot {
-      case Challenged(_) => false
-      case Playing(_, playerPair) => playerPair.roleFromPair(playerId).isDefined
+  private def forfeit(gameInstance: Option[GameInstance], playerId: String): (Option[GameInstance], String) = {
+    gameInstance match {
+      case Some(instance @ Playing(_, _)) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
+        (None, Strings.Forfeit)
+      }
+      case _ => (gameInstance, Strings.FailedForfeit)
     }
-
-    // Determines what reply to give
-    if (newGameInstances.length == gameInstances.length)
-      (gameInstances, Strings.FailedForfeit)
-    else
-      (newGameInstances, Strings.Forfeit)
-
   }
 
   // TODO: This is very similar to forfeit, perhaps they can be merged somehow
-  private def reject(gameInstances: Vector[GameInstance], playerId: String): (Vector[GameInstance], String) = {
-
-    val newGameInstances = gameInstances.filterNot {
-      case Challenged(playerPair) => playerPair.roleFromPair(playerId).isDefined
-      case Playing(_,_) => false
-    }
-
-    if (newGameInstances.length == gameInstances.length)
-      (gameInstances, Strings.FailedAcceptOrReject)
-    else
-      (newGameInstances, Strings.Reject)
-  }
-
-  private def changeToken(gameInstances: Vector[GameInstance], token: String, playerId: String): (Vector[GameInstance], String) = {
-
-    mapGameInstanceWithReply(gameInstances, Strings.NotInGame) { gameInstance =>
-
-      val playerRole = gameInstance.instancePlayerPair.roleFromPair(playerId)
-
-      val newGameInstance = playerRole match {
-        case Some(role) => gameInstance.changeToken(role, token)
-        case None => gameInstance
+  private def reject(gameInstance: Option[GameInstance], playerId: String): (Option[GameInstance], String) = {
+    gameInstance match {
+      case Some(instance @ Challenged(_)) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
+        (None, Strings.Reject)
       }
-
-      val reply = playerRole match {
-        case Some(_) => Strings.tokenChange(token)
-        case None => Strings.NotInGame
-      }
-
-      (newGameInstance, reply)
+      case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
   }
+
+  private def changeToken(gameInstance: Option[GameInstance], token: String, playerId: String): (Option[GameInstance], String) = {
+
+    val (maybeRole, definedInstance) = gameInstance match {
+      case Some(instance) => (instance.playerRole(playerId), instance)
+      case None => return (gameInstance, Strings.NotInGame)
+    }
+
+    maybeRole match {
+      case Some(role) => (Some(definedInstance.changeToken(role, token)), Strings.tokenChange(token))
+      case None => (gameInstance, Strings.NotInGame)
+    }
+
+  }
+
+  // TODO: These last 3 helper functions could be better placed to reduce the bloat of this file
 
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
