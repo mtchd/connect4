@@ -1,5 +1,7 @@
 package connect4
 
+import connect4.wrappers.SlackWrapper
+
 object Main {
 
   // TODO: More tests

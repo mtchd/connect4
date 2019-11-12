@@ -1,5 +1,6 @@
 package connect4
 
+import connect4.commands.CommandHandler
 import org.scalatest.FunSuite
 
 class CommandHandlerTests extends FunSuite {

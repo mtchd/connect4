@@ -1,11 +1,14 @@
-package connect4
+package connect4.wrappers
 
 import akka.NotUsed
 import cats.Monad
+import cats.Monad._
 import com.typesafe.config.ConfigFactory
+import connect4.commands.CommandInterpreter
+import connect4.game.GameInstance
 import net.katsstuff.ackcord.data.{Message, UserId}
 import net.katsstuff.ackcord.http.rest.CreateMessage
-import net.katsstuff.ackcord._
+import net.katsstuff.ackcord.{APIMessage, ClientSettings, Request, SourceRequest}
 
 object DiscordWrapper {
 
@@ -24,7 +27,6 @@ object DiscordWrapper {
     futureClient.foreach { client =>
       client.onEvent {
         client.withCache[SourceRequest, APIMessage] { implicit c => {
-          case APIMessage.Ready(_) => Monad[SourceRequest].pure(println("Now ready"))
           case APIMessage.MessageCreate(message, _) =>
             import client.sourceRequesterRunner._
             for {

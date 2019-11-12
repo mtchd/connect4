@@ -1,4 +1,7 @@
-package connect4
+package connect4.commands
+
+import connect4.Strings
+import connect4.game.GameInstance
 
 object CommandInterpreter {
 

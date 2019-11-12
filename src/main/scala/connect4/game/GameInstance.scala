@@ -1,4 +1,6 @@
-package connect4
+package connect4.game
+
+import connect4.{Strings, game}
 
 sealed trait GameInstance {
 
@@ -7,7 +9,7 @@ sealed trait GameInstance {
   def startPlaying: Playing = this match {
     case Challenged(playerPair) => {
       val gameState = GameState.newDefaultBoard()
-      Playing(gameState, playerPair)
+      game.Playing(gameState, playerPair)
     }
     case playing @ Playing(_,_) => playing
   }

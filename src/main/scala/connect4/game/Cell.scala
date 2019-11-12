@@ -1,4 +1,4 @@
-package connect4
+package connect4.game
 
 // Using a sum type allows two players to have the same token but be recognised by the game as different
 sealed trait CellContents

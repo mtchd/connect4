@@ -1,4 +1,7 @@
-package connect4
+package connect4.commands
+
+import connect4.{game, _}
+import connect4.game.{CellContents, Challenged, GameInstance, GameState, PlayerPair, Playing}
 
 object CommandHandler {
 
@@ -118,7 +121,7 @@ object CommandHandler {
 
     val (newState, reply) = play(col, gameState, playerRole)
 
-    val newInstance = Playing(newState, playing.instancePlayerPair)
+    val newInstance = game.Playing(newState, playing.instancePlayerPair)
 
     (newInstance, replyWithBoard(newInstance, reply))
 

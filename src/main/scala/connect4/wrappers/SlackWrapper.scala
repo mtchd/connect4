@@ -1,12 +1,13 @@
-package connect4
+package connect4.wrappers
 
 import akka.actor.ActorSystem
+import connect4.commands.CommandInterpreter
 import connect4.gamestore.RDSGameStore
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.duration._
+import scala.concurrent.duration.DurationInt
 
 object SlackWrapper {
 
@@ -20,7 +21,7 @@ object SlackWrapper {
 
     val rtmClient = SlackRtmClient(slackToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
     val gameStore = RDSGameStore(password)
-    // TODO UnsafeRunSync
+
     gameStore.setup().unsafeRunSync()
 
     println("Now listening to Slack...")
@@ -32,10 +33,7 @@ object SlackWrapper {
 
       // ThreadId => IO[Option[GameInstance]]
       val getIo = gameStore.get(thread)
-
-      // TODO UnsafeRunSync
       val maybeGameInstances = getIo.unsafeRunSync()
-
       val gameInstances = RDSGameStore.convertGame(maybeGameInstances)
 
       val (newGameInstances, reply) = CommandInterpreter.interpret(message.text, message.user, gameInstances)

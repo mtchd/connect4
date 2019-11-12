@@ -1,4 +1,6 @@
-package connect4
+package connect4.game
+
+import connect4.Strings
 
 object GameState {
 
@@ -217,7 +219,7 @@ case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
     try {
       board(row)(col)
     } catch {
-      // connect4.Empty cells can either be None or actual characters. I have chosen actual characters because it's easier to
+      // connect4.game.Empty cells can either be None or actual characters. I have chosen actual characters because it's easier to
       // print.
       case e: IndexOutOfBoundsException => Cell(Empty)
     }

@@ -1,4 +1,4 @@
-package connect4
+package connect4.commands
 
 import scala.util.matching.Regex
 

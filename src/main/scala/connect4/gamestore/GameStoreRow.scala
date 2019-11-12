@@ -1,6 +1,6 @@
 package connect4.gamestore
 
-import connect4.{Cell, Challenged, GameInstance, GameState, Move, PlayerPair, Playing}
+import connect4.game.{Cell, Challenged, GameInstance, GameState, Move, PlayerPair, Playing}
 import io.circe._
 import io.circe.syntax._
 

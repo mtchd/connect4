@@ -1,4 +1,4 @@
-package connect4
+package connect4.game
 
 case class PlayerPair(challenger: Player, defender: Player) {
 

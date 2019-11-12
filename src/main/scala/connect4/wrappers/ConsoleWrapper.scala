@@ -1,4 +1,8 @@
-package connect4
+package connect4.wrappers
+
+import connect4._
+import connect4.commands.{CommandHandler, CommandsRegex}
+import connect4.game.{CellContents, Challenger, Defender, GameState}
 
 object ConsoleWrapper {
 

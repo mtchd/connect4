@@ -1,6 +1,6 @@
 package connect4.gamestore
 import cats.effect.{Blocker, ContextShift, IO}
-import connect4.GameInstance
+import connect4.game.GameInstance
 import doobie.Transactor
 import doobie.implicits._
 import doobie.util.ExecutionContexts
