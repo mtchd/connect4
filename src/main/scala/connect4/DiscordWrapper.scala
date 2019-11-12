@@ -11,10 +11,10 @@ object DiscordWrapper {
 
   // Side effects be here, yarr
 
-  def startVectorening(): Unit = {
+  def startListening(): Unit = {
 
     //TODO: Investigate using a VectorBuffer instead of a Vector, seeing as we are going mutable.
-    var gameInstances: Vector[GameInstance] = Vector.empty
+    var gameInstance: Option[GameInstance] = None
 
     val token = ConfigFactory.load().getString("secrets.discordApiKey")
     val clientSettings = ClientSettings(token)
@@ -34,8 +34,8 @@ object DiscordWrapper {
                 client.sourceRequesterRunner.unit
               } else {
                 // Check that statement begins with @connect4
-                val (newGameInstances, reply) = CommandHandler.interpret(message.content, message.authorId.toString, gameInstances)
-                gameInstances = newGameInstances
+                val (newGameInstances, reply) = CommandInterpreter.interpret(message.content, message.authorId.toString, gameInstance)
+                gameInstance = newGameInstances
                 reply match {
                   case Some(text) => run (replyMessage(message, text))
                   case None => client.sourceRequesterRunner.unit

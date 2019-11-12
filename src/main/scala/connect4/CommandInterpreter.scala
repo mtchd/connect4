@@ -4,12 +4,12 @@ object CommandInterpreter {
 
   def interpret(message: String, authorId: String, gameInstance: Option[GameInstance]): (Option[GameInstance], Option[String]) = {
     gameInstance match {
-      case Some(gameInstance) => interpretGame(message, authorId, gameInstance)
+      case Some(gameInstance) => interpretWithGame(message, authorId, gameInstance)
       case None => interpretWithoutGame(message, authorId)
     }
   }
 
-  def interpretGame(message: String, authorId: String, gameInstance: GameInstance): (Option[GameInstance], Option[String]) = {
+  def interpretWithGame(message: String, authorId: String, gameInstance: GameInstance): (Option[GameInstance], Option[String]) = {
     message match {
       case CommandsRegex.Challenge(_, _, _) => wrapBoth(gameInstance, Strings.AlreadyGame)
       case CommandsRegex.Accept(_, flags) => wrapBoth.tupled(CommandHandler.accept(gameInstance, authorId, flags))

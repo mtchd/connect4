@@ -2,7 +2,6 @@ package connect4
 
 object CommandHandler {
 
-  // Adds the challenging and defending players to Vector of games in initiation, and acknowledges with message.
   def challenge(defenderId: String, challengerId: String, emoji: String): (GameInstance, String) = {
 
     // Read flag
@@ -11,7 +10,6 @@ object CommandHandler {
       case _ => Strings.ChallengerToken
     }
 
-    // This could be done in one line, but I've spaced it out here for better readability
     // TODO: Inconsistent way of doing custom tokens
     val pair             = PlayerPair.newPairFromIdsWithChallengerToken(challengerId, defenderId, challengerToken)
     val newGameInstance  = Challenged(pair)

@@ -1,16 +1,16 @@
 package connect4.gamestore
-import cats.effect.{Blocker, IO}
+import cats.effect.{Blocker, ContextShift, IO}
 import connect4.GameInstance
 import doobie.Transactor
 import doobie.implicits._
 import doobie.util.ExecutionContexts
+import doobie.util.transactor.Transactor.Aux
 
-// TODO: Refactor this to be functional
 case class RDSGameStore(password: String) {
 
-  implicit val cs = IO.contextShift(ExecutionContexts.synchronous)
+  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContexts.synchronous)
 
-  val xa = Transactor.fromDriverManager[IO](
+  val xa: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",     // driver classname
     "jdbc:postgresql://connect4.csmziitufcpp.ap-southeast-2.rds.amazonaws.com:5432/connect4",     // connect URL (driver-specific)
     "connect4",                  // user
@@ -24,10 +24,10 @@ case class RDSGameStore(password: String) {
     GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa)
   }
 
-  def put(threadTs: String, gameInstances: Vector[GameInstance]): IO[Int] = {
-    gameInstances match {
-      case Vector() => delete(threadTs)
-      case gameInstances => upsert(threadTs, gameInstances.head)
+  def put(threadTs: String, gameInstance: Option[GameInstance]): IO[Int] = {
+    gameInstance match {
+      case None => delete(threadTs)
+      case Some(gameInstance) => upsert(threadTs, gameInstance)
     }
   }
 
@@ -44,15 +44,10 @@ case class RDSGameStore(password: String) {
 }
 
 object RDSGameStore {
-  def convertGame(maybeGameStoreRow: Option[GameStoreRow]): Vector[GameInstance] = {
-    val maybeGameInstance = maybeGameStoreRow match {
+  def convertGame(maybeGameStoreRow: Option[GameStoreRow]): Option[GameInstance] = {
+    maybeGameStoreRow match {
       case Some(gameStoreRow) => Some(gameStoreRow.convertToGameInstance)
       case None => None
-    }
-    // TODO: It be the way it do because tech debt
-    maybeGameInstance match {
-      case Some(gameStoreInstance) => Vector(gameStoreInstance)
-      case None => Vector.empty
     }
   }
 }
