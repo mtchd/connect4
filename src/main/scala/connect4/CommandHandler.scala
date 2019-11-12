@@ -2,38 +2,8 @@ package connect4
 
 object CommandHandler {
 
-  def interpret(message: String, authorId: String, gameInstance: Option[GameInstance]): (Option[GameInstance], Option[String]) = {
-
-    // TODO: Divide into when you have game and when you don't
-    val (gi, reply) = message match {
-      case CommandsRegex.Challenge(_, opponentId, flags) => challenge(gameInstance, opponentId, authorId, flags)
-      case CommandsRegex.Accept(_, flags) =>
-        // We assume a player is only in one game at once. Discord does not have threading like
-        // slack, so we'll need a new alternative to disambiguate what game they are referring to.
-        // TODO: Passing the playerRole is better than the ID
-        CommandHandler.accept(gameInstance, authorId, flags)
-      case CommandsRegex.Drop(col) => drop(col.toInt, gameInstance, authorId)
-      case CommandsRegex.Forfeit(_) => forfeit(gameInstance, authorId)
-      case CommandsRegex.Reject(_) => reject(gameInstance, authorId)
-      case CommandsRegex.Token(_, token, _) => changeToken(gameInstance, token, authorId)
-      case CommandsRegex.Help(_) => (gameInstance, Strings.Help)
-      // TODO: Update to return None cleanly
-      case _ => (gameInstance, "")
-    }
-
-    reply match {
-      case "" => (gi, None)
-      case x => (gi, Some(x))
-    }
-
-  }
-
   // Adds the challenging and defending players to Vector of games in initiation, and acknowledges with message.
-  def challenge(gameInstance: Option[GameInstance], defenderId: String, challengerId: String, emoji: String): (Option[GameInstance], String) = {
-
-     if (gameInstance.isDefined) {
-       return (gameInstance, Strings.AlreadyGame)
-     }
+  def challenge(defenderId: String, challengerId: String, emoji: String): (GameInstance, String) = {
 
     // Read flag
     val challengerToken = emoji match {
@@ -44,14 +14,14 @@ object CommandHandler {
     // This could be done in one line, but I've spaced it out here for better readability
     // TODO: Inconsistent way of doing custom tokens
     val pair             = PlayerPair.newPairFromIdsWithChallengerToken(challengerId, defenderId, challengerToken)
-    val newGameInstance  = Some(Challenged(pair))
+    val newGameInstance  = Challenged(pair)
     val reply            = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
     (newGameInstance, reply)
 
   }
 
-  private def accept(gameInstance: Option[GameInstance], accepterId: String, flags: String): (Option[GameInstance], String) = {
+  def accept(gameInstance: GameInstance, accepterId: String, flags: String): (GameInstance, String) = {
 
     val token = flags match {
       case CommandsRegex.Token(_, emoji, _) => emoji
@@ -59,28 +29,25 @@ object CommandHandler {
     }
 
     gameInstance match {
-      case Some(instance @ Challenged(playerPair)) if playerPair.defender.id == accepterId => {
+      case instance @ Challenged(playerPair) if playerPair.defender.id == accepterId => {
         val playing: GameInstance = instance.startPlayingWithDefenderToken(token)
         val reply = Strings.InGameCommands + "\n" + playing.boardAsString
-        (Some(playing), reply)
+        (playing, reply)
       }
       case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
 
   }
 
-  private def drop(col: Int, gameInstance: Option[GameInstance], playerId: String): (Option[GameInstance], String) = {
+  def drop(col: Int, gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
 
-    val (newGameInstance, reply) = gameInstance match {
-      case Some(instance) => playIf(col, instance, playerId)
-      case None => return (gameInstance, Strings.FailedDrop)
-    }
-
+    val (newGameInstance, reply) = playIf(col, gameInstance, playerId)
     checkWin(newGameInstance, reply)
 
   }
 
-  private def checkWin(gameInstance: GameInstance, currentReply: String): (Option[GameInstance], String) = {
+  def checkWin(gameInstance: GameInstance, currentReply: String): (Option[GameInstance], String) = {
+
     gameInstance match {
       case Challenged(_) => ()
       case Playing(gameState, _) => gameState.maybeWinningBoard() match {
@@ -92,34 +59,33 @@ object CommandHandler {
 
   }
 
-  private def forfeit(gameInstance: Option[GameInstance], playerId: String): (Option[GameInstance], String) = {
+  def forfeit(gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
+
     gameInstance match {
-      case Some(instance @ Playing(_, _)) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
+      case instance @ Playing(_, _) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
         (None, Strings.Forfeit)
       }
-      case _ => (gameInstance, Strings.FailedForfeit)
+      case _ => (Some(gameInstance), Strings.FailedForfeit)
     }
+
   }
 
   // TODO: This is very similar to forfeit, perhaps they can be merged somehow
-  private def reject(gameInstance: Option[GameInstance], playerId: String): (Option[GameInstance], String) = {
+  def reject(gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
     gameInstance match {
-      case Some(instance @ Challenged(_)) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
+      case instance @ Challenged(_) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
         (None, Strings.Reject)
       }
-      case _ => (gameInstance, Strings.FailedAcceptOrReject)
+      case _ => (Some(gameInstance), Strings.FailedAcceptOrReject)
     }
   }
 
-  private def changeToken(gameInstance: Option[GameInstance], token: String, playerId: String): (Option[GameInstance], String) = {
+  def changeToken(gameInstance: GameInstance, token: String, playerId: String): (GameInstance, String) = {
 
-    val (maybeRole, definedInstance) = gameInstance match {
-      case Some(instance) => (instance.playerRole(playerId), instance)
-      case None => return (gameInstance, Strings.NotInGame)
-    }
+    val maybeRole = gameInstance.playerRole(playerId)
 
     maybeRole match {
-      case Some(role) => (Some(definedInstance.changeToken(role, token)), Strings.tokenChange(token))
+      case Some(role) => (gameInstance.changeToken(role, token), Strings.tokenChange(token))
       case None => (gameInstance, Strings.NotInGame)
     }
 

@@ -38,7 +38,7 @@ object SlackWrapper {
 
       val gameInstances = RDSGameStore.convertGame(maybeGameInstances)
 
-      val (newGameInstances, reply) = CommandHandler.interpret(message.text, message.user, gameInstances)
+      val (newGameInstances, reply) = CommandInterpreter.interpret(message.text, message.user, gameInstances)
 
       reply.foreach { replyText =>
         rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread))
