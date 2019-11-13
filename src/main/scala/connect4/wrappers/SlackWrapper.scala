@@ -2,7 +2,7 @@ package connect4.wrappers
 
 import akka.actor.ActorSystem
 import connect4.commands.CommandInterpreter
-import connect4.gamestore.RDSGameStore
+import connect4.gamestore.{GameStoreRow, RDSGameStore}
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
@@ -33,10 +33,10 @@ object SlackWrapper {
 
       // ThreadId => IO[Option[GameInstance]]
       val getIo = gameStore.get(thread)
-      val maybeGameInstances = getIo.unsafeRunSync()
-      val gameInstances = RDSGameStore.convertGame(maybeGameInstances)
+      val maybeGameRow: Option[GameStoreRow] = getIo.unsafeRunSync()
+      val maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
 
-      val (newGameInstances, reply) = CommandInterpreter.interpret(message.text, message.user, gameInstances)
+      val (newMaybeGameInstance, reply) = CommandInterpreter.interpret(message.text, message.user, maybeGameInstance)
 
       reply.foreach { replyText =>
         rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread))

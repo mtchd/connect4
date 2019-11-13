@@ -1,0 +1,16 @@
+#! /bin/bash
+set -euo pipefail
+
+sbt assembly
+
+docker build -t mtchd/connect4 .
+
+# Get password
+
+PASSWORD=$(aws kms decrypt --ciphertext-blob fileb://"$(dirname "$0")"/../encrypted/docker.encrypted --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode)
+
+echo "${PASSWORD}" | docker login --username mtchd --password-stdin
+
+docker push mtchd/connect4

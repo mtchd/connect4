@@ -1,8 +1,11 @@
 package connect4.commands
 
-import scala.util.matching.Regex
+import connect4.Strings
 
-//TODO: Look into Parser Combinators
+import scala.util.matching.Regex
+import scala.util.parsing.combinator._
+
+// TODO: Look into Parser Combinators
 object CommandsRegex {
   // Regex for challenging and accepting/rejecting a game
   val Challenge: Regex = atUserRegex("challenge")
@@ -16,6 +19,7 @@ object CommandsRegex {
   // Flags
   val Token: Regex = "(?i)(.*token.*)(:.*:)(.*)".r
   val Emoji: Regex = "(?i)(.*)(:.*:)(.*)".r
+  val Emoji2: Regex = "(?i)(:[^:]*:)".r
 
   // For Console
   val DefenderRole: Regex = simpleRegex("d")
@@ -39,6 +43,14 @@ object CommandsRegex {
 
   private def exactRegex(command: String): Regex = {
     s"(?i)($command)".r
+  }
+
+  // This was added as emoji's can be made of two emoji's, which present as one, e.g :ok-hand::skin-tone-4:
+  def extractEmoji(input: String, default: String): String = {
+    input match {
+      case Emoji(_*) => CommandsRegex.Emoji2.findAllIn(input).toVector.take(2).mkString
+      case _ => default
+    }
   }
 
 }

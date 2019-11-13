@@ -4,7 +4,6 @@ import connect4.Strings
 
 object GameState {
 
-  // Hardcoded crap
   val DefaultBoardCols = 6
   val DefaultBoardRows = 7
 
@@ -20,6 +19,42 @@ object GameState {
 
   def newCustomBoard(boardRows: Int, boardCols: Int): GameState = {
     GameState(Vector.fill(boardRows)(Vector.fill(boardCols)(Cell(Empty))), None)
+  }
+
+  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int),
+                           ): Option[GameState] = {
+    maybeWinningBoardTest(
+      startRow,
+      startCol,
+      direction,
+      Move(Challenger, startRow, startCol))
+  }
+
+  def maybeWinningBoardTest(startRow: Int, startCol: Int, direction: (Int, Int), lastMove: Move
+                           ): Option[GameState] = {
+
+    val gameState = GameState.newDefaultBoard()
+
+    val newState =
+      gameState.replace4Cells(startRow, startCol, direction, Challenger)
+
+    // println(newState.boardAsString())
+
+    val newerState = newState.updateLastMoveOnly(Some(lastMove))
+
+    newerState.maybeWinningBoard()
+  }
+
+  def newStateWithFourCells(token: CellContents): GameState = {
+    val gameState = GameState.newDefaultBoard()
+    gameState.replace4Cells(0,0, GameState.Horizontal, token)
+  }
+
+  def newStateWithFourCellsAndLastMove(token: CellContents): GameState = {
+    val gameState = GameState.newDefaultBoard()
+    val lastMove = Some(Move(Challenger, 0, 0))
+    val newGameState = gameState.updateLastMoveOnly(lastMove)
+    newGameState.replace4Cells(0,0, GameState.Horizontal, token)
   }
 
 }
@@ -73,7 +108,7 @@ case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
 
   // TODO: Maybe this should override toString
   // For console printing
-  def boardAsString(): String = {
+  def boardAsConsoleString(): String = {
     boardAsString(
       Strings.ConsoleDefenderToken,
       Strings.ConsoleChallengerToken,
@@ -81,6 +116,11 @@ case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
       Strings.ConsoleEmptySpace,
       Strings.ConsoleColMarkers.take(nBoardCols)
     )
+  }
+
+  def boardAsString(gameInstance: GameInstance): String = {
+    val playerPair = gameInstance.instancePlayerPair
+    boardAsString(playerPair.defender, playerPair.defender)
   }
 
   // This is really where the win check happens

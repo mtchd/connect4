@@ -5,7 +5,7 @@ object Strings {
   // TODO: Better way of storing strings
 
   // Help text sent with a challenge
-  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\naccept token :emoji:"
+  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\naccept :emoji:"
   // Help text when failing to respond to a challenge
   val ChallengeHelp = "You will need to answer the challenge with 'accept' or 'reject"
 
@@ -36,7 +36,7 @@ object Strings {
   val TestChallengerId = "X"
   // General help, Vectors available commands
   val Help = "To challenge a player, use:" +
-    "\nchallenge @username" +
+    "\nchallenge @username :emoji:, where :emoji: is your token for the game" +
     "\nYou can add/change a token with this flag 'token :your-token-here:'" +
     "\nWhen in a game, simply type the number of the column you want to drop into." +
     "\nYou can also type 'forfeit' to give up."

@@ -19,7 +19,7 @@ object CommandInterpreter {
       case CommandsRegex.Drop(col) => wrapReply.tupled(CommandHandler.drop(col.toInt, gameInstance, authorId))
       case CommandsRegex.Forfeit(_) => wrapReply.tupled(CommandHandler.forfeit(gameInstance, authorId))
       case CommandsRegex.Reject(_) => wrapReply.tupled(CommandHandler.reject(gameInstance, authorId))
-      case CommandsRegex.Token(_, token, _) => wrapBoth.tupled(CommandHandler.changeToken(gameInstance, token, authorId))
+      case CommandsRegex.Token(_*) => wrapBoth.tupled(CommandHandler.changeToken(gameInstance, message, authorId))
       case CommandsRegex.Help(_) => wrapBoth(gameInstance, Strings.Help)
       case _ => (Some(gameInstance), None)
     }

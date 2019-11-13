@@ -7,12 +7,7 @@ object CommandHandler {
 
   def challenge(defenderId: String, challengerId: String, emoji: String): (GameInstance, String) = {
 
-    // Extract the emoji if they attached one
-    val challengerToken = emoji match {
-      case CommandsRegex.Emoji(_, token, _) => token
-      case _ => Strings.ChallengerToken
-    }
-
+    val challengerToken = CommandsRegex.extractEmoji(emoji, Strings.ChallengerToken)
     val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, challengerToken)
     val reply           = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
@@ -20,16 +15,13 @@ object CommandHandler {
 
   }
 
-  def accept(gameInstance: GameInstance, accepterId: String, flags: String): (GameInstance, String) = {
+  def accept(gameInstance: GameInstance, accepterId: String, emoji: String): (GameInstance, String) = {
 
-    val token = flags match {
-      case CommandsRegex.Token(_, emoji, _) => emoji
-      case _ => Strings.DefenderToken
-    }
+    val defenderToken = CommandsRegex.extractEmoji(emoji, Strings.DefenderToken)
 
     gameInstance match {
       case instance @ Challenged(playerPair) if playerPair.defender.id == accepterId => {
-        val playing: GameInstance = instance.startPlayingWithDefenderToken(token)
+        val playing: GameInstance = instance.startPlayingWithDefenderToken(defenderToken)
         val reply = Strings.InGameCommands + "\n" + playing.boardAsString
         (playing, reply)
       }
@@ -40,21 +32,13 @@ object CommandHandler {
 
   def drop(col: Int, gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
 
-    val (newGameInstance, reply) = playIf(col, gameInstance, playerId)
-    checkWin(newGameInstance, reply)
-
-  }
-
-  def checkWin(gameInstance: GameInstance, currentReply: String): (Option[GameInstance], String) = {
-
     gameInstance match {
-      case Challenged(_) => ()
-      case Playing(gameState, _) => gameState.maybeWinningBoard() match {
-        case Some(winningGame) => (None, Strings.Win + winningGame.boardAsString())
-        case _ => ()
+      case playing @ Playing(_,_) => {
+        val (newPlaying, reply) = playIf(col, playing, playerId)
+        checkWin(newPlaying, reply)
       }
+      case _ => (Some(gameInstance), Strings.FailedDrop)
     }
-    (Some(gameInstance), currentReply)
 
   }
 
@@ -76,8 +60,9 @@ object CommandHandler {
     }
   }
 
-  def changeToken(gameInstance: GameInstance, token: String, playerId: String): (GameInstance, String) = {
+  def changeToken(gameInstance: GameInstance, message: String, playerId: String): (GameInstance, String) = {
 
+    val token = CommandsRegex.extractEmoji(message, ":poop:")
     val maybeRole = gameInstance.playerRole(playerId)
 
     maybeRole match {
@@ -87,38 +72,38 @@ object CommandHandler {
 
   }
 
-  // TODO: These last 3 helper functions could be better placed to reduce the bloat of this file
+  // TODO: These last few helper functions could be better placed to reduce the bloat of this file
 
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
   // TODO: Could bring out the gameInstance part and have only gameState in here
-  private def playIf(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+  private def playIf(col: Int, playing: Playing, playerId: String): (Playing, String) = {
 
-    val optionRole = gameInstance.playerRole(playerId)
-    val playerRole = optionRole.getOrElse{ return (gameInstance, Strings.FailedDrop) }
-
-    val playing = gameInstance match {
-      case Challenged(_) => return (gameInstance, Strings.FailedDrop)
-      case playing @ Playing(_,_) => playing
+    val playerRole = playing.playerRole(playerId) match {
+      case Some(role) => role
+      case None => return (playing, Strings.FailedDrop)
     }
-
-    val gameState = playing.gameState
 
     // Check it's this players turn
-    // TODO: Returning in the middle of a map is not ideal
-    gameState.lastMove.map{ lastMove =>
-      if (lastMove.playerRole == playerRole) {
-        return (playing, Strings.WrongTurn)
-      } else {
-        lastMove
-      }
+    playing.gameState.lastMove match {
+      case Some(lastMove) if lastMove.playerRole == playerRole => return (playing, Strings.WrongTurn)
+      case _ => ()
     }
 
-    val (newState, reply) = play(col, gameState, playerRole)
+    val (newState, reply) = play(col, playing.gameState, playerRole)
 
     val newInstance = game.Playing(newState, playing.instancePlayerPair)
 
     (newInstance, replyWithBoard(newInstance, reply))
+
+  }
+
+  def checkWin(playing: Playing, currentReply: String): (Option[GameInstance], String) = {
+
+    playing.gameState.maybeWinningBoard() match {
+      case Some(gameState) => (None, Strings.Win + gameState.boardAsString(playing))
+      case _ => (Some(playing), currentReply)
+    }
 
   }
 

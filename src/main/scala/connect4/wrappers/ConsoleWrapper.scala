@@ -50,7 +50,7 @@ object ConsoleWrapper {
           gameState,
           playerRole
         )
-        (newGameState, reply + "\n" + newGameState.boardAsString())
+        (newGameState, reply + "\n" + newGameState.boardAsConsoleString())
       }
 
       case CommandsRegex.Forfeit(_) => (GameState.newDefaultBoard(), Strings.Forfeit + "\n" + "Starting new game...")
