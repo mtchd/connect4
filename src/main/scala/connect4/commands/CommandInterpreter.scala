@@ -16,7 +16,7 @@ object CommandInterpreter {
     message match {
       case CommandsRegex.Challenge(_, _, _) => wrapBoth(gameInstance, Strings.AlreadyGame)
       case CommandsRegex.Accept(_, flags) => wrapBoth.tupled(CommandHandler.accept(gameInstance, authorId, flags))
-      case CommandsRegex.Drop(col) => wrapReply.tupled(CommandHandler.drop(col.toInt, gameInstance, authorId))
+      case CommandsRegex.Drop(col) => wrapBoth.tupled(CommandHandler.drop(col.toInt, gameInstance, authorId))
       case CommandsRegex.Forfeit(_) => wrapReply.tupled(CommandHandler.forfeit(gameInstance, authorId))
       case CommandsRegex.Reject(_) => wrapReply.tupled(CommandHandler.reject(gameInstance, authorId))
       case CommandsRegex.Token(_*) => wrapBoth.tupled(CommandHandler.changeToken(gameInstance, message, authorId))

@@ -15,7 +15,8 @@ object SlackWrapper {
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
   /**
-    * Start point of the program, handles all incoming messages in channels the bot is present in.
+    * Start point of the program, handles all incoming messages in channels the bot is present in. Side effects be
+    * here, but only here.
     */
   def startListening(slackToken: String, password: String): Unit = {
 

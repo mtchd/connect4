@@ -30,19 +30,16 @@ object CommandHandler {
 
   }
 
-  def drop(col: Int, gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
+  def drop(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
 
     gameInstance match {
-      case playing @ Playing(_,_) => {
-        val (newPlaying, reply) = playIf(col, playing, playerId)
-        checkWin(newPlaying, reply)
-      }
-      case _ => (Some(gameInstance), Strings.FailedDrop)
+      case playing @ Playing(_,_) => playIf(col, playing, playerId)
+      case _ => (gameInstance, Strings.FailedDrop)
     }
 
   }
 
-  def forfeit(gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
+  def forfeit(gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
     gameInstance match {
       case instance @ Playing(_, _) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
         (None, Strings.Forfeit)
@@ -77,7 +74,7 @@ object CommandHandler {
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
   // TODO: Could bring out the gameInstance part and have only gameState in here
-  private def playIf(col: Int, playing: Playing, playerId: String): (Playing, String) = {
+  private def playIf(col: Int, playing: Playing, playerId: String): (GameInstance, String) = {
 
     val playerRole = playing.playerRole(playerId) match {
       case Some(role) => role
@@ -92,23 +89,13 @@ object CommandHandler {
 
     val (newState, reply) = play(col, playing.gameState, playerRole)
 
-    val newInstance = game.Playing(newState, playing.instancePlayerPair)
+    val newPlaying = game.Playing(newState, playing.instancePlayerPair)
 
-    (newInstance, replyWithBoard(newInstance, reply))
-
-  }
-
-  def checkWin(playing: Playing, currentReply: String): (Option[GameInstance], String) = {
-
-    playing.gameState.maybeWinningBoard() match {
-      case Some(gameState) => (None, Strings.Win + gameState.boardAsString(playing))
-      case _ => (Some(playing), currentReply)
+    newPlaying.gameState.maybeWinningBoard() match {
+      case Some(gameState) => (playing.finishGame(playerRole), Strings.Win + gameState.boardAsString(playing))
+      case _ => (newPlaying, reply + "\n" + newPlaying.boardAsString)
     }
 
-  }
-
-  private def replyWithBoard(gameInstance: GameInstance, reply: String): String = {
-    reply + "\n" + gameInstance.boardAsString
   }
 
   def play(col: Int, gameState: GameState, playerRole: CellContents): (GameState, String) = {

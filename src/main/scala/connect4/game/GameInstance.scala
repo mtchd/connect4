@@ -28,6 +28,12 @@ sealed trait GameInstance {
     }
   }
 
+  def finishGame(winnerRole: CellContents): Finished = this match{
+    case Challenged(playerPair) => Finished(playerPair, Empty)
+    case Playing(_, playerPair) => Finished(playerPair, winnerRole)
+    case finished @ Finished(_, _) => finished
+  }
+
 }
 
 case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
