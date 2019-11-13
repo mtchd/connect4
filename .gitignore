@@ -91,6 +91,7 @@ application.conf
 /config
 *.pem
 /secrets
+*.encrypted
 
 # Terraform
 *.tfstate
