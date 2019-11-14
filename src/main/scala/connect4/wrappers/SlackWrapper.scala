@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import cats.effect.IO
 import cats.implicits._
 import connect4.Strings
-import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContext, GameContextCommand, Help, NoContext, NoReply, ScoreContext}
+import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContext, GameContextCommand, Help, NoContext, NoContextCommand, NoReply, ScoreContext, ScoreContextCommand}
 import connect4.game.{Finished, GameInstance, Ranked, UnRanked}
 import connect4.gamestore.{GameStoreRow, RDSGameStore, ScoreStoreRow}
 import slack.api.SlackApiClient
@@ -35,13 +35,12 @@ object SlackWrapper {
 
     rtmClient.onMessage { message =>
 
+      val threadTs = message.thread_ts.getOrElse(message.ts)
+      val messageContext = SendMessage(rtmClient, message, threadTs)
+
       val pro: IO[Any] = CommandInterpreter.bigBadInterpret(message.text) match {
         case NoReply => IO(Unit)
-        case NoContext(command) => {
-          val thread = message.thread_ts.getOrElse(message.ts)
-          val replyText = CommandInterpreter.interpretNoContextCommand(command)
-          IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread)))
-        }
+        case NoContext(command) => handleNoContextCommand(command, messageContext)
         case GameContext(command) => {
           val thread = message.thread_ts.getOrElse(message.ts)
 
@@ -65,11 +64,7 @@ object SlackWrapper {
           } yield ()
 
         }
-        case ScoreContext(command) => {
-          val thread = message.thread_ts.getOrElse(message.ts)
-          val replyText = CommandInterpreter.interpretScoreContextCommand(command)
-          IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread)))
-        }
+        case ScoreContext(command) => handleScoreContextCommand(command, messageContext)
       }
 
       val messageResponseProgram = for {
@@ -106,16 +101,11 @@ object SlackWrapper {
 
     val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, authorId)
 
-    // Then put that stuff
-
     putarydoo(rtmClient, message, reply, thread, gameStore, newGameInstance)
-
-    // Then if it's a finished, we do the score stuff
-
 
   }
 
-  // TODO: Dear god loss input please
+  // TODO: Dear god less input please
   def handleChallenge(challengerId: String, defenderId: String, flags: String, rtmClient: SlackRtmClient, message: Message, gameStore: RDSGameStore, thread: String): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandHandler.challenge(challengerId, defenderId, flags)
@@ -123,7 +113,6 @@ object SlackWrapper {
     val io = putarydoo(rtmClient, message, reply, thread, gameStore, newGameInstance)
 
     newGameInstance match {
-        // TODO: Does isInstanceOf work?
       case Finished(rankType) => {
         rankType match {
           case UnRanked => io
@@ -135,7 +124,7 @@ object SlackWrapper {
 
   }
 
-  // TODO: Dear god loss input please
+  // TODO: Dear god less input please
   // TODO: Better name
   def putarydoo(rtmClient: SlackRtmClient, message: Message, reply: String, thread: String, gameStore: RDSGameStore, gameInstance: GameInstance): IO[Unit] = {
     for {
@@ -149,12 +138,27 @@ object SlackWrapper {
       _ <- gameStore.updateLoss(loserId)
       _ <- gameStore.updateWin(winnerId)
       scores <- gameStore.reportScores(winnerId, loserId)
-      _ <- IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $scores", Some(thread)))
+      _ <- scores.traverse_ { score =>
+        IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $score", Some(thread)))
+      }
     } yield ()
   }
 
-//  def handleNoContextCommand
+  def handleNoContextCommand(command: NoContextCommand, sendMessage: SendMessage): IO[Unit] = {
+    val replyText = CommandInterpreter.interpretNoContextCommand(command)
+    // TODO: Unreadable garbage
+    IO(sendMessage.rtmClient.sendMessage(sendMessage.message.channel, s"<@${sendMessage.message.user}>: $replyText", Some(sendMessage.thread)))
+  }
 
+  def handleScoreContextCommand(command: ScoreContextCommand, sendMessage: SendMessage): IO[Unit] = {
+    val replyText = CommandInterpreter.interpretScoreContextCommand(command)
+    // TODO: Unreadable garbage
+    IO(sendMessage.rtmClient.sendMessage(sendMessage.message.channel, s"<@${sendMessage.message.user}>: $replyText", Some(sendMessage.thread)))
+  }
+
+//  def handleGameContextCommand()
+
+  case class SendMessage(rtmClient: SlackRtmClient, message: Message, thread: String)
 
 
 
