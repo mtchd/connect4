@@ -7,8 +7,8 @@ import connect4.Strings
 import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContext, GameContextCommand, Help, NoContext, NoReply, ScoreContext}
 import connect4.game.{Finished, GameInstance, Ranked, UnRanked}
 import connect4.gamestore.{GameStoreRow, RDSGameStore, ScoreStoreRow}
-import connect4.wrappers.SlackWrapper.putGameInstance
 import slack.api.SlackApiClient
+import slack.models.Message
 import slack.rtm.SlackRtmClient
 
 import scala.concurrent.ExecutionContextExecutor
@@ -50,10 +50,10 @@ object SlackWrapper {
             maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
 
             _ <- maybeGameInstance match {
-              case Some(gameInstance) => handleGame(gameInstance, command, message.user) // Continue
+              case Some(gameInstance) => handleGame(gameInstance, command, message.user, rtmClient, message, gameStore, thread) // Continue
               case None => {
                 command match {
-                  case Challenge(opponentId, flags) => handleChallenge(message.user, opponentId, flags)
+                  case Challenge(opponentId, flags) => handleChallenge(message.user, opponentId, flags, rtmClient, message, gameStore, thread)
                   case _ => {
                     val replyText = Strings.NotInGame
                     IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread)))
@@ -101,21 +101,59 @@ object SlackWrapper {
       //access dynamodb
     }
   }
+  // TODO: Dear god loss input please
+  def handleGame(gameInstance: GameInstance, command: GameContextCommand, authorId: String, rtmClient: SlackRtmClient, message: Message, gameStore: RDSGameStore, thread: String): IO[Unit] = {
 
-  def handleGame(gameInstance: GameInstance, command: GameContextCommand, authorId: String): IO[Int] = {
+    val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, authorId)
+
+    // Then put that stuff
+
+    putarydoo(rtmClient, message, reply, thread, gameStore, newGameInstance)
+
+    // Then if it's a finished, we do the score stuff
+
 
   }
 
-  def handleChallenge(challengerId: String, defenderId: String, flags: String): IO[Unit] = {
+  // TODO: Dear god loss input please
+  def handleChallenge(challengerId: String, defenderId: String, flags: String, rtmClient: SlackRtmClient, message: Message, gameStore: RDSGameStore, thread: String): IO[Unit] = {
+
     val (newGameInstance, reply) = CommandHandler.challenge(challengerId, defenderId, flags)
 
+    val io = putarydoo(rtmClient, message, reply, thread, gameStore, newGameInstance)
+
+    newGameInstance match {
+        // TODO: Does isInstanceOf work?
+      case Finished(rankType) => {
+        rankType match {
+          case UnRanked => io
+          case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gameStore, io, message, rtmClient, thread)
+        }
+      }
+      case _ => io
+    }
+
+  }
+
+  // TODO: Dear god loss input please
+  // TODO: Better name
+  def putarydoo(rtmClient: SlackRtmClient, message: Message, reply: String, thread: String, gameStore: RDSGameStore, gameInstance: GameInstance): IO[Unit] = {
     for {
       _ <- IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(thread)))
-      _ <- putGameInstance(newGameInstance, gameStore, thread)
+      _ <- gameStore.put(thread, gameInstance)
     } yield ()
   }
 
-  def handleNoContextCommand
+  def updateScores(winnerId: String, loserId: String, gameStore: RDSGameStore, io: IO[Unit], message: Message, rtmClient: SlackRtmClient, thread: String): IO[Unit] = {
+    for {
+      _ <- gameStore.updateLoss(loserId)
+      _ <- gameStore.updateWin(winnerId)
+      scores <- gameStore.reportScores(winnerId, loserId)
+      _ <- IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $scores", Some(thread)))
+    } yield ()
+  }
+
+//  def handleNoContextCommand
 
 
 
