@@ -1,9 +1,11 @@
 #! /bin/bash
 set -euo pipefail
 
+ENV=${1:-dev}
+
 sbt assembly
 
-docker build -t mtchd/connect4 .
+docker build -t mtchd/connect4:"${ENV}" .
 
 # Get password
 

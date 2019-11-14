@@ -1,11 +1,23 @@
 package connect4.game
 
 // Using a sum type allows two players to have the same token but be recognised by the game as different
-sealed trait CellContents
+sealed trait CellContents {
+  def opposite: CellContents = {
+    this match {
+      case Defender => Challenger
+      case Challenger => Defender
+    }
+  }
+}
 case object Defender extends CellContents
 case object Challenger extends CellContents
 case object Empty extends CellContents
 case object Winner extends CellContents
+
+// TODO: Implement this when you can
+//sealed trait PlayerRole extends CellContents
+//case object Defender extends PlayerRole
+//case object Challenger extends PlayerRole
 
 case class Cell(contents: CellContents)
 

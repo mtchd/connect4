@@ -1,5 +1,6 @@
-package connect4.scorestore
+package connect4.gamestore
 
+import connect4.game.{Finished, Ranked}
 import doobie.implicits._
 
 object ScoreStoreQueries {
@@ -30,7 +31,7 @@ object ScoreStoreQueries {
          |)
          |ON CONFLICT (playerId)
          |DO UPDATE
-         |SET wins = wins + 1
+         |SET wins = leaderboard.wins + 1
         """.stripMargin
       .update
   }
@@ -49,19 +50,18 @@ object ScoreStoreQueries {
          |)
          |ON CONFLICT (playerId)
          |DO UPDATE
-         |SET losses = losses + 1
+         |SET losses = leaderboard.losses + 1
         """.stripMargin
       .update
   }
 
-//  def searchWithTs(playerId: String): doobie.Query0[GameStoreRow] = {
-//    sql"""
-//         |SELECT * FROM leaderboard
-//         |WHERE playerId = $playerId
-//         |LIMIT 1
-//       """.stripMargin
-//      .query[GameStoreRow]
-//  }
-
+  def reportScores(challengerId: String, defenderId: String): doobie.Query0[ScoreStoreRow] = {
+        sql"""
+             |SELECT * FROM leaderboard
+             |WHERE playerId = $challengerId
+             |OR playerId = $defenderId
+           """.stripMargin
+          .query[ScoreStoreRow]
+  }
 
 }

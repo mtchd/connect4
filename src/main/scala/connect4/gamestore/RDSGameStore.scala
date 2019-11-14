@@ -1,6 +1,6 @@
 package connect4.gamestore
 import cats.effect.{Blocker, ContextShift, IO}
-import connect4.game.GameInstance
+import connect4.game.{Challenged, Finished, GameInstance, Playing, Ranked}
 import doobie.Transactor
 import doobie.implicits._
 import doobie.util.ExecutionContexts
@@ -18,17 +18,34 @@ case class RDSGameStore(password: String) {
     Blocker.liftExecutionContext(ExecutionContexts.synchronous) // just for testing
   )
 
-  def setup(): IO[Int] = GameStoreQueries.createTable.run.transact(xa)
+  def setupGameStore(): IO[Int] = GameStoreQueries.createTable.run.transact(xa)
+  def setupScoreStore(): IO[Int] = ScoreStoreQueries.createTable.run.transact(xa)
 
   def get(threadTimeStamp: String): IO[Option[GameStoreRow]] = {
     GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa)
   }
 
-  def put(threadTs: String, gameInstance: Option[GameInstance]): IO[Int] = {
+  def reportScores(player1Id: String, player2Id: String): IO[List[ScoreStoreRow]] = {
+    ScoreStoreQueries.reportScores(player1Id, player2Id).to[List].transact(xa)
+  }
+
+  def put(threadTs: String, gameInstance: GameInstance): IO[Int] = {
+
     gameInstance match {
-      case None => delete(threadTs)
-      case Some(gameInstance) => upsert(threadTs, gameInstance)
+      case Finished(_) => delete(threadTs)
+        // TODO: Has to be a way to merge these two
+      case playing @ Playing(_, _) => upsert(threadTs, playing)
+      case challenged @ Challenged(_) => upsert(threadTs, challenged)
     }
+
+  }
+
+  def updateLoss(playerId: String): IO[Int] = {
+    ScoreStoreQueries.upsertLoss(playerId).run.transact(xa)
+  }
+
+  def updateWin(playerId: String): IO[Int] = {
+    ScoreStoreQueries.upsertWin(playerId).run.transact(xa)
   }
 
   def upsert(threadTs: String, gameInstance: GameInstance): IO[Int] = {

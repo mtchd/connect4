@@ -30,31 +30,39 @@ object CommandHandler {
 
   }
 
-  def drop(col: Int, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+  def drop(col: String, gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+
+    val intCol = col.toInt
 
     gameInstance match {
-      case playing @ Playing(_,_) => playIf(col, playing, playerId)
+      case playing @ Playing(_,_) => playIf(intCol, playing, playerId)
       case _ => (gameInstance, Strings.FailedDrop)
     }
 
   }
 
   def forfeit(gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+
     gameInstance match {
-      case instance @ Playing(_, _) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
-        (None, Strings.Forfeit)
+      case playing @ Playing(_, playerPair) =>  playerPair.roleFromPair(playerId) match {
+        case Some(role) => (playing.finishGame(role.opposite), Strings.Forfeit)
+        case None => (gameInstance, Strings.FailedForfeit)
       }
-      case _ => (Some(gameInstance), Strings.FailedForfeit)
+      case _ => (gameInstance, Strings.FailedForfeit)
     }
+
   }
 
-  def reject(gameInstance: GameInstance, playerId: String): (Option[GameInstance], String) = {
+  def reject(gameInstance: GameInstance, playerId: String): (GameInstance, String) = {
+
     gameInstance match {
-      case instance @ Challenged(_) if instance.instancePlayerPair.isPlayerInPair(playerId) => {
-        (None, Strings.Reject)
+      case challenged @ Challenged(playerPair) => playerPair.roleFromPair(playerId) match {
+        case Some(_) => (challenged.finishGame, Strings.Reject)
+        case None => (gameInstance, Strings.FailedAcceptOrReject)
       }
-      case _ => (Some(gameInstance), Strings.FailedAcceptOrReject)
+      case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
+
   }
 
   def changeToken(gameInstance: GameInstance, message: String, playerId: String): (GameInstance, String) = {
@@ -92,7 +100,7 @@ object CommandHandler {
     val newPlaying = game.Playing(newState, playing.instancePlayerPair)
 
     newPlaying.gameState.maybeWinningBoard() match {
-      case Some(gameState) => (playing.finishGame(playerRole), Strings.Win + gameState.boardAsString(playing))
+      case Some(gameState) => (playing.finishGame(playerRole), Strings.Win + gameState.boardAsString(playing.instancePlayerPair))
       case _ => (newPlaying, reply + "\n" + newPlaying.boardAsString)
     }
 

@@ -17,16 +17,16 @@ object CommandsRegex {
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
   // Flags
-  val Token: Regex = "(?i)(.*token.*)(:.*:)(.*)".r
+  val Token: Regex = simpleRegex("token")
   val Emoji: Regex = "(?i)(.*)(:.*:)(.*)".r
+  // TODO: Better Name
   val Emoji2: Regex = "(?i)(:[^:]*:)".r
+
+  val Score: Regex = simpleRegex("score")
 
   // For Console
   val DefenderRole: Regex = simpleRegex("d")
   val ChallengerRole: Regex = simpleRegex("c")
-
-  // Other
-  val Clean: Regex = "(?i)(<@.*>)(.*)".r
 
   private def atUserRegex(command: String): Regex = {
     // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,

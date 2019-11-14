@@ -10,7 +10,7 @@ yum install docker -y
 usermod -a -G docker ec2-user
 service docker start
 
-docker pull mtchd/connect4
+docker pull mtchd/connect4:"${ENV}"
 
 # Base64 takes a lowercase -d on linux
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n

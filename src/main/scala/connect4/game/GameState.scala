@@ -106,6 +106,8 @@ case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
       Strings.ColMarkers.take(nBoardCols*2))
   }
 
+  def boardAsString(playerPair: PlayerPair): String = boardAsString(playerPair.defender, playerPair.challenger)
+
   // TODO: Maybe this should override toString
   // For console printing
   def boardAsConsoleString(): String = {
@@ -116,11 +118,6 @@ case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
       Strings.ConsoleEmptySpace,
       Strings.ConsoleColMarkers.take(nBoardCols)
     )
-  }
-
-  def boardAsString(gameInstance: GameInstance): String = {
-    val playerPair = gameInstance.instancePlayerPair
-    boardAsString(playerPair.defender, playerPair.defender)
   }
 
   // This is really where the win check happens

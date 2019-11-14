@@ -4,7 +4,7 @@ import connect4.Strings
 
 sealed trait GameInstance {
 
-  val instancePlayerPair: PlayerPair
+  // TODO: Cause soft fail for a lot of these finish things
 
   def boardAsString: String = this match {
     case Playing(gameState, playerPair) => gameState.boardAsString(playerPair.defender, playerPair.challenger)
@@ -15,23 +15,16 @@ sealed trait GameInstance {
   def playerRole(playerId: String): Option[CellContents] = this match {
     case Challenged(playerPair) => playerPair.roleFromPair(playerId)
     case Playing(_, playerPair) => playerPair.roleFromPair(playerId)
-    case Finished(playerPair, _) => playerPair.roleFromPair(playerId)
+    case _ => None
   }
 
   def changeToken(role: CellContents, token: String): GameInstance = {
-    val newPlayerPair = instancePlayerPair.updateToken(role, token)
 
     this match {
-      case challenged @ Challenged(_) => challenged.copy(instancePlayerPair = newPlayerPair)
-      case playing @ Playing(_, _) => playing.copy(instancePlayerPair = newPlayerPair)
-      case finished @ Finished(_, _) => finished.copy(instancePlayerPair = newPlayerPair)
+      case challenged @ Challenged(playerPair) => challenged.copy(instancePlayerPair = playerPair.updateToken(role, token))
+      case playing @ Playing(_, playerPair) => playing.copy(instancePlayerPair = playerPair.updateToken(role, token))
+      case finished @ Finished(_) => finished
     }
-  }
-
-  def finishGame(winnerRole: CellContents): Finished = this match{
-    case Challenged(playerPair) => Finished(playerPair, Empty)
-    case Playing(_, playerPair) => Finished(playerPair, winnerRole)
-    case finished @ Finished(_, _) => finished
   }
 
 }
@@ -43,11 +36,28 @@ case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
       Playing(GameState.newDefaultBoard(), instancePlayerPair.updateDefenderToken(token))
   }
 
+  def finishGame: Finished = Finished(UnRanked)
+
 }
 
-case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance
+case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance {
 
-case class Finished(instancePlayerPair: PlayerPair, winner: CellContents) extends GameInstance
+  def finishGame(winnerRole: CellContents): Finished = Finished.finishRanked(instancePlayerPair, winnerRole)
+}
+
+case class Finished(rankType: RankType) extends GameInstance
+
+sealed trait RankType
+case class Ranked(winnerId: String, loserId: String) extends RankType
+case object UnRanked extends RankType
+
+
+object Finished {
+  def finishRanked(playerPair: PlayerPair, winnerRole: CellContents): Finished = {
+    val (winner, loser) = playerPair.winnerAndLoserIds(winnerRole)
+    Finished(Ranked(winner, loser))
+  }
+}
 
 object GameInstance {
   def newChallenge(defenderId: String, challengerId: String, challengerToken: String): Challenged = {

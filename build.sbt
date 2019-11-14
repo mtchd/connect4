@@ -1,3 +1,5 @@
+import sbt.util
+
 name := "Connect4"
 
 version := "0.3.1"
@@ -38,4 +40,6 @@ libraryDependencies ++= Seq(
 resolvers ++= Seq(
   "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 )
+
+logLevel := Level.Debug
 

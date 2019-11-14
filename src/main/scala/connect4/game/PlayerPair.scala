@@ -28,6 +28,17 @@ case class PlayerPair(challenger: Player, defender: Player) {
 
   def atLeastOneInPair(challengerId: String, defenderId: String): Boolean =
     isPlayerInPair(challengerId) || isPlayerInPair(defenderId)
+
+  // TODO: Update when we have PlayerRoles instead of CellContents
+  def winnerAndLoserIds(winnerRole: CellContents): (String, String) = {
+
+    winnerRole match {
+      case Challenger => (challenger.id, defender.id)
+      case Defender => (defender.id, challenger.id)
+        // TODO: We give empty here to winnerRole when someone forfeits, and it just...dies?
+    }
+
+  }
 }
 
 object PlayerPair {

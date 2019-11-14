@@ -3,7 +3,7 @@ set -euo pipefail
 
 ENV=dev
 
-docker pull mtchd/connect4
+docker pull mtchd/connect4:"${ENV}"
 
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
 echo ${ENCRYPTED_DB_PASS} | base64 -D > db.encrypted

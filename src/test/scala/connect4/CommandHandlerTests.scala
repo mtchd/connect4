@@ -17,36 +17,4 @@ class CommandHandlerTests extends FunSuite {
 
   }
 
-  test("CommandHandler.checkWin if not won") {
-
-    // Mock bois
-    val gameInstance = Playing(GameState.newDefaultBoard(), PlayerPair.newTestPair())
-    val currentReply = Strings.dropSuccess(1)
-
-    val potentialWin: (Option[GameInstance], String) = CommandHandler.checkWin(gameInstance, currentReply)
-
-    // Will return if they haven't won
-    assert(potentialWin._1.isDefined)
-  }
-
-  test("CommandHandler.checkWin if have won") {
-
-    val gameState = GameState.newStateWithFourCellsAndLastMove(Challenger)
-
-    assert(gameState.maybeWinningBoard().isDefined)
-
-    // Mock bois
-    val gameInstance = Playing(
-      gameState,
-      PlayerPair.newTestPair()
-    )
-
-    val currentReply = Strings.dropSuccess(1)
-
-    val potentialWin: (Option[GameInstance], String) = CommandHandler.checkWin(gameInstance, currentReply)
-
-//  Will return if they haven't won
-    assert(potentialWin._1.isEmpty)
-  }
-
 }
