@@ -1,7 +1,7 @@
 #! /bin/bash
 set -euo pipefail
 
-ENV=dev
+ENV=${1:-dev}
 
 docker pull mtchd/connect4:"${ENV}"
 
@@ -28,4 +28,4 @@ DB_PASS=$(aws kms decrypt --ciphertext-blob fileb://db.encrypted --region ap-sou
         --output text | base64 --decode)
 
 echo "Starting connect 4..."
-docker run --rm -e SLACK_TOKEN="${SLACK_TOKEN}" -e DB_PASS="${DB_PASS}" mtchd/connect4
+docker run --rm -e SLACK_TOKEN="${SLACK_TOKEN}" -e DB_PASS="${DB_PASS}" mtchd/connect4:"${ENV}"

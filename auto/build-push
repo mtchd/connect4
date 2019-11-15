@@ -15,4 +15,4 @@ PASSWORD=$(aws kms decrypt --ciphertext-blob fileb://"$(dirname "$0")"/../encryp
 
 echo "${PASSWORD}" | docker login --username mtchd --password-stdin
 
-docker push mtchd/connect4
+docker push mtchd/connect4:"${ENV}"
