@@ -42,7 +42,7 @@ object SlackWrapper {
         case NoReply => IO(Unit)
         case NoContext(command) => handleNoContextCommand(command, messageContext)
         case GameContext(command) => handleGameContextCommand(command, messageContext, gameStore)
-        case ScoreContext(command) => handleScoreContextCommand(command, messageContext)
+        case ScoreContext(command) => handleScoreContextCommand(command, messageContext, gameStore)
       }
 
       val messageResponseProgram = for {
@@ -78,28 +78,25 @@ object SlackWrapper {
   def handleGame(gameInstance: GameInstance, command: GameContextCommand, authorId: String, rtmClient: SlackRtmClient, message: Message, gameStore: RDSGameStore, thread: String): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, sendMessage.message.user)
-
-    putarydoo(sendMessage, reply, gameStore, newGameInstance)
+    val gamePutIo = putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
+    newGameInstance match {
+      case Finished(rankType) => rankType match {
+        case UnRanked => gamePutIo
+        case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gameStore, gamePutIo, sendMessage)
+      }
+      case _ => gamePutIo
+    }
 
   }
 
   def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandHandler.challenge(sendMessage.message.user, defenderId, flags)
-    val io = putarydoo(sendMessage, reply, gameStore, newGameInstance)
-
-    newGameInstance match {
-      case Finished(rankType) => rankType match {
-        case UnRanked => io
-        case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gameStore, io, sendMessage)
-      }
-      case _ => io
-    }
+    putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
 
   }
 
-  // TODO: Better name
-  def putarydoo(sendMessage: SendMessage, reply: String, gameStore: RDSGameStore, gameInstance: GameInstance): IO[Unit] = {
+  def putGameAndReplyIo(sendMessage: SendMessage, reply: String, gameStore: RDSGameStore, gameInstance: GameInstance): IO[Unit] = {
 
     // TODO: Do something about this unpacking
     val rtmClient = sendMessage.rtmClient
@@ -112,14 +109,13 @@ object SlackWrapper {
     } yield ()
   }
 
-  def updateScores(winnerId: String, loserId: String, gameStore: RDSGameStore, io: IO[Unit], sendMessage: SendMessage): IO[Unit] = {
+  def updateScores(winnerId: String, loserId: String, gameStore: RDSGameStore, gamePutIo: IO[Unit], sendMessage: SendMessage): IO[Unit] = {
     for {
+      _ <- gamePutIo
       _ <- gameStore.updateLoss(loserId)
       _ <- gameStore.updateWin(winnerId)
       scores <- gameStore.reportScores(winnerId, loserId)
-      _ <- scores.traverse_ { score =>
-        reply(sendMessage, score.toString)
-      }
+      _ <- scores.traverse_ { score => reply(sendMessage, score.toString) }
     } yield ()
   }
 
@@ -128,13 +124,25 @@ object SlackWrapper {
     reply(sendMessage, replyText)
   }
 
-  def handleScoreContextCommand(command: ScoreContextCommand, sendMessage: SendMessage): IO[Unit] = {
-    val replyText = CommandInterpreter.interpretScoreContextCommand(command)
-    reply(sendMessage, replyText)
+  def handleScoreContextCommand(command: ScoreContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore): IO[Unit] = {
+
+    for {
+      maybeScore <- gameStore.reportScore(sendMessage.message.user)
+
+      _ <- maybeScore match {
+        case Some(score) => reply(sendMessage, CommandInterpreter.interpretScoreContextCommand(command, score))
+        case None => reply(sendMessage, Strings.HaventPlayed)
+      }
+
+    } yield ()
+
   }
 
   def reply(sendMessage: SendMessage, replyText: String): IO[Unit] = {
-    IO(sendMessage.rtmClient.sendMessage(sendMessage.message.channel, s"<@${sendMessage.message.user}>: $replyText", Some(sendMessage.thread)))
+    IO(sendMessage.rtmClient.sendMessage(
+      sendMessage.message.channel,
+      Strings.atUser(sendMessage.message.user, replyText),
+      Some(sendMessage.thread)))
   }
 
   def handleGameContextCommand(command: GameContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore): IO[Unit] = {

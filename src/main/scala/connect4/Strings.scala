@@ -1,5 +1,7 @@
 package connect4
 
+import connect4.gamestore.ScoreStoreRow
+
 object Strings {
 
   // TODO: Better way of storing strings
@@ -67,8 +69,14 @@ object Strings {
 
   val Win = "You win!\n"
 
+  val HaventPlayed = "You haven't played a game yet!"
+
   def dropSuccess(col: Int): String = s"Dropped into column $col"
 
   def tokenChange(token: String): String = s"You changed your token to $token"
+
+  def reportScore(score: ScoreStoreRow) = s"<@${score.playerId}> has ${score.wins} wins and ${score.losses} losses."
+
+  def atUser(userId: String, reply: String) = s"<@${userId}>: $reply"
 
 }

@@ -29,6 +29,10 @@ case class RDSGameStore(password: String) {
     ScoreStoreQueries.reportScores(player1Id, player2Id).to[List].transact(xa)
   }
 
+  def reportScore(playerId: String): IO[Option[ScoreStoreRow]] = {
+    ScoreStoreQueries.reportScore(playerId).option.transact(xa)
+  }
+
   def put(threadTs: String, gameInstance: GameInstance): IO[Int] = {
 
     gameInstance match {

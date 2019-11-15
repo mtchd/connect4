@@ -63,5 +63,13 @@ object ScoreStoreQueries {
            """.stripMargin
           .query[ScoreStoreRow]
   }
+  
+  def reportScore(playerId: String): doobie.Query0[ScoreStoreRow] = 
+    sql"""
+         |SELECT * FROM leaderboard
+         |WHERE playerId = $playerId
+         |LIMIT 1
+           """.stripMargin
+      .query[ScoreStoreRow]
 
 }
