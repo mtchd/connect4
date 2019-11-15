@@ -16,13 +16,13 @@ import scala.concurrent.duration.DurationInt
 
 object SlackWrapper {
 
-  implicit val system: ActorSystem = ActorSystem("slack"/* config.getConfig("akka")*/)
+  implicit val system: ActorSystem = ActorSystem("slack" /* config.getConfig("akka")*/)
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
   /**
-    * Start point of the program, handles all incoming messages in channels the bot is present in. Side effects be
-    * here, but only here.
-    */
+   * Start point of the program, handles all incoming messages in channels the bot is present in. Side effects be
+   * here, but only here.
+   */
   def startListening(slackToken: String, password: String): Unit = {
 
     val rtmClient = SlackRtmClient(slackToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
@@ -83,18 +83,15 @@ object SlackWrapper {
 
   }
 
-  // TODO: Dear god less input please
-  def handleChallenge(challengerId: String, defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
+  def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
 
-    val (newGameInstance, reply) = CommandHandler.challenge(challengerId, defenderId, flags)
+    val (newGameInstance, reply) = CommandHandler.challenge(sendMessage.message.user, defenderId, flags)
     val io = putarydoo(sendMessage, reply, gameStore, newGameInstance)
 
     newGameInstance match {
-      case Finished(rankType) => {
-        rankType match {
-          case UnRanked => io
-          case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gameStore, io, message, rtmClient, thread)
-        }
+      case Finished(rankType) => rankType match {
+        case UnRanked => io
+        case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gameStore, io, sendMessage)
       }
       case _ => io
     }
@@ -128,13 +125,11 @@ object SlackWrapper {
 
   def handleNoContextCommand(command: NoContextCommand, sendMessage: SendMessage): IO[Unit] = {
     val replyText = CommandInterpreter.interpretNoContextCommand(command)
-    // TODO: Unreadable garbage
     reply(sendMessage, replyText)
   }
 
   def handleScoreContextCommand(command: ScoreContextCommand, sendMessage: SendMessage): IO[Unit] = {
     val replyText = CommandInterpreter.interpretScoreContextCommand(command)
-    // TODO: Unreadable garbage
     reply(sendMessage, replyText)
   }
 
@@ -143,19 +138,19 @@ object SlackWrapper {
   }
 
   def handleGameContextCommand(command: GameContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore): IO[Unit] = {
-
-    // TODO: Do something about unpacking
-    val thread = sendMessage.thread
-    val message = sendMessage.message
-    val rtmClient = sendMessage.rtmClient
-
     for {
-      maybeGameRow <- gameStore.get(thread)
+      maybeGameRow <- gameStore.get(sendMessage.thread)
       maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
 
       _ <- maybeGameInstance match {
-        case Some(gameInstance) => handleGame(gameInstance, command, gameStore, sendMessage) // Continue
-        case None => {
-          command match {
-            case Challenge(opponentId, flags) => handleChallenge(message.user, opponentId, flags, rtmClient, message, gameStore, thread)
-          
+        case Some(gameInstance) => handleGame(gameInstance, command, gameStore, sendMessage)
+        case None => command match {
+          case Challenge(opponentId, flags) => handleChallenge(opponentId, flags, gameStore, sendMessage)
+          case _ => reply(sendMessage, Strings.NotInGame)
+        }
+      }
+    } yield ()
+  }
+}
+
+case class SendMessage(rtmClient: SlackRtmClient, message: Message, thread: String)
