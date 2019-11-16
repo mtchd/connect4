@@ -25,6 +25,7 @@ object CommandHandler {
         val reply = Strings.InGameCommands + "\n" + playing.boardAsString
         (playing, reply)
       }
+      case Challenged(playerPair) => (gameInstance, Strings.FailedAcceptOrReject(playerPair.defender.id))
       case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
 
@@ -58,7 +59,7 @@ object CommandHandler {
     gameInstance match {
       case challenged @ Challenged(playerPair) => playerPair.roleFromPair(playerId) match {
         case Some(_) => (challenged.finishGame, Strings.Reject)
-        case None => (gameInstance, Strings.FailedAcceptOrReject)
+        case None => (gameInstance, Strings.FailedAcceptOrReject(challenged.instancePlayerPair.defender.id))
       }
       case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }

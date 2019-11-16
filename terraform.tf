@@ -31,6 +31,10 @@ resource "aws_instance" "connect4" {
   tags = {
     Name = "connect4"
   }
+
+  lifecycle  {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "connect4dev" {

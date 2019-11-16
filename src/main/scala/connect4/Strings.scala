@@ -7,7 +7,7 @@ object Strings {
   // TODO: Better way of storing strings
 
   // Help text sent with a challenge
-  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\naccept :emoji:"
+  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\nYou can customise your emoji with:\ntoken :emoji:"
   // Help text when failing to respond to a challenge
   val ChallengeHelp = "You will need to answer the challenge with 'accept' or 'reject"
 
@@ -78,5 +78,7 @@ object Strings {
   def reportScore(score: ScoreStoreRow) = s"<@${score.playerId}> has ${score.wins} wins and ${score.losses} losses."
 
   def atUser(userId: String, reply: String) = s"<@${userId}>: $reply"
+
+  def FailedAcceptOrReject(user: String) = s"Awaiting challenge acceptance from <@${user}"
 
 }

@@ -10,9 +10,12 @@ import connect4.gamestore.{GameStoreRow, RDSGameStore, ScoreStoreRow}
 import slack.api.SlackApiClient
 import slack.models.Message
 import slack.rtm.SlackRtmClient
+import slack.api.SlackApiClient
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.DurationInt
+import scala.util.{Failure, Success}
+
 
 object SlackWrapper {
 
@@ -23,10 +26,24 @@ object SlackWrapper {
    * Start point of the program, handles all incoming messages in channels the bot is present in. Side effects be
    * here, but only here.
    */
-  def startListening(slackToken: String, password: String): Unit = {
+  def startListening(slackRtmToken: String, dbPassword: String, slackApiToken: String): Unit = {
 
-    val rtmClient = SlackRtmClient(slackToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
-    val gameStore = RDSGameStore(password)
+    val rtmClient = SlackRtmClient(slackRtmToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
+    val slackApiClient = SlackApiClient(slackApiToken)
+    val gameStore = RDSGameStore(dbPassword)
+
+    val que: Future[Map[String, String]] = slackApiClient.listEmojis()
+
+    // Hit slack api for the emoji list
+    // Convert list to scala list
+    // Store in val
+    // Create a function to validate an emoji, should return boolean saying if it's valid
+    // Work this into the logic present in slackwrapper so you can return the reply / take the right actions
+
+    que.onComplete {
+      case Failure(exception) => throw exception
+      case Success(value) => println(value.keys)
+    }
 
     gameStore.setupGameStore().unsafeRunSync()
     gameStore.setupScoreStore().unsafeRunSync()
@@ -91,7 +108,7 @@ object SlackWrapper {
 
   def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
 
-    val (newGameInstance, reply) = CommandHandler.challenge(sendMessage.message.user, defenderId, flags)
+    val (newGameInstance, reply) = CommandHandler.challenge(defenderId, sendMessage.message.user, flags)
     putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
 
   }
