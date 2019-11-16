@@ -91,7 +91,7 @@ object SlackWrapper {
 
   def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
 
-    val (newGameInstance, reply) = CommandHandler.challenge(sendMessage.message.user, defenderId, flags)
+    val (newGameInstance, reply) = CommandHandler.challenge(defenderId, sendMessage.message.user, flags)
     putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
 
   }
