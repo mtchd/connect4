@@ -1,6 +1,11 @@
-import scala.util.matching.Regex
+package connect4.commands
 
-//TODO: Look into Parser Combinators
+import connect4.Strings
+
+import scala.util.matching.Regex
+import scala.util.parsing.combinator._
+
+// TODO: Look into Parser Combinators
 object CommandsRegex {
   // Regex for challenging and accepting/rejecting a game
   val Challenge: Regex = atUserRegex("challenge")
@@ -12,14 +17,16 @@ object CommandsRegex {
   val Reset: Regex = simpleRegex("reset")
   val Help: Regex = simpleRegex("help")
   // Flags
-  val Token: Regex = "(?i)(.*token.*)(:.*:)(.*)".r
+  val Token: Regex = simpleRegex("token")
+  val Emoji: Regex = "(?i)(.*)(:.*:)(.*)".r
+  // TODO: Better Name
+  val Emoji2: Regex = "(?i)(:[^:]*:)".r
+
+  val Score: Regex = simpleRegex("score")
 
   // For Console
   val DefenderRole: Regex = simpleRegex("d")
   val ChallengerRole: Regex = simpleRegex("c")
-
-  // Other
-  val Clean: Regex = "(?i)(<@.*>)(.*)".r
 
   private def atUserRegex(command: String): Regex = {
     // Note that using the (?i) flag, i.e. case insensitive flag, we take a small performance hit,
@@ -38,18 +45,12 @@ object CommandsRegex {
     s"(?i)($command)".r
   }
 
-  // Lists commands as string. Currently unused but available for use if needed.
-  def listCommandsAsString(): String = {
-    val fields = CommandsRegex.getClass.getDeclaredFields
-
-    var list: List[AnyRef] = List()
-
-    fields.foreach { f =>
-      f.setAccessible(true)
-      list = list :+ f.get(CommandsRegex)
+  // This was added as emoji's can be made of two emoji's, which present as one, e.g :ok-hand::skin-tone-4:
+  def extractEmoji(input: String, default: String): String = {
+    input match {
+      case Emoji(_*) => CommandsRegex.Emoji2.findAllIn(input).toVector.take(2).mkString
+      case _ => default
     }
-
-    list.mkString("\n")
   }
 
 }

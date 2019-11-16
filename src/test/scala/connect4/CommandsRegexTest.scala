@@ -1,3 +1,6 @@
+package connect4
+
+import connect4.commands.CommandsRegex
 import org.scalatest.FunSuite
 
 class CommandsRegexTest extends FunSuite {

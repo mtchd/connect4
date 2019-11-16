@@ -1,3 +1,9 @@
+package connect4.wrappers
+
+import connect4._
+import connect4.commands.{CommandHandler, CommandsRegex}
+import connect4.game.{CellContents, Challenger, Defender, GameState}
+
 object ConsoleWrapper {
 
   def startListening(): Unit = {
@@ -6,6 +12,7 @@ object ConsoleWrapper {
     listen(gameState)
   }
 
+  @scala.annotation.tailrec
   private def listen(gameState: GameState): Unit = {
 
     val playerRole = askRole()
@@ -20,6 +27,7 @@ object ConsoleWrapper {
     listen(newGameState)
   }
 
+  @scala.annotation.tailrec
   private def askRole(): CellContents = {
     println("\nEnter 'D' for defender or 'C' for challenger:")
 
@@ -42,7 +50,7 @@ object ConsoleWrapper {
           gameState,
           playerRole
         )
-        (newGameState, reply + "\n" + newGameState.boardAsString())
+        (newGameState, reply + "\n" + newGameState.boardAsConsoleString())
       }
 
       case CommandsRegex.Forfeit(_) => (GameState.newDefaultBoard(), Strings.Forfeit + "\n" + "Starting new game...")

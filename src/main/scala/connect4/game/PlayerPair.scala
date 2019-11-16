@@ -1,3 +1,5 @@
+package connect4.game
+
 case class PlayerPair(challenger: Player, defender: Player) {
 
   def roleFromPair(playerId: String): Option[CellContents] =
@@ -26,6 +28,17 @@ case class PlayerPair(challenger: Player, defender: Player) {
 
   def atLeastOneInPair(challengerId: String, defenderId: String): Boolean =
     isPlayerInPair(challengerId) || isPlayerInPair(defenderId)
+
+  // TODO: Update when we have PlayerRoles instead of CellContents
+  def winnerAndLoserIds(winnerRole: CellContents): (String, String) = {
+
+    winnerRole match {
+      case Challenger => (challenger.id, defender.id)
+      case Defender => (defender.id, challenger.id)
+        // TODO: We give empty here to winnerRole when someone forfeits, and it just...dies?
+    }
+
+  }
 }
 
 object PlayerPair {
@@ -37,10 +50,20 @@ object PlayerPair {
     PlayerPair(challenger, defender)
   }
 
+  def newTestPair(): PlayerPair = {
+    newDefaultPairFromIds("1","2")
+  }
+
   def newPairFromIdsWithChallengerToken(challengerId: String, defenderId: String, token: String): PlayerPair = {
     val challenger = Player(challengerId, token)
     val defender = Player.newDefaultPlayer(defenderId, Defender)
 
+    PlayerPair(challenger, defender)
+  }
+
+  def newPairWithTokens(challengerId: String, challengerToken: String, defenderId: String, defenderToken: String): PlayerPair = {
+    val defender = Player(defenderId, defenderToken)
+    val challenger = Player(challengerId, challengerToken)
     PlayerPair(challenger, defender)
   }
 }

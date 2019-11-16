@@ -1,10 +1,13 @@
+package connect4
+
+import connect4.gamestore.ScoreStoreRow
 
 object Strings {
 
   // TODO: Better way of storing strings
 
   // Help text sent with a challenge
-  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\naccept token :emoji:"
+  val NewChallengeHelp = "\nYou can respond with:\naccept\nreject\nYou can customise your emoji with:\ntoken :emoji:"
   // Help text when failing to respond to a challenge
   val ChallengeHelp = "You will need to answer the challenge with 'accept' or 'reject"
 
@@ -33,9 +36,9 @@ object Strings {
 
   // Test challenger slack ID
   val TestChallengerId = "X"
-  // General help, lists available commands
+  // General help, Vectors available commands
   val Help = "To challenge a player, use:" +
-    "\nchallenge @username" +
+    "\nchallenge @username :emoji:, where :emoji: is your token for the game" +
     "\nYou can add/change a token with this flag 'token :your-token-here:'" +
     "\nWhen in a game, simply type the number of the column you want to drop into." +
     "\nYou can also type 'forfeit' to give up."
@@ -60,14 +63,22 @@ object Strings {
 
   val FailedRenderBoard = "No game playing with this pair."
 
-  val AlreadyInGame = "You or your opponent are already in a game in this context."
+  val AlreadyGame = "There already is a game in this context."
 
   val NotInGame = "You don't seem to be associated with a game here."
 
-  val Win = "You win!"
+  val Win = "You win!\n"
+
+  val HaventPlayed = "You haven't played a game yet!"
 
   def dropSuccess(col: Int): String = s"Dropped into column $col"
 
   def tokenChange(token: String): String = s"You changed your token to $token"
+
+  def reportScore(score: ScoreStoreRow) = s"<@${score.playerId}> has ${score.wins} wins and ${score.losses} losses."
+
+  def atUser(userId: String, reply: String) = s"<@${userId}>: $reply"
+
+  def FailedAcceptOrReject(user: String) = s"Awaiting challenge acceptance from <@${user}"
 
 }

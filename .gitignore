@@ -87,10 +87,10 @@ project/plugins/project/
 .ensime
 
 # Api key secrets
-application.conf
 /config
 *.pem
 /secrets
+*.encrypted
 
 # Terraform
 *.tfstate
