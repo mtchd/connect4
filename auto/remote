@@ -22,7 +22,7 @@ then
     echo ${ENCRYPTED_PROD_SLACK_TOKEN} | base64 -d > prod.encrypted
 else
     ENCRYPTED_DEV_SLACK_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwFkp0pQCFWuoAIk74qz5bJ/AAAAmDCBlQYJKoZIhvcNAQcGoIGHMIGEAgEAMH8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3DNwIvmTsqS0Rx99AgEQgFIhfIGK75TtUQdjjNJEiPXvYZZvb4Y4R0hsNuJOgFYi0I8cRZefHDS8E9wtSJEq9KUpfaKCMpyaIeXUNlOBBBIWWYAMjnTDvjqMD5DWE5RyaqUY
-    echo ${ENCRYPTED_DEV_SLACK_TOKEN} | base64 -d > dev.encrypted
+    echo ${ENCRYPTED_DEV_SLACK_TOKEN} | base64 -d > dev-rtm.encrypted
 fi
 
 echo "Decrypting slack api key..."

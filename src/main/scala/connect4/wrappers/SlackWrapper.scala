@@ -28,7 +28,8 @@ object SlackWrapper {
    */
   def startListening(slackRtmToken: String, dbPassword: String, slackApiToken: String): Unit = {
 
-    val rtmClient = SlackRtmClient(slackRtmToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
+    // TODO: Put prep in it's own for comprehension
+    val rtmClient: SlackRtmClient = SlackRtmClient(slackRtmToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
     val slackApiClient = SlackApiClient(slackApiToken)
     val gameStore = RDSGameStore(dbPassword)
 
@@ -74,7 +75,8 @@ object SlackWrapper {
       }
     }
 
-  // TODO: Dear god loss input please
+  // TODO: Put functions in own object
+
   def handleGame(gameInstance: GameInstance, command: GameContextCommand, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, sendMessage.message.user)
@@ -99,12 +101,10 @@ object SlackWrapper {
   def putGameAndReplyIo(sendMessage: SendMessage, reply: String, gameStore: RDSGameStore, gameInstance: GameInstance): IO[Unit] = {
 
     // TODO: Do something about this unpacking
-    val rtmClient = sendMessage.rtmClient
-    val message = sendMessage.message
     val thread = sendMessage.thread
 
     for {
-      _ <- IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $reply", Some(thread)))
+      _ <- SlackWrapper.reply(sendMessage, reply)
       _ <- gameStore.put(thread, gameInstance)
     } yield ()
   }

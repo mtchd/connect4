@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+FILE=$1
+
+# TODO: Is it okay to put the key id here?
+aws kms encrypt --key-id 4a861d97-5d4b-414d-ba9b-ce964293ae8b --profile Connect4 \
+        --plaintext file://secrets/"${FILE}" \
+        --output text --query CiphertextBlob | base64 --decode > encrypted/"${FILE}".encrypted

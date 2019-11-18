@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+FILE=$1
+
+base64 "${FILE}"

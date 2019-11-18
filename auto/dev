@@ -6,34 +6,35 @@ ENV=${1:-dev}
 docker pull mtchd/connect4:"${ENV}"
 
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
-echo ${ENCRYPTED_DB_PASS} | base64 -D > db.encrypted
+echo ${ENCRYPTED_DB_PASS} | base64 -D > encrypted/db.encrypted
 
 if [[ ${ENV} == "prod" ]];
 then
     ENCRYPTED_PROD_SLACK_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHZksn7tWDDaTqU+C4yQJUaAAAAljCBkwYJKoZIhvcNAQcGoIGFMIGCAgEAMH0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgKs/WZmBmioiYfXJAgEQgFDM5mt4xJAQ8sY/7TKfPOORp/t28xR2hVVbBv4rBXD7Qvo9tLNjElekaVsb+L/rMZ1xeTVGhZo7DPCuug4KnxSs64R8TkJhVoNlrA8N3HGXLw==
-    echo ${ENCRYPTED_PROD_SLACK_TOKEN} | base64 -D > prod.encrypted
+    echo ${ENCRYPTED_PROD_SLACK_TOKEN} | base64 -D > encrypted/prod.encrypted
 
 else
     ENCRYPTED_DEV_SLACK_RTM_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwFkp0pQCFWuoAIk74qz5bJ/AAAAmDCBlQYJKoZIhvcNAQcGoIGHMIGEAgEAMH8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3DNwIvmTsqS0Rx99AgEQgFIhfIGK75TtUQdjjNJEiPXvYZZvb4Y4R0hsNuJOgFYi0I8cRZefHDS8E9wtSJEq9KUpfaKCMpyaIeXUNlOBBBIWWYAMjnTDvjqMD5DWE5RyaqUY
-    echo ${ENCRYPTED_DEV_SLACK_RTM_TOKEN} | base64 -D > rtm-dev.encrypted
-    ENCRYPTED_DEV_SLACK_API_TOKEN=A
-    echo ${ENCRYPTED_DEV_SLACK_API_TOKEN} | base64 -D > api-dev.encrypted
+    echo ${ENCRYPTED_DEV_SLACK_RTM_TOKEN} | base64 -D > encrypted/dev-rtm.encrypted
+    ENCRYPTED_DEV_SLACK_API_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHIdZ3Gy9F9bFudZaic1VNgAAAArjCBqwYJKoZIhvcNAQcGoIGdMIGaAgEAMIGUBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDDhtlTmVUnyynMMOogIBEIBnOY5qm9IuJNr6uedsOcS1Tzf6PL/UuQfOf9mAfTyuTi4P855LO15vgyhzHglWtNTGEVPdG4vy++YE3HGi/q6beNmiqP8V1iX2zHUvWSobNY3T1CUYPG7ey9+z2Nr0qdsZo6ft/5wTpw==
+    echo ${ENCRYPTED_DEV_SLACK_API_TOKEN} | base64 -D > encrypted/dev-api.encrypted
 fi
 
+# TODO: This is getting out of hand, there has to be a way to decrypt many in one call
 echo "Decrypting slack api key..."
-SLACK_API_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://api-"${ENV}".encrypted --region ap-southeast-2 \
+SLACK_API_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://encrypted/"${ENV}"-api.encrypted --region ap-southeast-2 \
         --query Plaintext \
         --output text | base64 --decode)
 
 echo "Decrypting slack rtm key..."
-SLACK_RTM_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://rtm-"${ENV}".encrypted --region ap-southeast-2 \
+SLACK_RTM_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://encrypted/"${ENV}"-rtm.encrypted --region ap-southeast-2 \
         --query Plaintext \
         --output text | base64 --decode)
 
 echo "Decrypting database password..."
-DB_PASS=$(aws kms decrypt --ciphertext-blob fileb://db.encrypted --region ap-southeast-2 \
+DB_PASS=$(aws kms decrypt --ciphertext-blob fileb://encrypted/db.encrypted --region ap-southeast-2 \
         --query Plaintext \
         --output text | base64 --decode)
 
 echo "Starting connect 4..."
-docker run --rm -e SLACK_RTM_TOKEN="${SLACK_RTM_TOKEN}" -e DB_PASS="${DB_PASS}" mtchd/connect4:"${ENV}"
+docker run --rm -e SLACK_RTM_TOKEN="${SLACK_RTM_TOKEN}" -e DB_PASS="${DB_PASS}" -e SLACK_API_TOKEN="${SLACK_API_TOKEN}" mtchd/connect4:"${ENV}"
