@@ -32,7 +32,7 @@ object SlackWrapper {
     val slackApiClient = SlackApiClient(slackApiToken)
     val gameStore = RDSGameStore(dbPassword)
 
-    val que: Future[Map[String, String]] = slackApiClient.listEmojis()
+    val emojis: Future[Map[String, String]] = slackApiClient.listEmojis()
 
     // Hit slack api for the emoji list
     // Convert list to scala list
@@ -40,7 +40,7 @@ object SlackWrapper {
     // Create a function to validate an emoji, should return boolean saying if it's valid
     // Work this into the logic present in slackwrapper so you can return the reply / take the right actions
 
-    que.onComplete {
+    emojis.onComplete {
       case Failure(exception) => throw exception
       case Success(value) => println(value.keys)
     }
@@ -62,37 +62,20 @@ object SlackWrapper {
         case ScoreContext(command) => handleScoreContextCommand(command, messageContext, gameStore)
       }
 
-      val messageResponseProgram = for {
-        // Use information in message to *maybe* query database for relevant thread
-        thread <- IO(message.thread_ts.getOrElse(message.ts))
-
-        // ThreadId => IO[Option[GameInstance]]
-        maybeGameRow <- gameStore.get(thread)
-        maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
-
-        (newMaybeGameInstance, reply) = CommandInterpreter.interpret(message.text, message.user, maybeGameInstance)
-
-        _ <- reply.traverse_ { replyText =>
-          IO(rtmClient.sendMessage(message.channel, s"<@${message.user}>: $replyText", Some(thread)))
+      messageResponseProgram
+        .attempt
+        .flatMap {
+          // TODO: Inconsistent unit IOs
+          case Right(_) => IO.unit
+          case Left(e) => IO(e.printStackTrace())
         }
+        .unsafeRunSync()
 
-        _ <- putGameInstance(newMaybeGameInstance, gameStore, thread)
-
-        _ <- updateScoreStoreWithLoss(newMaybeGameInstance, gameStore)
-
-        _ <- updateScoreStoreWithWin(newMaybeGameInstance, gameStore)
-
-        scores <- getScores(newMaybeGameInstance, gameStore)
-
-        _ <- scores.traverse_ { score =>
-          IO(rtmClient.sendMessage(message.channel, s"$score", Some(thread)))
-        }
-
-      //access dynamodb
+      }
     }
-  }
+
   // TODO: Dear god loss input please
-  def handleGame(gameInstance: GameInstance, command: GameContextCommand, authorId: String, rtmClient: SlackRtmClient, message: Message, gameStore: RDSGameStore, thread: String): IO[Unit] = {
+  def handleGame(gameInstance: GameInstance, command: GameContextCommand, gameStore: RDSGameStore, sendMessage: SendMessage): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, sendMessage.message.user)
     val gamePutIo = putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
