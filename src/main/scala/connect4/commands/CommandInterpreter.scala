@@ -4,38 +4,18 @@ import connect4.Strings
 import connect4.game.GameInstance
 import connect4.gamestore.ScoreStoreRow
 
-sealed trait CommandPath
-case class NoContext(noContextCommand: NoContextCommand) extends CommandPath
-case class GameContext(gameContextCommand: GameContextCommand) extends CommandPath
-case class ScoreContext(scoreContextCommand: ScoreContextCommand) extends CommandPath
-case object NoReply extends CommandPath
-
-sealed trait NoContextCommand
-case object Help extends NoContextCommand
-
-sealed trait ScoreContextCommand
-case object PlayerScore extends ScoreContextCommand
-
-sealed trait GameContextCommand
-case class Challenge(opponentId: String, flags: String) extends GameContextCommand
-case class Accept(flags: String) extends GameContextCommand
-case class Drop(col: String) extends GameContextCommand
-case object Reject extends GameContextCommand
-case class Token(message: String) extends GameContextCommand
-case object Forfeit extends GameContextCommand
-
 object CommandInterpreter {
 
   def bigBadInterpret(message: String): CommandPath = {
     message match {
       case CommandsRegex.Help(_) => NoContext(Help)
       case CommandsRegex.Score(_) => ScoreContext(PlayerScore)
-      case CommandsRegex.Challenge(_, opponentId, flags) => GameContext(Challenge(opponentId, flags))
-      case CommandsRegex.Accept(_, flags) => GameContext(Accept(flags))
-      case CommandsRegex.Drop(col) => GameContext(Drop(col))
-      case CommandsRegex.Reject(_) => GameContext(Reject)
-      case CommandsRegex.Token(_) => GameContext(Token(message))
-      case CommandsRegex.Forfeit(_) => GameContext(Forfeit)
+      case CommandsRegex.Challenge(_, opponentId, flags) => GameAndScoreContext(Challenge(opponentId, flags))
+      case CommandsRegex.Accept(_, flags) => GameAndScoreContext(Accept(flags))
+      case CommandsRegex.Drop(col) => GameAndScoreContext(Drop(col))
+      case CommandsRegex.Reject(_) => GameAndScoreContext(Reject)
+      case CommandsRegex.Token(_) => GameAndScoreContext(Token(message))
+      case CommandsRegex.Forfeit(_) => GameAndScoreContext(Forfeit)
       case _ => NoReply
     }
   }

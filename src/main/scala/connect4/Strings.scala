@@ -79,6 +79,6 @@ object Strings {
 
   def atUser(userId: String, reply: String) = s"<@${userId}>: $reply"
 
-  def FailedAcceptOrReject(user: String) = s"Awaiting challenge acceptance from <@${user}"
+  def FailedAcceptOrReject(user: String) = s"Awaiting challenge acceptance from <@${user}>"
 
 }

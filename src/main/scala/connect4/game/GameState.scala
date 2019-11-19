@@ -4,8 +4,8 @@ import connect4.Strings
 
 object GameState {
 
-  val DefaultBoardCols = 6
-  val DefaultBoardRows = 7
+  val DefaultBoardCols = 7
+  val DefaultBoardRows = 6
 
   // Constants for going directions in replaceCells.
   val UpperRight: (Int, Int) = (-1, 1)

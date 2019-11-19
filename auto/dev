@@ -2,6 +2,9 @@
 set -euo pipefail
 
 ENV=${1:-dev}
+#BUILD = ${1:-build}
+#
+#if [[ ${BUILD}]]
 
 docker pull mtchd/connect4:"${ENV}"
 
