@@ -18,6 +18,8 @@ object Strings {
   val ChallengerToken = ":red_circle:"
   // Default token for a defender
   val DefenderToken = ":large_blue_circle:"
+
+  val FailedToken = ":poop:"
   // Turns winning 4 tokens into these
   val WinningToken = ":medal:"
   // Markers for board columns

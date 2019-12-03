@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ENV=dev
+export BUILD=true
 
 sbt assembly
 

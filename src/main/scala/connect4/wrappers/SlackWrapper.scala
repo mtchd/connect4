@@ -22,6 +22,16 @@ object SlackWrapper {
    */
   def startListening(slackRtmToken: String, dbPassword: String, slackApiToken: String)(implicit cs: ContextShift[IO]): Unit = {
 
+    // TODO: Should we put the unsafeRunSyncs in the one for loop? How does threading work if we do that?
+    val emojis: Vector[Emoji] = EmojiHandler.load(slackApiToken)
+      .attempt
+      .flatMap {
+        case Right(emojis) => IO(emojis)
+        // TODO: Worth stopping the program?
+        case Left(e) => throw e
+      }
+      .unsafeRunSync()
+
     val rtmClient: SlackRtmClient = SlackRtmClient(slackRtmToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
     val gameStore = RDSGameStore(dbPassword)
 
@@ -38,7 +48,7 @@ object SlackWrapper {
       val messageResponseProgram: IO[Any] = CommandInterpreter.bigBadInterpret(message.text) match {
         case NoReply => IO(Unit)
         case NoContext(command) => handleNoContextCommand(command, messageContext)
-        case GameAndScoreContext(command) => handleGameAndScoreContextCommand(command, messageContext, gameStore)
+        case GameAndScoreContext(command) => handleGameAndScoreContextCommand(command, messageContext, gameStore, emojis)
         case ScoreContext(command) => handleScoreContextCommand(command, messageContext, gameStore)
       }
 

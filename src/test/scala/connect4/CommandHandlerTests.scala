@@ -1,19 +1,23 @@
 package connect4
 
-import connect4.commands.CommandHandler
+import connect4.commands.{CommandHandler, CommandsRegex}
 import connect4.game.{Challenger, GameInstance, GameState, PlayerPair, Playing}
+import connect4.wrappers.Emoji
 import org.scalatest.FunSuite
 
 class CommandHandlerTests extends FunSuite {
 
-  val challengerId = "007"
-  val defenderId = "666"
+  test("changeToken") {
 
-  test("CommandHandler.challenge") {
+//    val (gameInstance, reply) = CommandHandler.changeToken(
+//      GameInstance.newChallenge(),
+//      "token :simple_smile:",
+//      "1",
+//      Vector(Emoji(":simple_smile:")))
+//
+//    assert(reply == "<@1> You changed your token to :simple_smile:")
 
-    val (_, reply) = CommandHandler.challenge( defenderId, challengerId, "")
 
-    assert(reply == s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}")
 
   }
 

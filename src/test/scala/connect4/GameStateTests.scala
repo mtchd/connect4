@@ -10,31 +10,6 @@ class GameStateTests extends FunSuite {
     GameState.newStateWithFourCells(Challenger)
   }
 
-  test("connect4.game.GameState.maybeWinningBoard") {
-
-    // TODO: Finish getting rid of these magic numbers
-    // TODO: This only checks if it detects a win, not if it replaces the tokens with winning tokens properly.
-    // Horizontal
-    assert(GameState.maybeWinningBoardTest(0,0, GameState.Horizontal).isDefined)
-    // Vertical
-    assert(GameState.maybeWinningBoardTest(0,0, GameState.Vertical).isDefined)
-    // Vertical again, all on left side
-    assert(GameState.maybeWinningBoardTest(3,0, GameState.Vertical).isDefined)
-    // Down and to right diagonal, from top left corner
-    assert(GameState.maybeWinningBoardTest(0,0,(1,1)).isDefined)
-    // Down and to right diagonal, from middlish
-    assert(GameState.maybeWinningBoardTest(2,2,(1,1)).isDefined)
-    // Down adn to right diagonal, from middlish, different last move
-    assert(GameState.maybeWinningBoardTest(2,2,(1,1), new Move(3, 3)).isDefined)
-    // Up and to right diagonal
-    assert(GameState.maybeWinningBoardTest(3,0,(-1,1)).isDefined)
-    // Up and to right diagonal, last move is at top
-    assert(GameState.maybeWinningBoardTest(6,0,(-1,1), new Move(3, 3)).isDefined)
-    // Should not be a winning game (Because the move is placed wrong, although there is actually 4 in a row)
-    assert(GameState.maybeWinningBoardTest(0,0, GameState.Horizontal, new Move(6,5)).isEmpty)
-
-  }
-
   test("connect4.game.GameState.getDiagonal") {
     val gameState = GameState.newDefaultBoard()
 

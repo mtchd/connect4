@@ -2,26 +2,32 @@ package connect4.commands
 
 import connect4.{game, _}
 import connect4.game.{CellContents, Challenged, GameInstance, GameState, Playing}
+import connect4.wrappers.Emoji
 
 object CommandHandler {
 
-  def challenge(defenderId: String, challengerId: String, emoji: String): (GameInstance, String) = {
+  def challenge(defenderId: String, challengerId: String, emoji: String, emojis: Vector[Emoji]): (GameInstance, String) = {
 
     val challengerToken = CommandsRegex.extractEmoji(emoji, Strings.ChallengerToken)
-    val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, challengerToken)
+
+    // If emoji is invalid, we continue with default emoji
+    val validatedToken = validateEmoji(emojis, challengerToken, Strings.ChallengerToken)
+
+    val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, validatedToken)
     val reply           = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
     (newGameInstance, reply)
 
   }
 
-  def accept(gameInstance: GameInstance, accepterId: String, emoji: String): (GameInstance, String) = {
+  def accept(gameInstance: GameInstance, accepterId: String, emoji: String, emojis: Vector[Emoji]): (GameInstance, String) = {
 
     val defenderToken = CommandsRegex.extractEmoji(emoji, Strings.DefenderToken)
+    val validatedToken = validateEmoji(emojis, defenderToken, Strings.ChallengerToken)
 
     gameInstance match {
       case instance @ Challenged(playerPair) if playerPair.defender.id == accepterId => {
-        val playing: GameInstance = instance.startPlayingWithDefenderToken(defenderToken)
+        val playing: GameInstance = instance.startPlayingWithDefenderToken(validatedToken)
         val reply = Strings.InGameCommands + "\n" + playing.boardAsString
         (playing, reply)
       }
@@ -66,13 +72,14 @@ object CommandHandler {
 
   }
 
-  def changeToken(gameInstance: GameInstance, message: String, playerId: String): (GameInstance, String) = {
+  def changeToken(gameInstance: GameInstance, message: String, playerId: String, emojis: Vector[Emoji]): (GameInstance, String) = {
 
-    val token = CommandsRegex.extractEmoji(message, ":poop:")
+    val token = CommandsRegex.extractEmoji(message, Strings.FailedToken)
+    val validatedToken = validateEmoji(emojis, token, Strings.FailedToken)
     val maybeRole = gameInstance.playerRole(playerId)
 
     maybeRole match {
-      case Some(role) => (gameInstance.changeToken(role, token), Strings.tokenChange(token))
+      case Some(role) => (gameInstance.changeToken(role, validatedToken), Strings.tokenChange(validatedToken))
       case None => (gameInstance, Strings.NotInGame)
     }
 
@@ -132,5 +139,12 @@ object CommandHandler {
 
   }
 
+  def validateEmoji(emojis: Vector[Emoji], emoji: String, default: String): String = {
+
+    // Strip out the :
+    val strippedEmoji = emoji.replaceAll(":","")
+
+    if (emojis.contains(Emoji(strippedEmoji))) emoji else default
+  }
 
 }
