@@ -45,15 +45,4 @@ object CommandsRegex {
     s"(?i)($command)".r
   }
 
-  // This was added as emoji's can be made of two emoji's, which present as one, e.g :ok-hand::skin-tone-4:
-  def extractEmoji(input: String, default: String): String = {
-
-
-
-    input match {
-      case Emoji(_*) => CommandsRegex.Emoji2.findAllIn(input).toVector.take(2).mkString
-      case _ => default
-    }
-  }
-
 }

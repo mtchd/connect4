@@ -15,9 +15,9 @@ object Strings {
   // Token for empty space on the board.
   val EmptySpace = ":white_circle:"
   // Default token for a challenger
-  val ChallengerToken = ":red_circle:"
+  val DefaultChallengerToken = ":red_circle:"
   // Default token for a defender
-  val DefenderToken = ":large_blue_circle:"
+  val DefaultDefenderToken = ":large_blue_circle:"
 
   val FailedToken = ":poop:"
   // Turns winning 4 tokens into these

@@ -15,9 +15,9 @@ object Player {
   def newDefaultPlayer(id: String, role: CellContents): Player = {
 
     if (role == Defender) {
-      Player(id, Strings.DefenderToken)
+      Player(id, Strings.DefaultDefenderToken)
     } else {
-      Player(id, Strings.ChallengerToken)
+      Player(id, Strings.DefaultChallengerToken)
     }
 
   }

@@ -2,16 +2,14 @@ package connect4.commands
 
 import connect4.{game, _}
 import connect4.game.{CellContents, Challenged, GameInstance, GameState, Playing}
-import connect4.wrappers.Emoji
+import connect4.wrappers.{Emoji, EmojiHandler}
 
 object CommandHandler {
 
   def challenge(defenderId: String, challengerId: String, emoji: String, emojis: Vector[Emoji]): (GameInstance, String) = {
 
-    val challengerToken = CommandsRegex.extractEmoji(emoji, Strings.ChallengerToken)
-
     // If emoji is invalid, we continue with default emoji
-    val validatedToken = validateEmoji(emojis, challengerToken, Strings.ChallengerToken)
+    val validatedToken = EmojiHandler.validateAndExtractEmoji(emojis, emoji, Strings.DefaultChallengerToken)
 
     val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, validatedToken)
     val reply           = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
@@ -22,8 +20,7 @@ object CommandHandler {
 
   def accept(gameInstance: GameInstance, accepterId: String, emoji: String, emojis: Vector[Emoji]): (GameInstance, String) = {
 
-    val defenderToken = CommandsRegex.extractEmoji(emoji, Strings.DefenderToken)
-    val validatedToken = validateEmoji(emojis, defenderToken, Strings.ChallengerToken)
+    val validatedToken = EmojiHandler.validateAndExtractEmoji(emojis, emoji, Strings.DefaultDefenderToken)
 
     gameInstance match {
       case instance @ Challenged(playerPair) if playerPair.defender.id == accepterId => {
@@ -74,8 +71,7 @@ object CommandHandler {
 
   def changeToken(gameInstance: GameInstance, message: String, playerId: String, emojis: Vector[Emoji]): (GameInstance, String) = {
 
-    val token = CommandsRegex.extractEmoji(message, Strings.FailedToken)
-    val validatedToken = validateEmoji(emojis, token, Strings.FailedToken)
+    val validatedToken = EmojiHandler.validateAndExtractEmoji(emojis, message, Strings.FailedToken)
     val maybeRole = gameInstance.playerRole(playerId)
 
     maybeRole match {
@@ -137,14 +133,6 @@ object CommandHandler {
 
     (newState, Strings.dropSuccess(col))
 
-  }
-
-  def validateEmoji(emojis: Vector[Emoji], emoji: String, default: String): String = {
-
-    // Strip out the :
-    val strippedEmoji = emoji.replaceAll(":","")
-
-    if (emojis.contains(Emoji(strippedEmoji))) emoji else default
   }
 
 }
