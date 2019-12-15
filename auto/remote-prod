@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+#TODO: Merge remote-prod and remote
 ENV=${1:-prod}
 
 # Set Up

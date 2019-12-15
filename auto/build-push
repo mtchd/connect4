@@ -1,6 +1,7 @@
 #! /bin/bash
 set -euo pipefail
 
+# TODO: Make this insist you enter dev or prod
 ENV=${1:-dev}
 
 sbt assembly

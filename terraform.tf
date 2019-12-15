@@ -11,10 +11,6 @@ terraform {
   }
 }
 
-variable "sshkey" {
-  default = ""
-}
-
 variable "dbPassword" {
   type = string
 }
@@ -61,7 +57,7 @@ resource "aws_db_instance" "connect4" {
   storage_type         = "gp2"
   engine               = "postgres"
   engine_version       = "11.5"
-  instance_class       = "db.t3.micro"
+  instance_class       = "db.t2.micro"
   name                 = "connect4"
   username             = "connect4"
   password             = var.dbPassword

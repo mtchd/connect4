@@ -8,5 +8,4 @@ sbt assembly
 
 docker build -t mtchd/connect4:${ENV} .
 
-# TODO: Set a variable to handle the docker pull
 source auto/dev

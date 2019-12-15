@@ -6,10 +6,10 @@ import connect4.wrappers.{Emoji, EmojiHandler}
 
 object CommandHandler {
 
-  def challenge(defenderId: String, challengerId: String, emoji: String, emojis: Vector[Emoji]): (GameInstance, String) = {
+  def challenge(defenderId: String, challengerId: String, emoji: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
 
     // If emoji is invalid, we continue with default emoji
-    val validatedToken = EmojiHandler.validateAndExtractEmoji(emojis, emoji, Strings.DefaultChallengerToken)
+    val validatedToken = emojiHandler.validateAndExtractEmoji(emoji, Strings.DefaultChallengerToken)
 
     val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, validatedToken)
     val reply           = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
@@ -18,9 +18,9 @@ object CommandHandler {
 
   }
 
-  def accept(gameInstance: GameInstance, accepterId: String, emoji: String, emojis: Vector[Emoji]): (GameInstance, String) = {
+  def accept(gameInstance: GameInstance, accepterId: String, emoji: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
 
-    val validatedToken = EmojiHandler.validateAndExtractEmoji(emojis, emoji, Strings.DefaultDefenderToken)
+    val validatedToken = emojiHandler.validateAndExtractEmoji(emoji, Strings.DefaultDefenderToken)
 
     gameInstance match {
       case instance @ Challenged(playerPair) if playerPair.defender.id == accepterId => {
@@ -69,9 +69,9 @@ object CommandHandler {
 
   }
 
-  def changeToken(gameInstance: GameInstance, message: String, playerId: String, emojis: Vector[Emoji]): (GameInstance, String) = {
+  def changeToken(gameInstance: GameInstance, message: String, playerId: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
 
-    val validatedToken = EmojiHandler.validateAndExtractEmoji(emojis, message, Strings.FailedToken)
+    val validatedToken = emojiHandler.validateAndExtractEmoji(message, Strings.FailedToken)
     val maybeRole = gameInstance.playerRole(playerId)
 
     maybeRole match {

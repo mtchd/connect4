@@ -1,42 +1,49 @@
 #! /bin/bash
 set -euo pipefail
 
-ENV=${1:-dev}
+function decrypt {
+  aws kms decrypt --ciphertext-blob fileb://<(echo "${1}" | base64 --decode) \
+        --region ap-southeast-2 \
+        --query Plaintext \
+        --output text | base64 --decode
+}
 
-if [[ -z ${BUILD+x} ]]; then
+PREM=${1:-remote}
+
+if [[ ${PREM} == "remote" ]]
+then
+  TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id)
+  TAGS=$(aws ec2 describe-tags --filters "Name=resource-id,Values=${INSTANCE_ID}")
+  # Parse the json for the dev/prod tag
+fi
+
+ENV=${2:-dev}
+
+if [[ -z ${BUILD+x} ]]
+then
   docker pull mtchd/connect4:"${ENV}"
 fi
 
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
-echo ${ENCRYPTED_DB_PASS} | base64 -D > encrypted/db.encrypted
 
-if [[ ${ENV} == "prod" ]];
+if [[ ${ENV} == "prod" ]]
 then
-    ENCRYPTED_PROD_SLACK_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHZksn7tWDDaTqU+C4yQJUaAAAAljCBkwYJKoZIhvcNAQcGoIGFMIGCAgEAMH0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgKs/WZmBmioiYfXJAgEQgFDM5mt4xJAQ8sY/7TKfPOORp/t28xR2hVVbBv4rBXD7Qvo9tLNjElekaVsb+L/rMZ1xeTVGhZo7DPCuug4KnxSs64R8TkJhVoNlrA8N3HGXLw==
-    echo ${ENCRYPTED_PROD_SLACK_TOKEN} | base64 -D > encrypted/prod.encrypted
-
+    ENCRYPTED_SLACK_RTM_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHZksn7tWDDaTqU+C4yQJUaAAAAljCBkwYJKoZIhvcNAQcGoIGFMIGCAgEAMH0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgKs/WZmBmioiYfXJAgEQgFDM5mt4xJAQ8sY/7TKfPOORp/t28xR2hVVbBv4rBXD7Qvo9tLNjElekaVsb+L/rMZ1xeTVGhZo7DPCuug4KnxSs64R8TkJhVoNlrA8N3HGXLw==
+    ENCRYPTED_SLACK_API_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwG6MIUhzOu4X+Nz1zPZkgQZAAAArDCBqQYJKoZIhvcNAQcGoIGbMIGYAgEAMIGSBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDKQgfBRw74rIY6DzRgIBEIBlxSHSuWlaDva8shuzTskz/46caNmI2WzofDSzNxS/U0nI0fmFO/P+P1NxBNElmfKLPgVU3ir7FwkkbeffB4L9oGEGelReyebeyrv0pChi0dO/GAUOHWYD4D4zHjuYI8YBi/CIIEM=
 else
-    ENCRYPTED_DEV_SLACK_RTM_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwFkp0pQCFWuoAIk74qz5bJ/AAAAmDCBlQYJKoZIhvcNAQcGoIGHMIGEAgEAMH8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3DNwIvmTsqS0Rx99AgEQgFIhfIGK75TtUQdjjNJEiPXvYZZvb4Y4R0hsNuJOgFYi0I8cRZefHDS8E9wtSJEq9KUpfaKCMpyaIeXUNlOBBBIWWYAMjnTDvjqMD5DWE5RyaqUY
-    echo ${ENCRYPTED_DEV_SLACK_RTM_TOKEN} | base64 -D > encrypted/dev-rtm.encrypted
-    ENCRYPTED_DEV_SLACK_API_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHIdZ3Gy9F9bFudZaic1VNgAAAArjCBqwYJKoZIhvcNAQcGoIGdMIGaAgEAMIGUBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDDhtlTmVUnyynMMOogIBEIBnOY5qm9IuJNr6uedsOcS1Tzf6PL/UuQfOf9mAfTyuTi4P855LO15vgyhzHglWtNTGEVPdG4vy++YE3HGi/q6beNmiqP8V1iX2zHUvWSobNY3T1CUYPG7ey9+z2Nr0qdsZo6ft/5wTpw==
-    echo ${ENCRYPTED_DEV_SLACK_API_TOKEN} | base64 -D > encrypted/dev-api.encrypted
+    ENCRYPTED_SLACK_RTM_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwFkp0pQCFWuoAIk74qz5bJ/AAAAmDCBlQYJKoZIhvcNAQcGoIGHMIGEAgEAMH8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3DNwIvmTsqS0Rx99AgEQgFIhfIGK75TtUQdjjNJEiPXvYZZvb4Y4R0hsNuJOgFYi0I8cRZefHDS8E9wtSJEq9KUpfaKCMpyaIeXUNlOBBBIWWYAMjnTDvjqMD5DWE5RyaqUY
+    ENCRYPTED_SLACK_API_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHIdZ3Gy9F9bFudZaic1VNgAAAArjCBqwYJKoZIhvcNAQcGoIGdMIGaAgEAMIGUBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDDhtlTmVUnyynMMOogIBEIBnOY5qm9IuJNr6uedsOcS1Tzf6PL/UuQfOf9mAfTyuTi4P855LO15vgyhzHglWtNTGEVPdG4vy++YE3HGi/q6beNmiqP8V1iX2zHUvWSobNY3T1CUYPG7ey9+z2Nr0qdsZo6ft/5wTpw==
 fi
 
-# TODO: This is getting out of hand, there has to be a way to decrypt many in one call
 echo "Decrypting slack api key..."
-SLACK_API_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://encrypted/"${ENV}"-api.encrypted --region ap-southeast-2 \
-        --query Plaintext \
-        --output text | base64 --decode)
+SLACK_API_TOKEN=$(decrypt "${ENCRYPTED_SLACK_API_TOKEN}")
 
 echo "Decrypting slack rtm key..."
-SLACK_RTM_TOKEN=$(aws kms decrypt --ciphertext-blob fileb://encrypted/"${ENV}"-rtm.encrypted --region ap-southeast-2 \
-        --query Plaintext \
-        --output text | base64 --decode)
+SLACK_RTM_TOKEN=$(decrypt "${ENCRYPTED_SLACK_RTM_TOKEN}")
 
 echo "Decrypting database password..."
-DB_PASS=$(aws kms decrypt --ciphertext-blob fileb://encrypted/db.encrypted --region ap-southeast-2 \
-        --query Plaintext \
-        --output text | base64 --decode)
+DB_PASS=$(decrypt "${ENCRYPTED_DB_PASS}")
 
 echo "Starting connect 4..."
-docker run --rm -e SLACK_RTM_TOKEN="${SLACK_RTM_TOKEN}" -e DB_PASS="${DB_PASS}" -e SLACK_API_TOKEN="${SLACK_API_TOKEN}" mtchd/connect4:"${ENV}"
+docker run --rm -e SLACK_RTM_TOKEN="${SLACK_RTM_TOKEN}" -e DB_PASS="${DB_PASS}" -e SLACK_API_TOKEN="$SLACK_API_TOKEN" mtchd/connect4:"${ENV}"

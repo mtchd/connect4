@@ -15,9 +15,9 @@ case class SendMessage(rtmClient: SlackRtmClient, message: Message, thread: Stri
 // TODO: Rewrite as a case class, store clients / gamestore
 object SlackIoHandler {
 
-  def handleGame(gameInstance: GameInstance, command: GameContextCommand, gameStore: RDSGameStore, sendMessage: SendMessage, emojis: Vector[Emoji]): IO[Unit] = {
+  def handleGame(gameInstance: GameInstance, command: GameContextCommand, gameStore: RDSGameStore, sendMessage: SendMessage, emojiHandler: EmojiHandler): IO[Unit] = {
 
-    val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, sendMessage.message.user, emojis)
+    val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, sendMessage.message.user, emojiHandler)
     val gamePutIo = putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
     newGameInstance match {
       case Finished(rankType) => rankType match {
@@ -29,9 +29,9 @@ object SlackIoHandler {
 
   }
 
-  def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage, emojis: Vector[Emoji]): IO[Unit] = {
+  def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage, emojiHandler: EmojiHandler): IO[Unit] = {
 
-    val (newGameInstance, reply) = CommandHandler.challenge(defenderId, sendMessage.message.user, flags, emojis)
+    val (newGameInstance, reply) = CommandHandler.challenge(defenderId, sendMessage.message.user, flags, emojiHandler)
     putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
 
   }
@@ -81,15 +81,15 @@ object SlackIoHandler {
   }
 
   // TODO: This could be less nested and coupled
-  def handleGameAndScoreContextCommand(command: GameContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore, emojis: Vector[Emoji]): IO[Unit] = {
+  def handleGameAndScoreContextCommand(command: GameContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore, emojiHandler: EmojiHandler): IO[Unit] = {
     for {
       maybeGameRow <- gameStore.get(sendMessage.thread)
       maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
 
       _ <- maybeGameInstance match {
-        case Some(gameInstance) => handleGame(gameInstance, command, gameStore, sendMessage, emojis)
+        case Some(gameInstance) => handleGame(gameInstance, command, gameStore, sendMessage, emojiHandler)
         case None => command match {
-          case Challenge(opponentId, flags) => handleChallenge(opponentId, flags, gameStore, sendMessage, emojis)
+          case Challenge(opponentId, flags) => handleChallenge(opponentId, flags, gameStore, sendMessage, emojiHandler)
           case _ => reply(sendMessage, Strings.NotInGame)
         }
       }
