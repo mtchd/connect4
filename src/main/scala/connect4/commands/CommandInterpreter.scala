@@ -11,7 +11,7 @@ object CommandInterpreter {
     message match {
       case CommandsRegex.Help(_) => NoContext(Help)
       case CommandsRegex.Score(_) => ScoreContext(PlayerScore)
-      case CommandsRegex.Challenge(_, opponentId, flags) => GameAndScoreContext(Challenge(opponentId, flags))
+      case CommandsRegex.Challenge(_, opponentId, emoji) => GameAndScoreContext(Challenge(opponentId, emoji))
       case CommandsRegex.Accept(_, flags) => GameAndScoreContext(Accept(flags))
       case CommandsRegex.Drop(col) => GameAndScoreContext(Drop(col))
       case CommandsRegex.Reject(_) => GameAndScoreContext(Reject)
@@ -38,7 +38,7 @@ object CommandInterpreter {
     gameContextCommand match {
         // TODO: Note this makes us do a redundant update to database
       case Challenge(_, _) => (gameInstance, Strings.AlreadyGame)
-      case Accept(flags) => CommandHandler.accept(gameInstance, authorId, flags, emojiHandler)
+      case Accept(emoji) => CommandHandler.accept(gameInstance, authorId, emoji, emojiHandler)
       case Drop(col) => CommandHandler.drop(col, gameInstance, authorId)
       case Reject => CommandHandler.reject(gameInstance, authorId)
       case Token(message) => CommandHandler.changeToken(gameInstance, message, authorId, emojiHandler)

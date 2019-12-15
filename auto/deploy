@@ -8,26 +8,39 @@ function decrypt {
         --output text | base64 --decode
 }
 
+# TODO: Should remind the user to say local or anything else if running locally
 PREM=${1:-remote}
+ENV=${2:-dev}
 
 if [[ ${PREM} == "remote" ]]
 then
+
+  # Set Up
+  yum update -y
+  yum install docker -y
+  yum install jq -y
+  usermod -a -G docker ec2-user
+  service docker start
+
+  # Find out if we're dev or prod, seeing as terraform can't pass arguments to user data
   TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
   INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id)
-  TAGS=$(aws ec2 describe-tags --filters "Name=resource-id,Values=${INSTANCE_ID}")
-  # Parse the json for the dev/prod tag
+  TAGS=$(aws ec2 describe-tags --filters "Name=resource-id,Values=${INSTANCE_ID}" --region ap-southeast-2)
+  ENV=$(jq -r '.Tags[0].Value' <<< "$TAGS")
 fi
-
-ENV=${2:-dev}
 
 if [[ -z ${BUILD+x} ]]
 then
   docker pull mtchd/connect4:"${ENV}"
 fi
 
+echo "After docker pull"
+
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
 
-if [[ ${ENV} == "prod" ]]
+echo "Before prod check"
+
+if [[ "${ENV}" == "prod" ]]
 then
     ENCRYPTED_SLACK_RTM_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHZksn7tWDDaTqU+C4yQJUaAAAAljCBkwYJKoZIhvcNAQcGoIGFMIGCAgEAMH0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgKs/WZmBmioiYfXJAgEQgFDM5mt4xJAQ8sY/7TKfPOORp/t28xR2hVVbBv4rBXD7Qvo9tLNjElekaVsb+L/rMZ1xeTVGhZo7DPCuug4KnxSs64R8TkJhVoNlrA8N3HGXLw==
     ENCRYPTED_SLACK_API_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwG6MIUhzOu4X+Nz1zPZkgQZAAAArDCBqQYJKoZIhvcNAQcGoIGbMIGYAgEAMIGSBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDKQgfBRw74rIY6DzRgIBEIBlxSHSuWlaDva8shuzTskz/46caNmI2WzofDSzNxS/U0nI0fmFO/P+P1NxBNElmfKLPgVU3ir7FwkkbeffB4L9oGEGelReyebeyrv0pChi0dO/GAUOHWYD4D4zHjuYI8YBi/CIIEM=
@@ -47,3 +60,9 @@ DB_PASS=$(decrypt "${ENCRYPTED_DB_PASS}")
 
 echo "Starting connect 4..."
 docker run --rm -e SLACK_RTM_TOKEN="${SLACK_RTM_TOKEN}" -e DB_PASS="${DB_PASS}" -e SLACK_API_TOKEN="$SLACK_API_TOKEN" mtchd/connect4:"${ENV}"
+
+# Auto shutdown the dev environment after 1 hour to save costs
+if [[ "${ENV}" == "dev" && "${PREM}" == "remote" ]]; then
+    sleep 1h
+    shutdown
+fi

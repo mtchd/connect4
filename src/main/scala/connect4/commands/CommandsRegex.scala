@@ -9,6 +9,7 @@ import scala.util.parsing.combinator._
 object CommandsRegex {
   // Regex for challenging and accepting/rejecting a game
   val Challenge: Regex = atUserRegex("challenge")
+  // TODO: We can make this a single blob, which lets users put their token beforehand
   val Accept: Regex = "(?i)(.*accept)(.*)".r
   val Reject: Regex = simpleRegex("reject")
   // Available commands for running game

@@ -22,10 +22,10 @@ resource "aws_instance" "connect4" {
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   subnet_id = "subnet-b5b7a5d2"
   iam_instance_profile = "Connect4"
-  user_data = file("auto/remote-prod")
+  user_data = file("auto/deploy")
 
   tags = {
-    Name = "connect4"
+    Name = "prod"
   }
 
   lifecycle  {
@@ -41,10 +41,10 @@ resource "aws_instance" "connect4dev" {
   vpc_security_group_ids = ["sg-013088ddfb67a3198"]
   subnet_id = "subnet-b5b7a5d2"
   iam_instance_profile = "Connect4"
-  user_data = file("auto/remote")
+  user_data = file("auto/deploy")
 
   tags = {
-    Name = "connect4dev"
+    Name = "dev"
   }
 
   lifecycle  {

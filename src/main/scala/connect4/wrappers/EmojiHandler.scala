@@ -63,10 +63,11 @@ object EmojiHandler {
     // Loop through, just do it mutable cuz I don't know better
     var (invariant, skinnable, skin) = (Set.empty[Emoji], Set.empty[Emoji], Set.empty[Emoji])
     rawEmojis.foreach {
-      // Should crash if we find anything else
       case RawEmoji(short_name, true, false) => skinnable = skinnable + Emoji(short_name)
       case RawEmoji(short_name, false, true) => skin = skin + Emoji(short_name)
       case RawEmoji(short_name, false, false) => invariant = invariant + Emoji(short_name)
+      // TODO: Make this a real warning
+      case RawEmoji(_, true, true) => println("WARNING: Emoji that is both skin and skinnable found.")
     }
     (invariant, skinnable, skin)
   }
