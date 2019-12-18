@@ -106,6 +106,7 @@ object GameStoreRow {
 
   }
 
+  // TODO: We shouldn't need to do this if we have an encoder for Cell...maybe
   def convertToStringBoard(board: Vector[Vector[Cell]]): Vector[Vector[String]] = {
     board.map{ row =>
       row.map { cell =>
