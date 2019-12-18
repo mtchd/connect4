@@ -28,7 +28,8 @@ object SlackWrapper {
       .flatMap {
         case Right(emojis) => IO(emojis)
         // TODO: Worth stopping the program?
-        case Left(e) => throw e
+        // TODO: Should it be throw e?
+        case Left(e) => IO.raiseError(e)
       }
       .unsafeRunSync()
 
