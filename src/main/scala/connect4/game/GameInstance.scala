@@ -12,7 +12,7 @@ sealed trait GameInstance {
   }
 
   // Returns role of player, if they are in our pair
-  def playerRole(playerId: String): Option[CellContents] = this match {
+  def playerRole(playerId: String): Option[PlayerRole] = this match {
     case Challenged(playerPair) => playerPair.roleFromPair(playerId)
     case Playing(_, playerPair) => playerPair.roleFromPair(playerId)
     case _ => None
@@ -42,7 +42,7 @@ case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
 }
 
 case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance {
-  def finishGame(winnerRole: CellContents): Finished = Finished.finishRanked(instancePlayerPair, winnerRole)
+  def finishGame(winnerRole: PlayerRole): Finished = Finished.finishRanked(instancePlayerPair, winnerRole)
 }
 
 // TODO: This is completely different from challenged and playing and needs to be separated, either by a higher level
@@ -55,7 +55,7 @@ case class Ranked(winnerId: String, loserId: String) extends RankType
 case object UnRanked extends RankType
 
 object Finished {
-  def finishRanked(playerPair: PlayerPair, winnerRole: CellContents): Finished = {
+  def finishRanked(playerPair: PlayerPair, winnerRole: PlayerRole): Finished = {
     val (winner, loser) = playerPair.winnerAndLoserIds(winnerRole)
     Finished(Ranked(winner, loser))
   }

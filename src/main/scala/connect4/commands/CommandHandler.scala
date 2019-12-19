@@ -1,7 +1,7 @@
 package connect4.commands
 
 import connect4.{game, _}
-import connect4.game.{CellContents, Challenged, Defender, GameInstance, GameState, Playing}
+import connect4.game.{CellContents, Challenged, Defender, GameInstance, GameState, PlayerRole, Playing}
 import connect4.wrappers.{Emoji, EmojiHandler}
 
 object CommandHandler {
@@ -18,7 +18,7 @@ object CommandHandler {
 
   }
 
-  def accept(gameInstance: GameInstance, accepterRole: CellContents, emoji: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
+  def accept(gameInstance: GameInstance, accepterRole: PlayerRole, emoji: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
 
     val validatedToken = emojiHandler.validateAndExtractEmoji(emoji, Strings.DefaultDefenderToken)
 
@@ -33,13 +33,13 @@ object CommandHandler {
 
   }
 
-  def drop(col: String, gameInstance: GameInstance, playerRole: CellContents): (GameInstance, String) =
+  def drop(col: String, gameInstance: GameInstance, playerRole: PlayerRole): (GameInstance, String) =
     gameInstance match {
       case playing @ Playing(_,_) => playIf(col.toInt, playing, playerRole)
       case _ => (gameInstance, Strings.FailedDrop)
     }
 
-  def forfeit(gameInstance: GameInstance, playerRole: CellContents): (GameInstance, String) =
+  def forfeit(gameInstance: GameInstance, playerRole: PlayerRole): (GameInstance, String) =
     gameInstance match {
       case playing @ Playing(_, _) => (playing.finishGame(playerRole.opposite), Strings.Forfeit)
         // TODO: Give the user more information about why the command failed
@@ -47,14 +47,14 @@ object CommandHandler {
     }
 
 
-  def reject(gameInstance: GameInstance, playerRole: CellContents): (GameInstance, String) =
+  def reject(gameInstance: GameInstance, playerRole: PlayerRole): (GameInstance, String) =
     gameInstance match {
       case challenged @ Challenged(_) if playerRole == Defender => (challenged.finishGame, Strings.Reject)
         // TODO: Say who's defending here
       case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
 
-  def changeToken(gameInstance: GameInstance, message: String, playerRole: CellContents, emojiHandler: EmojiHandler): (GameInstance, String) = {
+  def changeToken(gameInstance: GameInstance, message: String, playerRole: PlayerRole, emojiHandler: EmojiHandler): (GameInstance, String) = {
     val validatedToken = emojiHandler.validateAndExtractEmoji(message, Strings.FailedToken)
     (gameInstance.changeToken(playerRole, validatedToken), Strings.tokenChange(validatedToken))
   }
@@ -64,7 +64,7 @@ object CommandHandler {
   // TODO: Better name for function
   // Plays a turn if the play meets all the rules
   // TODO: Could bring out the gameInstance part and have only gameState in here
-  private def playIf(col: Int, playing: Playing, playerRole: CellContents): (GameInstance, String) = {
+  private def playIf(col: Int, playing: Playing, playerRole: PlayerRole): (GameInstance, String) = {
 
     // Check it's this players turn
     // TODO: Don't do unit here
@@ -84,7 +84,7 @@ object CommandHandler {
 
   }
 
-  def play(col: Int, gameState: GameState, playerRole: CellContents): (GameState, String) = {
+  def play(col: Int, gameState: GameState, playerRole: PlayerRole): (GameState, String) = {
 
     // Check col is valid
     if (col < 0 || col > gameState.nBoardCols - 1) {

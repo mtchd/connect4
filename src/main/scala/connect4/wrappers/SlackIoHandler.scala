@@ -3,19 +3,18 @@ package connect4.wrappers
 import cats.effect.IO
 import connect4.Strings
 import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContextCommand, NoContextCommand, ScoreContextCommand}
-import connect4.game.{CellContents, Finished, GameInstance, Ranked, UnRanked}
+import connect4.game.{CellContents, Finished, GameInstance, PlayerRole, Ranked, UnRanked}
 import connect4.gamestore.RDSGameStore
 import slack.models.Message
 import slack.rtm.SlackRtmClient
 import cats.implicits._
 
-// TODO: Rename all occurrences
 case class MessageContext(rtmClient: SlackRtmClient, message: Message, thread: String)
 
 // TODO: Uncouple replying
 case class SlackIoHandler(gameStore: RDSGameStore, emojiHandler: EmojiHandler) {
 
-  def handleGame(gameInstance: GameInstance, command: GameContextCommand, messageContext: MessageContext, playerRole: CellContents): IO[Unit] = {
+  def handleGame(gameInstance: GameInstance, command: GameContextCommand, messageContext: MessageContext, playerRole: PlayerRole): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, messageContext.message.user, emojiHandler, playerRole)
     val gamePutIo = putGameAndReplyIo(messageContext, reply, newGameInstance)

@@ -2,7 +2,7 @@ package connect4.wrappers
 
 import connect4._
 import connect4.commands.{CommandHandler, CommandsRegex}
-import connect4.game.{CellContents, Challenger, Defender, GameState}
+import connect4.game.{CellContents, Challenger, Defender, GameState, PlayerRole}
 
 object ConsoleWrapper {
 
@@ -28,7 +28,7 @@ object ConsoleWrapper {
   }
 
   @scala.annotation.tailrec
-  private def askRole(): CellContents = {
+  private def askRole(): PlayerRole = {
     println("\nEnter 'D' for defender or 'C' for challenger:")
 
     val input = scala.io.StdIn.readLine()
@@ -40,7 +40,7 @@ object ConsoleWrapper {
     }
   }
 
-  private def interpretCommand(gameState: GameState, playerRole: CellContents, input: String): (GameState, String) = {
+  private def interpretCommand(gameState: GameState, playerRole: PlayerRole, input: String): (GameState, String) = {
 
     input match {
 
