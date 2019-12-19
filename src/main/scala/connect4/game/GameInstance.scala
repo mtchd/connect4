@@ -29,6 +29,7 @@ sealed trait GameInstance {
 
 }
 
+// TODO: Should theses case classes have their own file?
 case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
 
   def startPlayingWithDefenderToken(token: String): Playing = {
@@ -41,16 +42,17 @@ case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
 }
 
 case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance {
-
   def finishGame(winnerRole: CellContents): Finished = Finished.finishRanked(instancePlayerPair, winnerRole)
 }
 
+// TODO: This is completely different from challenged and playing and needs to be separated, either by a higher level
+// of abstraction or by making it a complete different type
 case class Finished(rankType: RankType) extends GameInstance
 
+// TODO: Actually let the player choose Ranked or Unranked
 sealed trait RankType
 case class Ranked(winnerId: String, loserId: String) extends RankType
 case object UnRanked extends RankType
-
 
 object Finished {
   def finishRanked(playerPair: PlayerPair, winnerRole: CellContents): Finished = {

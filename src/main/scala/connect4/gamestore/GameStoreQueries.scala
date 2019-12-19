@@ -72,19 +72,19 @@ object GameStoreQueries {
       .update
   }
 
-  def searchWithTs(ts: String): doobie.Query0[GameStoreRow] = {
+  def searchWithId(id: String): doobie.Query0[GameStoreRow] = {
     sql"""
          |SELECT * FROM connect4
-         |WHERE ts = $ts
+         |WHERE ts = $id
          |LIMIT 1
        """.stripMargin
       .query[GameStoreRow]
   }
 
-  def delete(ts: String): doobie.Update0 ={
+  def delete(id: String): doobie.Update0 ={
     sql"""
          |DELETE FROM connect4
-         |WHERE ts = $ts
+         |WHERE ts = $id
        """.stripMargin
       .update
   }

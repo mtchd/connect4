@@ -21,9 +21,17 @@ case class RDSGameStore(password: String) {
   def setupGameStore(): IO[Int] = GameStoreQueries.createTable.run.transact(xa)
   def setupScoreStore(): IO[Int] = ScoreStoreQueries.createTable.run.transact(xa)
 
-  def get(threadTimeStamp: String): IO[Option[GameStoreRow]] = {
-    GameStoreQueries.searchWithTs(threadTimeStamp).option.transact(xa)
+  // TODO: Convert to calling this id instead of timestamp, as with other abstractions this could be a channel id
+  def get(id: String): IO[Option[GameStoreRow]] = {
+    GameStoreQueries.searchWithId(id).option.transact(xa)
   }
+
+  // TODO: Level of abstraction on top of "get", not sure if needed
+  def maybeGetGame(id: String): IO[Option[GameInstance]] =
+    for {
+      maybeGameRow <- get(id)
+      maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
+    } yield maybeGameInstance
 
   def reportScores(player1Id: String, player2Id: String): IO[List[ScoreStoreRow]] = {
     ScoreStoreQueries.reportScores(player1Id, player2Id).to[List].transact(xa)

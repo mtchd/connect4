@@ -39,18 +39,20 @@ object SlackWrapper {
     gameStore.setupGameStore().unsafeRunSync()
     gameStore.setupScoreStore().unsafeRunSync()
 
+    val slackIoHandler = SlackIoHandler(gameStore, emojiHandler)
+
     println("Now listening to Slack...")
 
     rtmClient.onMessage { message =>
 
       val threadTs = message.thread_ts.getOrElse(message.ts)
-      val messageContext = SendMessage(rtmClient, message, threadTs)
+      val messageContext = MessageContext(rtmClient, message, threadTs)
 
       val messageResponseProgram: IO[Any] = CommandInterpreter.bigBadInterpret(message.text) match {
         case NoReply => IO(Unit)
-        case NoContext(command) => handleNoContextCommand(command, messageContext)
-        case GameAndScoreContext(command) => handleGameAndScoreContextCommand(command, messageContext, gameStore, emojiHandler)
-        case ScoreContext(command) => handleScoreContextCommand(command, messageContext, gameStore)
+        case NoContext(command) => slackIoHandler.handleNoContextCommand(command, messageContext)
+        case GameAndScoreContext(command) => slackIoHandler.handleGameAndScoreContextCommand(command, messageContext)
+        case ScoreContext(command) => slackIoHandler.handleScoreContextCommand(command, messageContext)
       }
 
       messageResponseProgram

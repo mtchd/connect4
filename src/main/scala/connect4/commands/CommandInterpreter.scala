@@ -1,7 +1,7 @@
 package connect4.commands
 
 import connect4.Strings
-import connect4.game.GameInstance
+import connect4.game.{CellContents, GameInstance}
 import connect4.gamestore.ScoreStoreRow
 import connect4.wrappers.{Emoji, EmojiHandler}
 
@@ -34,17 +34,15 @@ object CommandInterpreter {
     }
   }
 
-  // TODO: Author being in the game should be validated beforehand, ideally just pass role
-  def interpretGameContextCommand(gameContextCommand: GameContextCommand, gameInstance: GameInstance, authorId: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
+  def interpretGameContextCommand(gameContextCommand: GameContextCommand, gameInstance: GameInstance, authorId: String, emojiHandler: EmojiHandler, playerRole: CellContents): (GameInstance, String) =
     gameContextCommand match {
         // TODO: Note this makes us do a redundant update to database
       case Challenge(_, _) => (gameInstance, Strings.AlreadyGame)
-      case Accept(emoji) => CommandHandler.accept(gameInstance, authorId, emoji, emojiHandler)
-      case Drop(col) => CommandHandler.drop(col, gameInstance, authorId)
-      case Reject => CommandHandler.reject(gameInstance, authorId)
-      case Token(message) => CommandHandler.changeToken(gameInstance, message, authorId, emojiHandler)
-      case Forfeit => CommandHandler.forfeit(gameInstance, authorId)
+      case Accept(emoji) => CommandHandler.accept(gameInstance, playerRole, emoji, emojiHandler)
+      case Drop(col) => CommandHandler.drop(col, gameInstance, playerRole)
+      case Reject => CommandHandler.reject(gameInstance, playerRole)
+      case Token(message) => CommandHandler.changeToken(gameInstance, message, playerRole, emojiHandler)
+      case Forfeit => CommandHandler.forfeit(gameInstance, playerRole)
     }
-  }
 
 }

@@ -3,97 +3,92 @@ package connect4.wrappers
 import cats.effect.IO
 import connect4.Strings
 import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContextCommand, NoContextCommand, ScoreContextCommand}
-import connect4.game.{Finished, GameInstance, Ranked, UnRanked}
+import connect4.game.{CellContents, Finished, GameInstance, Ranked, UnRanked}
 import connect4.gamestore.RDSGameStore
 import slack.models.Message
 import slack.rtm.SlackRtmClient
 import cats.implicits._
 
-case class SendMessage(rtmClient: SlackRtmClient, message: Message, thread: String)
+// TODO: Rename all occurrences
+case class MessageContext(rtmClient: SlackRtmClient, message: Message, thread: String)
 
 // TODO: Uncouple replying
-// TODO: Rewrite as a case class, store clients / gamestore
-object SlackIoHandler {
+case class SlackIoHandler(gameStore: RDSGameStore, emojiHandler: EmojiHandler) {
 
-  def handleGame(gameInstance: GameInstance, command: GameContextCommand, gameStore: RDSGameStore, sendMessage: SendMessage, emojiHandler: EmojiHandler): IO[Unit] = {
+  def handleGame(gameInstance: GameInstance, command: GameContextCommand, messageContext: MessageContext, playerRole: CellContents): IO[Unit] = {
 
-    val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, sendMessage.message.user, emojiHandler)
-    val gamePutIo = putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
+    val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, messageContext.message.user, emojiHandler, playerRole)
+    val gamePutIo = putGameAndReplyIo(messageContext, reply, newGameInstance)
     newGameInstance match {
       case Finished(rankType) => rankType match {
         case UnRanked => gamePutIo
-        case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gameStore, gamePutIo, sendMessage)
+        case Ranked(winnerId, loserId) => updateScores(winnerId, loserId, gamePutIo, messageContext)
       }
       case _ => gamePutIo
     }
 
   }
 
-  def handleChallenge(defenderId: String, flags: String, gameStore: RDSGameStore, sendMessage: SendMessage, emojiHandler: EmojiHandler): IO[Unit] = {
-
-    val (newGameInstance, reply) = CommandHandler.challenge(defenderId, sendMessage.message.user, flags, emojiHandler)
-    putGameAndReplyIo(sendMessage, reply, gameStore, newGameInstance)
-
+  def handleChallenge(defenderId: String, flags: String, messageContext: MessageContext): IO[Unit] = {
+    val (newGameInstance, reply) = CommandHandler.challenge(defenderId, messageContext.message.user, flags, emojiHandler)
+    putGameAndReplyIo(messageContext, reply, newGameInstance)
   }
 
-  def putGameAndReplyIo(sendMessage: SendMessage, reply: String, gameStore: RDSGameStore, gameInstance: GameInstance): IO[Unit] = {
-
+  def putGameAndReplyIo(messageContext: MessageContext, replyText: String, gameInstance: GameInstance): IO[Unit] =
     for {
-      _ <- SlackIoHandler.reply(sendMessage, reply)
-      _ <- gameStore.put(sendMessage.thread, gameInstance)
+      _ <- reply(messageContext, replyText)
+      _ <- gameStore.put(messageContext.thread, gameInstance)
     } yield ()
-  }
 
-  def updateScores(winnerId: String, loserId: String, gameStore: RDSGameStore, gamePutIo: IO[Unit], sendMessage: SendMessage): IO[Unit] = {
+  def updateScores(winnerId: String, loserId: String, gamePutIo: IO[Unit], messageContext: MessageContext): IO[Unit] =
     for {
       _ <- gamePutIo
       _ <- gameStore.updateLoss(loserId)
       _ <- gameStore.updateWin(winnerId)
       scores <- gameStore.reportScores(winnerId, loserId)
-      _ <- scores.traverse_ { score => reply(sendMessage, score.toString) }
+      _ <- scores.traverse_ { score => reply(messageContext, score.toString) }
     } yield ()
-  }
 
-  def handleNoContextCommand(command: NoContextCommand, sendMessage: SendMessage): IO[Unit] = {
+  def handleNoContextCommand(command: NoContextCommand, messageContext: MessageContext): IO[Unit] = {
     val replyText = CommandInterpreter.interpretNoContextCommand(command)
-    reply(sendMessage, replyText)
+    reply(messageContext, replyText)
   }
 
-  def handleScoreContextCommand(command: ScoreContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore): IO[Unit] = {
-
+  def handleScoreContextCommand(command: ScoreContextCommand, messageContext: MessageContext): IO[Unit] =
     for {
-      maybeScore <- gameStore.reportScore(sendMessage.message.user)
-
+      maybeScore <- gameStore.reportScore(messageContext.message.user)
       _ <- maybeScore match {
-        case Some(score) => reply(sendMessage, CommandInterpreter.interpretScoreContextCommand(command, score))
-        case None => reply(sendMessage, Strings.HaventPlayed)
+        case Some(score) => reply(messageContext, CommandInterpreter.interpretScoreContextCommand(command, score))
+        case None => reply(messageContext, Strings.HaventPlayed)
       }
-
     } yield ()
 
-  }
-
-  def reply(sendMessage: SendMessage, replyText: String): IO[Unit] = {
-    IO(sendMessage.rtmClient.sendMessage(
-      sendMessage.message.channel,
-      Strings.atUser(sendMessage.message.user, replyText),
-      Some(sendMessage.thread)))
-  }
+  def reply(messageContext: MessageContext, replyText: String): IO[Unit] =
+    IO(messageContext.rtmClient.sendMessage(
+      messageContext.message.channel,
+      Strings.atUser(messageContext.message.user, replyText),
+      Some(messageContext.thread)))
 
   // TODO: This could be less nested and coupled
-  def handleGameAndScoreContextCommand(command: GameContextCommand, sendMessage: SendMessage, gameStore: RDSGameStore, emojiHandler: EmojiHandler): IO[Unit] = {
+  def handleGameAndScoreContextCommand(command: GameContextCommand, messageContext: MessageContext): IO[Unit] =
     for {
-      maybeGameRow <- gameStore.get(sendMessage.thread)
-      maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
+      maybeGameInstance <- gameStore.maybeGetGame(messageContext.thread)
 
       _ <- maybeGameInstance match {
-        case Some(gameInstance) => handleGame(gameInstance, command, gameStore, sendMessage, emojiHandler)
+        case Some(gameInstance) => checkPlayerInGameThenHandle(gameInstance, command, messageContext)
         case None => command match {
-          case Challenge(opponentId, flags) => handleChallenge(opponentId, flags, gameStore, sendMessage, emojiHandler)
-          case _ => reply(sendMessage, Strings.NotInGame)
+          case Challenge(opponentId, flags) => handleChallenge(opponentId, flags, messageContext)
+          case _ => reply(messageContext, Strings.NotInGame)
         }
       }
     } yield ()
-  }
+
+  // TODO: Not necessarily slack IO
+  def checkPlayerInGameThenHandle(gameInstance: GameInstance, command: GameContextCommand, messageContext: MessageContext): IO[Unit] =
+    gameInstance.playerRole(messageContext.message.user) match {
+      case Some(playerRole) => handleGame(gameInstance, command, messageContext, playerRole)
+        // TODO: Say who is in the game and what they need to do (based on challenge vs playing)
+      case None => reply(messageContext, Strings.NotInGame)
+    }
 
 }
