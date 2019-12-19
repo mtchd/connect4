@@ -1,6 +1,6 @@
 package connect4.gamestore
 import cats.effect.{Blocker, ContextShift, IO}
-import connect4.game.{Challenged, Finished, GameInstance, Playing, Ranked}
+import connect4.game.{Challenged, Finished, GameInstance, Playing, Ranked, UnFinishedGame}
 import doobie.Transactor
 import doobie.implicits._
 import doobie.util.ExecutionContexts
@@ -27,7 +27,7 @@ case class RDSGameStore(password: String) {
   }
 
   // TODO: Level of abstraction on top of "get", not sure if needed
-  def maybeGetGame(id: String): IO[Option[GameInstance]] =
+  def maybeGetGame(id: String): IO[Option[UnFinishedGame]] =
     for {
       maybeGameRow <- get(id)
       maybeGameInstance = RDSGameStore.convertGame(maybeGameRow)
@@ -45,9 +45,7 @@ case class RDSGameStore(password: String) {
 
     gameInstance match {
       case Finished(_) => delete(threadTs)
-        // TODO: Has to be a way to merge these two
-      case playing @ Playing(_, _) => upsert(threadTs, playing)
-      case challenged @ Challenged(_) => upsert(threadTs, challenged)
+      case unFinishedGame: UnFinishedGame => upsert(threadTs, unFinishedGame)
     }
 
   }
@@ -60,7 +58,7 @@ case class RDSGameStore(password: String) {
     ScoreStoreQueries.upsertWin(playerId).run.transact(xa)
   }
 
-  def upsert(threadTs: String, gameInstance: GameInstance): IO[Int] = {
+  def upsert(threadTs: String, gameInstance: UnFinishedGame): IO[Int] = {
     val gameStoreRow = GameStoreRow.convertGameInstance(gameInstance, threadTs)
     val insertQuery = GameStoreQueries.upsert(gameStoreRow)
     insertQuery.run.transact(xa)
@@ -73,7 +71,7 @@ case class RDSGameStore(password: String) {
 }
 
 object RDSGameStore {
-  def convertGame(maybeGameStoreRow: Option[GameStoreRow]): Option[GameInstance] = {
+  def convertGame(maybeGameStoreRow: Option[GameStoreRow]): Option[UnFinishedGame] = {
     maybeGameStoreRow match {
       case Some(gameStoreRow) => Some(gameStoreRow.convertToGameInstance)
       case None => None

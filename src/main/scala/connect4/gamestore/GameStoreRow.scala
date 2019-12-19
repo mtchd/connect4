@@ -1,6 +1,6 @@
 package connect4.gamestore
 
-import connect4.game.{Cell, Challenged, GameInstance, GameState, Move, PlayerPair, Playing}
+import connect4.game.{Cell, Challenged, GameInstance, GameState, Move, PlayerPair, Playing, UnFinishedGame}
 import io.circe._
 import io.circe.syntax._
 
@@ -16,7 +16,8 @@ case class GameStoreRow(
                             board: Option[Json]
                           ) {
 
-  def convertToGameInstance: GameInstance = {
+  def convertToGameInstance: UnFinishedGame = {
+    // TODO: Just checking the presence of board seems dodgy
     board match {
       case Some(board) => convertToPlaying(board)
       case None => convertToChallenged
@@ -63,7 +64,7 @@ case class GameStoreRow(
 
 object GameStoreRow {
 
-  def convertGameInstance(gameInstance: GameInstance, timestamp: String): GameStoreRow = {
+  def convertGameInstance(gameInstance: UnFinishedGame, timestamp: String): GameStoreRow = {
     gameInstance match {
       case challenged @ Challenged(_) => convertGameInstance(challenged, timestamp)
       case playing @ Playing(_,_) => convertGameInstance(playing, timestamp)

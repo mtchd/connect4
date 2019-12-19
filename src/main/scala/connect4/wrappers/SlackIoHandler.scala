@@ -3,7 +3,7 @@ package connect4.wrappers
 import cats.effect.IO
 import connect4.Strings
 import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContextCommand, NoContextCommand, ScoreContextCommand}
-import connect4.game.{CellContents, Finished, GameInstance, PlayerRole, Ranked, UnRanked}
+import connect4.game.{CellContents, Finished, GameInstance, PlayerRole, Ranked, UnFinishedGame, UnRanked}
 import connect4.gamestore.RDSGameStore
 import slack.models.Message
 import slack.rtm.SlackRtmClient
@@ -14,7 +14,7 @@ case class MessageContext(rtmClient: SlackRtmClient, message: Message, thread: S
 // TODO: Uncouple replying
 case class SlackIoHandler(gameStore: RDSGameStore, emojiHandler: EmojiHandler) {
 
-  def handleGame(gameInstance: GameInstance, command: GameContextCommand, messageContext: MessageContext, playerRole: PlayerRole): IO[Unit] = {
+  def handleGame(gameInstance: UnFinishedGame, command: GameContextCommand, messageContext: MessageContext, playerRole: PlayerRole): IO[Unit] = {
 
     val (newGameInstance, reply) = CommandInterpreter.interpretGameContextCommand(command, gameInstance, messageContext.message.user, emojiHandler, playerRole)
     val gamePutIo = putGameAndReplyIo(messageContext, reply, newGameInstance)
@@ -83,8 +83,8 @@ case class SlackIoHandler(gameStore: RDSGameStore, emojiHandler: EmojiHandler) {
     } yield ()
 
   // TODO: Not necessarily slack IO
-  def checkPlayerInGameThenHandle(gameInstance: GameInstance, command: GameContextCommand, messageContext: MessageContext): IO[Unit] =
-    gameInstance.playerRole(messageContext.message.user) match {
+  def checkPlayerInGameThenHandle(gameInstance: UnFinishedGame, command: GameContextCommand, messageContext: MessageContext): IO[Unit] =
+    gameInstance.maybePlayerRole(messageContext.message.user) match {
       case Some(playerRole) => handleGame(gameInstance, command, messageContext, playerRole)
         // TODO: Say who is in the game and what they need to do (based on challenge vs playing)
       case None => reply(messageContext, Strings.NotInGame)

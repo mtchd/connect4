@@ -1,7 +1,7 @@
 package connect4.commands
 
 import connect4.{game, _}
-import connect4.game.{CellContents, Challenged, Defender, GameInstance, GameState, PlayerRole, Playing}
+import connect4.game.{CellContents, Challenged, Defender, GameInstance, GameState, PlayerRole, Playing, UnFinishedGame}
 import connect4.wrappers.{Emoji, EmojiHandler}
 
 object CommandHandler {
@@ -10,7 +10,6 @@ object CommandHandler {
 
     // If emoji is invalid, we continue with default emoji
     val validatedToken = emojiHandler.validateAndExtractEmoji(emoji, Strings.DefaultChallengerToken)
-
     val newGameInstance = GameInstance.newChallenge(defenderId, challengerId, validatedToken)
     val reply           = s"Challenging <@$defenderId>...${Strings.NewChallengeHelp}"
 
@@ -18,7 +17,7 @@ object CommandHandler {
 
   }
 
-  def accept(gameInstance: GameInstance, accepterRole: PlayerRole, emoji: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
+  def accept(gameInstance: UnFinishedGame, accepterRole: PlayerRole, emoji: String, emojiHandler: EmojiHandler): (GameInstance, String) = {
 
     val validatedToken = emojiHandler.validateAndExtractEmoji(emoji, Strings.DefaultDefenderToken)
 
@@ -33,13 +32,13 @@ object CommandHandler {
 
   }
 
-  def drop(col: String, gameInstance: GameInstance, playerRole: PlayerRole): (GameInstance, String) =
+  def drop(col: String, gameInstance: UnFinishedGame, playerRole: PlayerRole): (GameInstance, String) =
     gameInstance match {
       case playing @ Playing(_,_) => playIf(col.toInt, playing, playerRole)
       case _ => (gameInstance, Strings.FailedDrop)
     }
 
-  def forfeit(gameInstance: GameInstance, playerRole: PlayerRole): (GameInstance, String) =
+  def forfeit(gameInstance: UnFinishedGame, playerRole: PlayerRole): (GameInstance, String) =
     gameInstance match {
       case playing @ Playing(_, _) => (playing.finishGame(playerRole.opposite), Strings.Forfeit)
         // TODO: Give the user more information about why the command failed
@@ -47,14 +46,14 @@ object CommandHandler {
     }
 
 
-  def reject(gameInstance: GameInstance, playerRole: PlayerRole): (GameInstance, String) =
+  def reject(gameInstance: UnFinishedGame, playerRole: PlayerRole): (GameInstance, String) =
     gameInstance match {
       case challenged @ Challenged(_) if playerRole == Defender => (challenged.finishGame, Strings.Reject)
         // TODO: Say who's defending here
       case _ => (gameInstance, Strings.FailedAcceptOrReject)
     }
 
-  def changeToken(gameInstance: GameInstance, message: String, playerRole: PlayerRole, emojiHandler: EmojiHandler): (GameInstance, String) = {
+  def changeToken(gameInstance: UnFinishedGame, message: String, playerRole: PlayerRole, emojiHandler: EmojiHandler): (GameInstance, String) = {
     val validatedToken = emojiHandler.validateAndExtractEmoji(message, Strings.FailedToken)
     (gameInstance.changeToken(playerRole, validatedToken), Strings.tokenChange(validatedToken))
   }

@@ -1,7 +1,7 @@
 package connect4.commands
 
 import connect4.Strings
-import connect4.game.{CellContents, GameInstance, PlayerRole}
+import connect4.game.{CellContents, GameInstance, PlayerRole, UnFinishedGame}
 import connect4.gamestore.ScoreStoreRow
 import connect4.wrappers.{Emoji, EmojiHandler}
 
@@ -34,7 +34,7 @@ object CommandInterpreter {
     }
   }
 
-  def interpretGameContextCommand(gameContextCommand: GameContextCommand, gameInstance: GameInstance, authorId: String, emojiHandler: EmojiHandler, playerRole: PlayerRole): (GameInstance, String) =
+  def interpretGameContextCommand(gameContextCommand: GameContextCommand, gameInstance: UnFinishedGame, authorId: String, emojiHandler: EmojiHandler, playerRole: PlayerRole): (GameInstance, String) =
     gameContextCommand match {
         // TODO: Note this makes us do a redundant update to database
       case Challenge(_, _) => (gameInstance, Strings.AlreadyGame)
