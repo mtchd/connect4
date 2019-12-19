@@ -35,9 +35,10 @@ case class GameStoreRow(
   def convertFromJsonBoard(board: Json): Vector[Vector[Cell]] = {
     val result = board.as[Vector[Vector[String]]]
 
-    // TODO: Just fucked in case of failure lol
     result match {
       case Right(right) => GameStoreRow.convertToCellBoard(right)
+        // TODO: Should we throw error here?
+      case Left(error) => throw error
     }
 
   }

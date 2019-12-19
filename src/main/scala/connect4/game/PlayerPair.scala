@@ -1,5 +1,7 @@
 package connect4.game
 
+import connect4.Strings
+
 case class PlayerPair(challenger: Player, defender: Player) {
 
   def roleFromPair(playerId: String): Option[PlayerRole] =
@@ -14,13 +16,11 @@ case class PlayerPair(challenger: Player, defender: Player) {
     PlayerPair(this.challenger, defender)
   }
 
-  def updateToken(role: CellContents, token: String): PlayerPair = {
+  def updateToken(role: PlayerRole, token: String): PlayerPair =
     role match {
       case Defender => this.copy(defender = defender.copy(token = token))
       case Challenger => this.copy(challenger = challenger.copy(token = token))
-      case _ => this
     }
-  }
 
   def isPlayerInPair(playerId: String): Boolean = {
     roleFromPair(playerId).isDefined
@@ -38,13 +38,8 @@ case class PlayerPair(challenger: Player, defender: Player) {
 
 object PlayerPair {
 
-  // TODO: Repeated code from "newPairWithTokens"
-  def newDefaultPairFromIds(challengerId: String, defenderId: String): PlayerPair = {
-    val challenger = Player.newDefaultPlayer(challengerId, Challenger)
-    val defender = Player.newDefaultPlayer(defenderId, Defender)
-
-    PlayerPair(challenger, defender)
-  }
+  def newDefaultPairFromIds(challengerId: String, defenderId: String): PlayerPair =
+    newPairWithTokens(challengerId, Strings.DefaultChallengerToken, defenderId, Strings.DefaultDefenderToken)
 
   def newTestPair(): PlayerPair = {
     newDefaultPairFromIds("1","2")
@@ -52,8 +47,7 @@ object PlayerPair {
 
   def newPairFromIdsWithChallengerToken(challengerId: String, defenderId: String, token: String): PlayerPair = {
     val challenger = Player(challengerId, token)
-    val defender = Player.newDefaultPlayer(defenderId, Defender)
-
+    val defender = Player(defenderId, Strings.DefaultDefenderToken)
     PlayerPair(challenger, defender)
   }
 

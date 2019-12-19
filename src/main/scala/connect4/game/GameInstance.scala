@@ -6,11 +6,6 @@ sealed trait GameInstance {
 
   // TODO: Cause soft fail for a lot of these finish things
 
-  def boardAsString: String = this match {
-    case Playing(gameState, playerPair) => gameState.boardAsString(playerPair.defender, playerPair.challenger)
-    case _ => Strings.FailedRenderBoard
-  }
-
   // Returns role of player, if they are in our pair
   def playerRole(playerId: String): Option[PlayerRole] = this match {
     case Challenged(playerPair) => playerPair.roleFromPair(playerId)
@@ -18,7 +13,7 @@ sealed trait GameInstance {
     case _ => None
   }
 
-  def changeToken(role: CellContents, token: String): GameInstance = {
+  def changeToken(role: PlayerRole, token: String): GameInstance = {
 
     this match {
       case challenged @ Challenged(playerPair) => challenged.copy(instancePlayerPair = playerPair.updateToken(role, token))
@@ -28,6 +23,8 @@ sealed trait GameInstance {
   }
 
 }
+
+sealed trait UnFinishedGame
 
 // TODO: Should theses case classes have their own file?
 case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
@@ -43,6 +40,7 @@ case class Challenged(instancePlayerPair: PlayerPair) extends GameInstance {
 
 case class Playing(gameState: GameState, instancePlayerPair: PlayerPair) extends GameInstance {
   def finishGame(winnerRole: PlayerRole): Finished = Finished.finishRanked(instancePlayerPair, winnerRole)
+  def boardAsString: String = gameState.boardAsString(instancePlayerPair.defender, instancePlayerPair.challenger)
 }
 
 // TODO: This is completely different from challenged and playing and needs to be separated, either by a higher level

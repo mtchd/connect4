@@ -21,12 +21,8 @@ case class RawEmoji(short_name: String, has_skin: Boolean, is_skin: Boolean)
 case class EmojiHandler(invariantEmojis: Set[Emoji], skinnableEmojis: Set[Emoji], skinEmojis: Set[Emoji]) {
 
   def validateAndExtractEmoji(input: String, default: String): String = {
-
-    // TODO: Feels like the input should be sanitised earlier - like in the regex?
-    val extractedEmojis: Vector[String] = input match {
-      case CommandsRegex.Emoji(_*) => CommandsRegex.Emoji2.findAllIn(input).toVector
-      case _ => Vector.empty
-    }
+    
+    val extractedEmojis: Vector[String] = CommandsRegex.Emoji2.findAllIn(input).toVector
 
     extractedEmojis.map(convertEmoji) match {
       case Vector(emoji) => if (invariantEmojis.contains(emoji)) emoji.coloned else default

@@ -1,12 +1,13 @@
 package connect4
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import connect4.wrappers.SlackWrapper
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object Main {
-  implicit val cs = IO.contextShift(global)
+
+  implicit val cs: ContextShift[IO] = IO.contextShift(global)
 
   // TODO: More tests
   def main(args: Array[String]) {

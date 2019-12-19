@@ -24,7 +24,7 @@ object CommandHandler {
 
     gameInstance match {
       case challenged @ Challenged(_) if Defender == accepterRole =>
-        val playing: GameInstance = challenged.startPlayingWithDefenderToken(validatedToken)
+        val playing: Playing = challenged.startPlayingWithDefenderToken(validatedToken)
         val reply = Strings.InGameCommands + "\n" + playing.boardAsString
         (playing, reply)
       case Challenged(playerPair) => (gameInstance, Strings.FailedAcceptOrReject(playerPair.defender.id))
