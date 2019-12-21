@@ -6,18 +6,16 @@ sealed trait GameInstance
 
 sealed trait UnFinishedGame extends GameInstance {
 
+  // TODO: This stated here, but defined in the case class, and it's weird
   val instancePlayerPair: PlayerPair
 
-  def maybePlayerRole(playerId: String): Option[PlayerRole] = this match {
-    case Challenged(playerPair) => playerPair.roleFromPair(playerId)
-    case Playing(_, playerPair) => playerPair.roleFromPair(playerId)
-  }
+  def maybePlayerRole(playerId: String): Option[PlayerRole] = instancePlayerPair.roleFromPair(playerId)
 
-  def changeToken(role: PlayerRole, token: String): GameInstance =
-    this match {
-      case challenged @ Challenged(playerPair) => challenged.copy(instancePlayerPair = playerPair.updateToken(role, token))
-      case playing @ Playing(_, playerPair) => playing.copy(instancePlayerPair = playerPair.updateToken(role, token))
-    }
+  // TODO: How to one line this
+  def changeToken(role: PlayerRole, token: String): GameInstance = this match {
+    case challenged @ Challenged(playerPair) => challenged.copy(instancePlayerPair = playerPair.updateToken(role, token))
+    case playing @ Playing(_, playerPair) => playing.copy(instancePlayerPair = playerPair.updateToken(role, token))
+  }
 }
 
 // TODO: Should theses case classes have their own file (note this would mean not using sealed)
