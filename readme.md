@@ -6,7 +6,7 @@ Here's an example of typical output:
 
 <img width="229" alt="Screen Shot 2019-08-15 at 10 32 10 am" src="https://user-images.githubusercontent.com/30946820/63065131-33419f80-bf48-11e9-8483-b477fae5285a.png">
 
-Here's a video of fairly exciting game:
+Here's a video of a game:
 
 [![video-thumbnail](https://user-images.githubusercontent.com/30946820/71894603-d7034480-31a2-11ea-9497-1488ba41b20e.PNG)](https://www.youtube.com/watch?v=TlFrnz3iKWk)
 
@@ -35,6 +35,20 @@ After that, the app is running.
 
 The App can be run locally with `auto/build-dev`, which will build the docker image then run it locally.
 
+## Basic Usage
+
+Connect 4 accepts the following commands:
+ - Help
+ - Score
+ - Challenge
+ - Accept
+ - Drop
+ - Reject
+ - Token
+ - Forfeit
+ 
+ Try them out and see what happens!
+ 
 ## License
 
 Licensed under the GNU General Public License v3.0. Feel free to use parts of the code in your own projects with attribution!
