@@ -1,6 +1,6 @@
 # Connect 4
 
-This is a bot that runs connect 4 in Slack. All input is entirely facilitated through messages!
+This is a bot that runs Connect 4 in Slack. All input is entirely facilitated through messages!
 
 Here's an example of typical output:
 
@@ -19,6 +19,21 @@ Game also runs in console for testing!
 - Terraform for Infrastructure as Code
 - Buildkite for it's CI pipeline
 - Docker for containerization
+
+## Working with Connect 4
+
+### Deployment
+
+All scripts for deployment are under the `auto` folder.
+
+1. The app is packaged and is pushed to Docker Hub with `auto/build-push`
+1. AWS infrastructure is created with `auto/terraform`
+
+After that, the app is running.
+
+### Local Development
+
+The App can be run locally with `auto/build-dev`, which will build the docker image then run it locally.
 
 ## License
 

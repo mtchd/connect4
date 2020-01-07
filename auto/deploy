@@ -12,10 +12,8 @@ function decrypt {
 PREM=${1:-remote}
 ENV=${2:-dev}
 
-if [[ ${PREM} == "remote" ]]
-then
-
-  # Set Up
+if [[ ${PREM} == "remote" ]]; then
+  # Need docker to run app
   yum update -y
   yum install docker -y
   yum install jq -y
@@ -29,15 +27,13 @@ then
   ENV=$(jq -r '.Tags[0].Value' <<< "$TAGS")
 fi
 
-if [[ -z ${BUILD+x} ]]
-then
+if [[ -z ${BUILD+x} ]]; then
   docker pull mtchd/connect4:"${ENV}"
 fi
 
 ENCRYPTED_DB_PASS=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwGsO7qzsVKYgdU3+57hVaEcAAAAiTCBhgYJKoZIhvcNAQcGoHkwdwIBADByBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMpxiHptfWFEJcjungIBEIBFtUN6h9H7/scpTpd698L1iTCtvCAmDiKrPDv/3uMBGEzVkWBQfnTUEZWp5PzxUIQm60dfCEKPz4i7etLqIWlbyGEDzj/n
 
-if [[ "${ENV}" == "prod" ]]
-then
+if [[ "${ENV}" == "prod" ]]; then
     ENCRYPTED_SLACK_RTM_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwHZksn7tWDDaTqU+C4yQJUaAAAAljCBkwYJKoZIhvcNAQcGoIGFMIGCAgEAMH0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgKs/WZmBmioiYfXJAgEQgFDM5mt4xJAQ8sY/7TKfPOORp/t28xR2hVVbBv4rBXD7Qvo9tLNjElekaVsb+L/rMZ1xeTVGhZo7DPCuug4KnxSs64R8TkJhVoNlrA8N3HGXLw==
     ENCRYPTED_SLACK_API_TOKEN=AQICAHhmLC/OEYZUyfRG86YuTDDXQX6tMI11YGBotbwolXT/PwG6MIUhzOu4X+Nz1zPZkgQZAAAArDCBqQYJKoZIhvcNAQcGoIGbMIGYAgEAMIGSBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDKQgfBRw74rIY6DzRgIBEIBlxSHSuWlaDva8shuzTskz/46caNmI2WzofDSzNxS/U0nI0fmFO/P+P1NxBNElmfKLPgVU3ir7FwkkbeffB4L9oGEGelReyebeyrv0pChi0dO/GAUOHWYD4D4zHjuYI8YBi/CIIEM=
 else
