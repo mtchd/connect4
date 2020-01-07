@@ -2,7 +2,7 @@
 
 <img width="229" alt="Screen Shot 2019-08-15 at 10 32 10 am" src="https://user-images.githubusercontent.com/30946820/63065131-33419f80-bf48-11e9-8483-b477fae5285a.png">
 
-I'm learning Scala by creating a connect 4 game.
+![video-thumbnail](https://user-images.githubusercontent.com/30946820/71894603-d7034480-31a2-11ea-9497-1488ba41b20e.PNG)(https://www.youtube.com/watch?v=TlFrnz3iKWk)
 
 Game runs in Slack and Console.
 
