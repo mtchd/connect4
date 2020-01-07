@@ -23,7 +23,6 @@ object SlackWrapper {
 
       val threadTs = message.thread_ts.getOrElse(message.ts)
       val messageContext = MessageContext(rtmClient, message, threadTs)
-
       val messageResponseProgram: IO[Any] = CommandInterpreter.interpretMessage(message.text) match {
         case NoReply => IO(Unit)
         case NoContext(command) => slackIoHandler.handleNoContextCommand(command, messageContext)
@@ -38,7 +37,6 @@ object SlackWrapper {
           case Left(e) => IO(e.printStackTrace())
         }
         .unsafeRunSync()
-
-      }
     }
+  }
 }
