@@ -11,13 +11,11 @@ import scala.concurrent.duration.DurationInt
 
 object SlackWrapper {
 
-  implicit val system: ActorSystem = ActorSystem("slack" /* config.getConfig("akka")*/)
+  implicit val system: ActorSystem = ActorSystem("slack")
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
-  // Side effects are here, but only here.
   def startListening(slackRtmToken: String, dbPassword: String, slackApiToken: String)(implicit cs: ContextShift[IO]): Unit = {
 
-    // First side effect, loads program (gets external info like emojis)
     val slackIoHandler = SlackIoHandler.attemptLoad(slackApiToken, dbPassword).unsafeRunSync()
     val rtmClient: SlackRtmClient = SlackRtmClient(slackRtmToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
 
@@ -33,7 +31,6 @@ object SlackWrapper {
         case ScoreContext(command) => slackIoHandler.handleScoreContextCommand(command, messageContext)
       }
 
-      // Second side effect, responds to users
       messageResponseProgram
         .attempt
         .flatMap {
