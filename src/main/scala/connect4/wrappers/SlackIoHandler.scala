@@ -1,6 +1,7 @@
 package connect4.wrappers
 
-import cats.effect.IO
+import akka.actor.ActorSystem
+import cats.effect.{ContextShift, IO}
 import connect4.Strings
 import connect4.commands.{Challenge, CommandHandler, CommandInterpreter, GameContextCommand, NoContextCommand, ScoreContextCommand}
 import connect4.game.{CellContents, Finished, GameInstance, PlayerRole, Ranked, UnFinishedGame, UnRanked}
@@ -90,4 +91,24 @@ case class SlackIoHandler(gameStore: RDSGameStore, emojiHandler: EmojiHandler) {
       case None => reply(messageContext, Strings.NotInGame)
     }
 
+}
+
+object SlackIoHandler {
+  def load(slackApiToken: String, dbPassword: String)(implicit cs: ContextShift[IO], system: ActorSystem): IO[SlackIoHandler] =
+    for {
+      emojiHandler <- EmojiHandler.load(slackApiToken)
+      gameStore = RDSGameStore(dbPassword)
+      _ <- gameStore.setupGameStore()
+      _ <- gameStore.setupScoreStore()
+      slackIoHandler = SlackIoHandler(gameStore, emojiHandler)
+      _ <- IO(println("Now listening to Slack..."))
+    } yield slackIoHandler
+
+  def attemptLoad(slackApiToken: String, dbPassword: String)(implicit cs: ContextShift[IO], system: ActorSystem): IO[SlackIoHandler] =
+    SlackIoHandler.load(slackApiToken, dbPassword)
+      .attempt
+      .flatMap {
+        case Right(slackIoHandling) => IO(slackIoHandling)
+        case Left(e) => IO.raiseError(e)
+      }
 }

@@ -3,8 +3,6 @@ package connect4.wrappers
 import akka.actor.ActorSystem
 import cats.effect.{ContextShift, IO}
 import connect4.commands._
-import connect4.gamestore.RDSGameStore
-import connect4.wrappers.SlackIoHandler._
 import slack.api.SlackApiClient
 import slack.rtm.SlackRtmClient
 
@@ -16,49 +14,30 @@ object SlackWrapper {
   implicit val system: ActorSystem = ActorSystem("slack" /* config.getConfig("akka")*/)
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
-  /**
-   * Start point of the program, handles all incoming messages in channels the bot is present in. Side effects be
-   * here, but only here.
-   */
+  // Side effects are here, but only here.
   def startListening(slackRtmToken: String, dbPassword: String, slackApiToken: String)(implicit cs: ContextShift[IO]): Unit = {
 
-    // TODO: Should we put the unsafeRunSyncs in the one for loop? How does threading work if we do that?
-    val emojiHandler: EmojiHandler = EmojiHandler.load(slackApiToken)
-      .attempt
-      .flatMap {
-        case Right(emojis) => IO(emojis)
-        // TODO: Worth stopping the program?
-        case Left(e) => IO.raiseError(e)
-      }
-      .unsafeRunSync()
-
+    // First side effect, loads program (gets external info like emojis)
+    val slackIoHandler = SlackIoHandler.attemptLoad(slackApiToken, dbPassword).unsafeRunSync()
     val rtmClient: SlackRtmClient = SlackRtmClient(slackRtmToken, SlackApiClient.defaultSlackApiBaseUri, 20.seconds)
-    val gameStore = RDSGameStore(dbPassword)
-
-    gameStore.setupGameStore().unsafeRunSync()
-    gameStore.setupScoreStore().unsafeRunSync()
-
-    val slackIoHandler = SlackIoHandler(gameStore, emojiHandler)
-
-    println("Now listening to Slack...")
 
     rtmClient.onMessage { message =>
 
       val threadTs = message.thread_ts.getOrElse(message.ts)
       val messageContext = MessageContext(rtmClient, message, threadTs)
 
-      val messageResponseProgram: IO[Any] = CommandInterpreter.bigBadInterpret(message.text) match {
+      val messageResponseProgram: IO[Any] = CommandInterpreter.interpretMessage(message.text) match {
         case NoReply => IO(Unit)
         case NoContext(command) => slackIoHandler.handleNoContextCommand(command, messageContext)
         case GameAndScoreContext(command) => slackIoHandler.handleGameAndScoreContextCommand(command, messageContext)
         case ScoreContext(command) => slackIoHandler.handleScoreContextCommand(command, messageContext)
       }
 
+      // Second side effect, responds to users
       messageResponseProgram
         .attempt
         .flatMap {
-          // TODO: Inconsistent unit IOs
-          case Right(_) => IO.unit
+          case Right(_) => IO(Unit)
           case Left(e) => IO(e.printStackTrace())
         }
         .unsafeRunSync()

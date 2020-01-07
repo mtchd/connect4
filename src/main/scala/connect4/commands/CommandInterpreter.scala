@@ -7,8 +7,7 @@ import connect4.wrappers.{Emoji, EmojiHandler}
 
 object CommandInterpreter {
 
-  // TODO: Better name
-  def bigBadInterpret(message: String): CommandPath = {
+  def interpretMessage(message: String): CommandPath = {
     message match {
       case CommandsRegex.Help(_) => NoContext(Help)
       case CommandsRegex.Score(_) => ScoreContext(PlayerScore)

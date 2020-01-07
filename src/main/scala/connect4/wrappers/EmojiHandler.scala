@@ -55,8 +55,7 @@ object EmojiHandler {
     }
 
   def sortEmojis(rawEmojis: Vector[RawEmoji]): (Set[Emoji], Set[Emoji], Set[Emoji]) = {
-    // Create three sets of Emojis to fuck with
-    // Loop through, just do it mutable cuz I don't know better
+    // TODO: This uses var for efficiency, change it to not use var explicitly but stay efficient
     var (invariant, skinnable, skin) = (Set.empty[Emoji], Set.empty[Emoji], Set.empty[Emoji])
     rawEmojis.foreach {
       case RawEmoji(short_name, true, false) => skinnable = skinnable + Emoji(short_name)
