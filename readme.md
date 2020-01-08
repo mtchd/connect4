@@ -13,7 +13,7 @@ Here's a video of a game:
 Game also runs in console for testing!
 
 ## Tech Stack
-- Scala App
+- Scala App, builds with sbt
 - Uses the slack scala client here to handle interactions with slack - https://github.com/slack-scala-client/slack-scala-client
 - AWS as the cloud provider
 - Terraform for Infrastructure as Code
