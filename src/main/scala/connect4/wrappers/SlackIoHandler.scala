@@ -87,7 +87,6 @@ case class SlackIoHandler(gameStore: RDSGameStore, emojiHandler: EmojiHandler) {
   def checkPlayerInGameThenHandle(gameInstance: UnFinishedGame, command: GameContextCommand, messageContext: MessageContext): IO[Unit] =
     gameInstance.maybePlayerRole(messageContext.message.user) match {
       case Some(playerRole) => handleGame(gameInstance, command, messageContext, playerRole)
-        // TODO: Say who is in the game and what they need to do (based on challenge vs playing)
       case None => reply(messageContext, Strings.NotInGame)
     }
 
