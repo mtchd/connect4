@@ -87,7 +87,7 @@ case class GameState(board: Vector[Vector[Cell]], lastMove: Option[Move]) {
           case Challenger => challengerToken
           case Defender => defenderToken
           case Winner => winningToken
-          case _ => emptyToken
+          case Empty => emptyToken
         }
         // Rows become strings, not Vectors
       }.mkString("")
