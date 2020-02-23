@@ -35,7 +35,6 @@ object CommandInterpreter {
 
   def interpretGameContextCommand(gameContextCommand: GameContextCommand, gameInstance: UnFinishedGame, authorId: String, emojiHandler: EmojiHandler, playerRole: PlayerRole): (GameInstance, String) =
     gameContextCommand match {
-        // TODO: Note this makes us do a redundant update to database
       case Challenge(_, _) => (gameInstance, Strings.AlreadyGame)
       case Accept(emoji) => CommandHandler.accept(gameInstance, playerRole, emoji, emojiHandler)
       case Drop(col) => CommandHandler.drop(col, gameInstance, playerRole)
