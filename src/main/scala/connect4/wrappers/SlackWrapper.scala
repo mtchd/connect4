@@ -23,8 +23,8 @@ object SlackWrapper {
 
       val threadTs = message.thread_ts.getOrElse(message.ts)
       val messageContext = MessageContext(rtmClient, message, threadTs)
-      val messageResponseProgram: IO[Any] = CommandInterpreter.interpretMessage(message.text) match {
-        case NoReply => IO(Unit)
+      val messageResponseProgram: IO[Unit] = CommandInterpreter.interpretMessage(message.text) match {
+        case NoReply => IO.unit
         case NoContext(command) => slackIoHandler.handleNoContextCommand(command, messageContext)
         case GameAndScoreContext(command) => slackIoHandler.handleGameAndScoreContextCommand(command, messageContext)
         case ScoreContext(command) => slackIoHandler.handleScoreContextCommand(command, messageContext)
@@ -33,7 +33,7 @@ object SlackWrapper {
       messageResponseProgram
         .attempt
         .flatMap {
-          case Right(_) => IO(Unit)
+          case Right(_) => IO.unit
           case Left(e) => IO(e.printStackTrace())
         }
         .unsafeRunSync()
